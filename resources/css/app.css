@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Knewave&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Gallery Swiper */
+#gallery .swiper-slide {
+    transition: transform 0.4s ease-in-out !important;
+}
+
+#gallery .swiper-slide-prev,
+#gallery .swiper-slide-next {
+    transform: scale(0.85) !important;
+}
+
+#gallery .swiper-slide-active {
+    transform: scale(1) !important;
+}
+
+#gallery .gallery-image {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+#gallery .custom-pagination-bullet {
+    background-color: hsl(183, 25%, 58%) !important;
+    width: 30px !important;
+    height: 3px !important;
+    cursor: pointer !important;
+    border-radius: 0px !important;
+    margin: 0px !important;
+}
+
+#gallery .custom-pagination-bullet-active {
+    background-color: hsl(192, 89%, 25%) !important;
+    width: 30px !important;
+    height: 3px !important;
+    cursor: pointer !important;
+    border-radius: 0px !important;
+    margin: 0px !important;
+}
