@@ -21,7 +21,10 @@ const ContentWithBackgroundImage = ({ backgroundImageUrl, content, textRight = f
                 <div className="relative bg-secondary/90 text-white max-lg:h-[80vh] lg:h-full flex items-center">
                     <div className="w-full overflow-y-auto max-h-full p-8 lg:p-12">
                         {title && (
-                            <h2 className="text-center font-bold tracking-wider text-white mb-6">
+                            <h2
+                                className="font-display text-white tracking-wide text-center mb-6"
+                                style={{ fontSize: 'clamp(1.6rem, 3vw, 2.5rem)' }}
+                            >
                                 {title}
                             </h2>
                         )}
