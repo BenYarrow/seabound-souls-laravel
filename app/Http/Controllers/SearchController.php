@@ -16,9 +16,14 @@ class SearchController extends Controller
         $query = $request->input('q', '');
         $results = [];
 
+        $page = Page::where('slug', 'search')
+            ->where('is_published', true)
+            ->with('staticMastheadMedia')
+            ->first();
+
         if (strlen($query) >= 2) {
             $spotGuides = SpotGuide::search($query)
-                ->query(fn($q) => $q->where('is_published', true)->with(['country', 'media']))
+                ->query(fn($q) => $q->where('is_published', true)->with(['country', 'thumbnailMedia']))
                 ->get()
                 ->map(fn($guide) => [
                     'type' => 'spot_guide',
@@ -26,11 +31,11 @@ class SearchController extends Controller
                     'slug' => $guide->slug,
                     'url' => route('spot-guides.show', $guide->slug),
                     'description' => $guide->country?->name,
-                    'thumbnail' => $guide->getFirstMediaUrl('thumbnail'),
+                    'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
                 ]);
 
             $blogs = Blog::search($query)
-                ->query(fn($q) => $q->where('is_published', true)->with('media'))
+                ->query(fn($q) => $q->where('is_published', true)->with('thumbnailMedia'))
                 ->get()
                 ->map(fn($blog) => [
                     'type' => 'blog',
@@ -38,7 +43,7 @@ class SearchController extends Controller
                     'slug' => $blog->slug,
                     'url' => route('blog.show', $blog->slug),
                     'description' => $blog->seo_description,
-                    'thumbnail' => $blog->getFirstMediaUrl('thumbnail'),
+                    'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
                 ]);
 
             $results = $spotGuides->concat($blogs)->values()->toArray();
@@ -47,6 +52,7 @@ class SearchController extends Controller
         return Inertia::render('Search', [
             'query' => $query,
             'results' => $results,
+            'static_masthead' => $page?->staticMastheadMedia?->getUrl() ?? '',
             'meta' => [
                 'title' => $query ? "Search: {$query} | Seabound Souls" : 'Search | Seabound Souls',
                 'description' => 'Search for windsurfing destinations and articles.',

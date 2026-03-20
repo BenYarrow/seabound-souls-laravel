@@ -12,8 +12,17 @@ class SpotGuide extends Model
 {
     use SoftDeletes, Searchable;
 
+    protected static function booted(): void
+    {
+        static::saving(function (SpotGuide $guide) {
+            if ($guide->isDirty('country_id')) {
+                $guide->country_name = Country::find($guide->country_id)?->name;
+            }
+        });
+    }
+
     protected $fillable = [
-        'title', 'slug', 'country_id', 'timezone', 'latitude', 'longitude',
+        'title', 'slug', 'country_id', 'country_name', 'timezone', 'latitude', 'longitude',
         'introduction_text', 'spot_overview', 'water_conditions', 'wind_conditions',
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
@@ -101,7 +110,7 @@ class SpotGuide extends Model
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
-            'country' => $this->country?->name,
+            'country_name' => $this->country_name,
             'introduction_text' => strip_tags((string) $this->introduction_text),
             'when_to_go' => strip_tags((string) $this->when_to_go),
         ];

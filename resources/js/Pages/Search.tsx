@@ -1,5 +1,6 @@
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
+import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import { Link } from '@inertiajs/react'
 import { router } from '@inertiajs/react'
 import { useState, FormEvent } from 'react'
@@ -16,10 +17,11 @@ interface SearchResult {
 interface Props {
     query: string
     results: SearchResult[]
+    static_masthead: string
     meta: { title: string; description: string }
 }
 
-const Search = ({ query, results, meta }: Props) => {
+const Search = ({ query, results, static_masthead, meta }: Props) => {
     const [searchValue, setSearchValue] = useState(query)
 
     const handleSearch = (e: FormEvent) => {
@@ -31,11 +33,15 @@ const Search = ({ query, results, meta }: Props) => {
 
     return (
         <Layout title={meta.title} description={meta.description}>
-            <div className="bg-primary py-16">
-                <div className="container mx-auto">
-                    <h1 className="text-white text-4xl md:text-5xl font-bold">Search</h1>
+            {static_masthead ? (
+                <StaticMasthead imageUrl={static_masthead} title="Search" />
+            ) : (
+                <div className="bg-primary py-16">
+                    <div className="container mx-auto">
+                        <h1 className="text-white text-4xl md:text-5xl font-bold">Search</h1>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <BlockWrapper>
                 <form onSubmit={handleSearch} className="mb-8">
