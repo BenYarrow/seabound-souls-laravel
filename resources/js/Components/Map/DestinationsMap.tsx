@@ -1,10 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import Map, { Marker, Popup, MapRef } from 'react-map-gl/mapbox'
-import { faRefresh, faWind } from '@fortawesome/free-solid-svg-icons'
+import { faRotateLeft, faWind } from '@fortawesome/free-solid-svg-icons'
 import { usePage } from '@inertiajs/react'
 import { Link } from '@inertiajs/react'
 import Icon from '@/Components/Common/Icon'
-import BlockWrapper from '@/Components/Common/BlockWrapper'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface SpotGuide {
@@ -48,8 +47,9 @@ const DestinationsMap = ({ spotGuides }: Props) => {
                         }}
                         className="cursor-pointer"
                     >
-                        <span className="size-8 aspect-square rounded-full flex items-center justify-center border border-white bg-primary">
+                        <span className="group relative size-9 rounded-full flex items-center justify-center border border-primary-lighter/60 bg-primary hover:bg-primary-lighter transition-all duration-300 shadow-lg shadow-black/40">
                             <Icon icon={faWind} size="size-4" customClasses="text-white" />
+                            <span className="absolute inset-0 rounded-full ring-2 ring-primary-lighter/0 group-hover:ring-primary-lighter/50 transition-all duration-300" />
                         </span>
                     </Marker>
                 )),
@@ -60,27 +60,28 @@ const DestinationsMap = ({ spotGuides }: Props) => {
         mapRef.current?.flyTo({
             center: [INITIAL_VIEW.longitude, INITIAL_VIEW.latitude],
             zoom: INITIAL_VIEW.zoom,
-            duration: 1000,
+            duration: 1200,
         })
         setPopupInfo(null)
     }
 
     return (
-        <BlockWrapper>
+        <div className="destinations-map w-full">
             <Map
                 ref={mapRef}
                 mapboxAccessToken={mapboxToken}
                 initialViewState={INITIAL_VIEW}
-                style={{ height: 500 }}
-                mapStyle="mapbox://styles/mapbox/light-v11"
-                logoPosition="top-right"
-                attributionControl={true}
+                style={{ height: 620 }}
+                mapStyle="mapbox://styles/mapbox/dark-v11"
+                logoPosition="bottom-right"
+                attributionControl={false}
                 onLoad={(e) => {
                     e.target.setFog({
-                        color: '#ffffff',
-                        'high-color': '#ffffff',
-                        'space-color': '#ffffff',
-                        'horizon-blend': 0,
+                        color: 'rgb(10, 20, 30)',
+                        'high-color': 'rgb(10, 20, 30)',
+                        'space-color': '#060c14',
+                        'horizon-blend': 0.02,
+                        'star-intensity': 0.15,
                     })
                 }}
             >
@@ -93,28 +94,45 @@ const DestinationsMap = ({ spotGuides }: Props) => {
                         anchor="left"
                         onClose={() => setPopupInfo(null)}
                         closeOnClick={false}
+                        offset={16}
                     >
-                        <Link
-                            href={`/destinations/${popupInfo.slug}`}
-                            className="block text-sm font-semibold text-primary hover:underline"
-                        >
-                            {popupInfo.title}
-                        </Link>
-                        {popupInfo.country && (
-                            <p className="text-xs text-gray-500">{popupInfo.country.name}</p>
+                        <div className="space-y-1">
+                            <Link
+                                href={`/destinations/${popupInfo.slug}`}
+                                className="block font-display text-xl text-white hover:text-primary-lighter transition-colors leading-none tracking-wide"
+                            >
+                                {popupInfo.title}
+                            </Link>
+                            {popupInfo.country && (
+                                <p className="text-white/45 text-[10px] uppercase tracking-[0.2em]">
+                                    {popupInfo.country.name}
+                                </p>
+                            )}
+                        </div>
+                        {popupInfo.thumbnail && (
+                            <div className="mt-3 -mx-[14px] -mb-[12px] overflow-hidden">
+                                <Link href={`/destinations/${popupInfo.slug}`}>
+                                    <img
+                                        src={popupInfo.thumbnail}
+                                        alt={popupInfo.title}
+                                        className="w-full h-24 object-cover hover:scale-105 transition-transform duration-500"
+                                    />
+                                </Link>
+                            </div>
                         )}
                     </Popup>
                 )}
 
+                {/* Reset button */}
                 <button
-                    className="absolute left-4 bottom-4 flex items-center gap-x-2 bg-white px-3 py-2 rounded-sm shadow-md"
+                    className="absolute left-4 bottom-4 flex items-center gap-2 bg-secondary/90 backdrop-blur-sm border border-white/10 text-white text-xs uppercase tracking-wide px-3 py-2 hover:bg-primary transition-colors duration-300"
                     onClick={handleReset}
                 >
-                    <Icon icon={faRefresh} size="size-4" />
-                    <span className="text-sm">Reset</span>
+                    <Icon icon={faRotateLeft} size="size-3.5" />
+                    <span>Reset view</span>
                 </button>
             </Map>
-        </BlockWrapper>
+        </div>
     )
 }
 

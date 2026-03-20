@@ -1,8 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Knewave&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Knewave&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Masthead: Ken Burns zoom on active slide */
+@keyframes kenburns {
+    0%   { transform: scale(1.0); }
+    100% { transform: scale(1.1); }
+}
+
+.masthead-slider .swiper-slide-active img {
+    animation: kenburns 5.8s ease-out forwards;
+}
+
+/* Scroll nudge indicator */
+@keyframes scroll-nudge {
+    0%, 100% { transform: translateY(0);   opacity: 0.6; }
+    50%       { transform: translateY(7px); opacity: 0.2; }
+}
+
+.animate-scroll-nudge {
+    animation: scroll-nudge 2s ease-in-out infinite;
+}
+
+/* Destinations map — dark popup */
+.destinations-map .mapboxgl-popup-content {
+    background: hsl(192 89% 18%);
+    border-radius: 0;
+    padding: 12px 14px;
+    color: white;
+    min-width: 160px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.destinations-map .mapboxgl-popup-anchor-left  .mapboxgl-popup-tip { border-right-color:  hsl(192 89% 18%); }
+.destinations-map .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color:   hsl(192 89% 18%); }
+.destinations-map .mapboxgl-popup-anchor-top   .mapboxgl-popup-tip { border-bottom-color: hsl(192 89% 18%); }
+.destinations-map .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color:   hsl(192 89% 18%); }
+.destinations-map .mapboxgl-popup-close-button { color: rgba(255,255,255,0.45); padding: 4px 8px; background: transparent; }
+.destinations-map .mapboxgl-popup-close-button:hover { color: white; background: transparent; }
+.destinations-map .mapboxgl-ctrl-logo { display: none !important; }
 
 /* Gallery Swiper */
 #gallery .swiper-slide {

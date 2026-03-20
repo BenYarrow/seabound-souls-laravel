@@ -24,6 +24,9 @@ interface Props {
 
 const unitOptions = ['kts', 'mph', 'kph']
 
+const AXIS_TICK = { fill: 'rgba(255,255,255,0.4)', fontSize: 11 }
+const AXIS_LINE = { stroke: 'rgba(255,255,255,0.08)' }
+
 const AllDestinationsWindChart = ({
     weatherData,
     activeYear,
@@ -55,18 +58,19 @@ const AllDestinationsWindChart = ({
             .sort((a, b) => b.value - a.value)
 
         return (
-            <div className="min-w-[10rem] bg-white p-2 shadow-md">
-                <p className="text-primary lg:text-lg border-b border-primary flex items-center justify-between gap-x-1 lg:gap-x-2">
-                    {month}: <span>{activeYear}</span>
+            <div className="min-w-[10rem] bg-secondary/95 border border-white/10 p-3 shadow-xl backdrop-blur-sm">
+                <p className="text-primary-lighter text-xs uppercase tracking-wide border-b border-white/10 pb-2 mb-2 flex items-center justify-between gap-x-3">
+                    {month} <span className="text-white/50">{activeYear}</span>
                 </p>
-                <ul className="w-full pt-2 lg:py-2 space-y-1 lg:space-y-2">
+                <ul className="space-y-1.5">
                     {orderedData.map(({ location, value }) => (
                         <li
                             key={location}
-                            className="max-md:text-sm flex items-center justify-between gap-x-4"
+                            className="flex items-center justify-between gap-x-4 text-xs"
                             style={{ color: colours[location] }}
                         >
-                            {location}: <span>{`${value} (${activeWindUnit})`}</span>
+                            <span className="truncate max-w-[8rem]">{location}</span>
+                            <span className="font-medium tabular-nums">{value} {activeWindUnit}</span>
                         </li>
                     ))}
                 </ul>
@@ -77,24 +81,23 @@ const AllDestinationsWindChart = ({
     if (!chartData.length) return null
 
     return (
-        <div className="relative">
-            <div className="absolute min-w-20 lg:min-w-24 flex items-center justify-center z-20 top-0 -translate-y-1/2 right-6 lg:right-8 bg-primary shadow-lg">
-                <h3 className="text-white text-lg px-3 py-2">{activeYear}</h3>
-            </div>
-            <div className="w-full p-6 lg:p-8 bg-white space-y-8 shadow-lg">
-                <div className="space-y-2 max-lg:pt-2">
-                    <h2 className="text-lg lg:text-xl text-primary">
-                        Wind Speed Averages: Monthly Breakdown by Spot
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        See how wind speeds vary throughout the year across different locations.
-                    </p>
+        <div className="bg-secondary/60 border border-white/[0.07] p-6 lg:p-8 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div>
+                    <h3 className="font-display text-white tracking-wide"
+                        style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
+                        Wind Speed Averages
+                    </h3>
+                    <p className="text-white/40 text-xs mt-1">Monthly breakdown by spot · {activeYear}</p>
                 </div>
 
-                <div className="pt-2 flex flex-col space-y-3 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between">
-                    <label className="inline-flex items-center cursor-pointer gap-x-2">
-                        <span className={`text-xs md:text-sm ${!showAverageGustData ? 'text-black' : 'text-gray-400'}`}>
-                            Avg Wind
+                {/* Controls */}
+                <div className="flex flex-wrap items-center gap-4 lg:gap-6">
+                    {/* Wind/Gust toggle */}
+                    <label className="inline-flex items-center cursor-pointer gap-2.5">
+                        <span className={`text-xs uppercase tracking-wide ${!showAverageGustData ? 'text-white' : 'text-white/35'}`}>
+                            Wind
                         </span>
                         <input
                             type="checkbox"
@@ -102,78 +105,84 @@ const AllDestinationsWindChart = ({
                             onChange={(e) => setShowAverageGustData(e.target.checked)}
                             className="sr-only peer"
                         />
-                        <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                        <span className={`text-xs md:text-sm ${showAverageGustData ? 'text-black' : 'text-gray-400'}`}>
-                            Avg Gust
+                        <div className="relative w-10 h-5 bg-white/10 border border-white/15 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white/70 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary/60" />
+                        <span className={`text-xs uppercase tracking-wide ${showAverageGustData ? 'text-white' : 'text-white/35'}`}>
+                            Gust
                         </span>
                     </label>
 
-                    <div className="flex items-center gap-x-4">
+                    {/* Unit radios */}
+                    <div className="flex items-center gap-1 border border-white/10">
                         {unitOptions.map((unit) => {
-                            const checked = activeWindUnit === unit
+                            const active = activeWindUnit === unit
                             return (
-                                <div key={unit} className="flex items-center gap-x-1">
-                                    <input
-                                        type="radio"
-                                        id={`wind-unit-${unit}`}
-                                        name="windUnit"
-                                        value={unit}
-                                        checked={checked}
-                                        onChange={() => setActiveWindUnit(unit)}
-                                        className="cursor-pointer"
-                                    />
-                                    <label
-                                        htmlFor={`wind-unit-${unit}`}
-                                        className={`text-xs md:text-sm cursor-pointer ${checked ? 'text-black' : 'text-gray-400'}`}
-                                    >
-                                        {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                                    </label>
-                                </div>
+                                <button
+                                    key={unit}
+                                    onClick={() => setActiveWindUnit(unit)}
+                                    className={`px-3 py-1.5 text-xs uppercase tracking-wide transition-colors duration-200 ${
+                                        active
+                                            ? 'bg-primary text-white'
+                                            : 'text-white/40 hover:text-white/70'
+                                    }`}
+                                >
+                                    {unit}
+                                </button>
                             )
                         })}
                     </div>
                 </div>
-
-                <div className="h-[25rem]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 0, right: 5, left: 0, bottom: 50 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" interval={0} angle={-45} textAnchor="end" />
-                            <YAxis
-                                label={{
-                                    value: `Avg ${showAverageGustData ? 'Gust' : 'Wind'} (${activeWindUnit})`,
-                                    angle: -90,
-                                    position: 'insideLeft',
-                                }}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            {activeDestinations.map(({ label }) => (
-                                <Line
-                                    key={label}
-                                    type="monotone"
-                                    dataKey={label}
-                                    stroke={colours[label]}
-                                    dot={false}
-                                />
-                            ))}
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="prose prose-sm prose-p:!text-gray-600 prose-p:text-sm">
-                    <p>
-                        <strong>Please note:</strong> Wind data is calculated from 4 years of
-                        historical records obtained from nearby official weather stations via the{' '}
-                        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener">
-                            Open-Meteo API
-                        </a>
-                        . These values are long-term averages and do not account for localised
-                        thermal effects (such as sea/land breezes or valley winds). Actual,
-                        real-time conditions, particularly in warmer seasons, may vary
-                        significantly.
-                    </p>
-                </div>
             </div>
+
+            {/* Chart */}
+            <div className="h-[22rem]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 50 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <XAxis
+                            dataKey="month"
+                            interval={0}
+                            angle={-45}
+                            textAnchor="end"
+                            tick={AXIS_TICK}
+                            axisLine={AXIS_LINE}
+                            tickLine={AXIS_LINE}
+                        />
+                        <YAxis
+                            tick={AXIS_TICK}
+                            axisLine={AXIS_LINE}
+                            tickLine={AXIS_LINE}
+                            label={{
+                                value: `Avg ${showAverageGustData ? 'Gust' : 'Wind'} (${activeWindUnit})`,
+                                angle: -90,
+                                position: 'insideLeft',
+                                fill: 'rgba(255,255,255,0.3)',
+                                fontSize: 11,
+                            }}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        {activeDestinations.map(({ label }) => (
+                            <Line
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={colours[label]}
+                                strokeWidth={1.5}
+                                dot={false}
+                                activeDot={{ r: 4, strokeWidth: 0 }}
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+
+            {/* Disclaimer */}
+            <p className="text-white/25 text-xs leading-relaxed border-t border-white/[0.06] pt-4">
+                <strong className="text-white/40">Note:</strong> Wind data calculated from historical records via the{' '}
+                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-white/50 transition-colors">
+                    Open-Meteo API
+                </a>
+                . Long-term averages — actual conditions may vary.
+            </p>
         </div>
     )
 }

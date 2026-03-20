@@ -32,20 +32,31 @@ const FeaturedGrid = ({
 }: FeaturedGridProps) => {
     if (!entries || entries.length === 0) return null
 
-    const invertText = backgroundColour !== 'bg-white' && backgroundColour !== 'bg-primary-lightest'
-    const headingClasses = `uppercase text-3xl lg:text-4xl font-bold ${invertText ? 'text-primary-lighter' : 'text-primary'}`
+    const isDark = backgroundColour !== 'bg-white' && backgroundColour !== 'bg-primary-lightest' && backgroundColour !== 'bg-cream'
 
     return (
         <BlockWrapper options={{ noContainer: true, fill: true, bgColourClass: backgroundColour }}>
-            <div className="space-y-8 lg:space-y-12">
-                <div className="container mx-auto flex items-center justify-between">
-                    <h2 className={headingClasses}>{title}</h2>
-                    <Button href={linkHref}>
+            <div className="space-y-10 lg:space-y-14">
+
+                {/* Section header */}
+                <div className="container mx-auto flex items-end justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                        {/* Accent bar */}
+                        <div className={`mt-3 w-1 self-stretch rounded-full ${isDark ? 'bg-orange' : 'bg-orange'}`} />
+                        <h2
+                            className={`font-display leading-none tracking-wide ${isDark ? 'text-white' : 'text-secondary'}`}
+                            style={{ fontSize: 'clamp(2.5rem, 6vw, 5.5rem)' }}
+                        >
+                            {title}
+                        </h2>
+                    </div>
+                    <Button href={linkHref} variant={isDark ? 'outline' : 'primary'}>
                         {linkLabel}
                         {linkScreenReaderLabel && <span className="sr-only">{linkScreenReaderLabel}</span>}
                     </Button>
                 </div>
 
+                {/* Card grid */}
                 <AnimateInView
                     tag="ul"
                     animateChildren
@@ -61,21 +72,29 @@ const FeaturedGrid = ({
                                     <img
                                         src={entry.thumbnail}
                                         alt={entry.title}
-                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                     />
                                 ) : (
                                     <div className="absolute inset-0 bg-primary" />
                                 )}
-                                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300" />
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                                    <h3 className="text-white text-2xl lg:text-3xl font-bold drop-shadow-lg">
+
+                                {/* Subtle vignette */}
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors duration-500" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+                                {/* Text — positioned at bottom-left for editorial feel */}
+                                <div className="absolute bottom-0 left-0 right-0 p-5">
+                                    <h3 className="font-display text-white leading-none tracking-wide drop-shadow-lg"
+                                        style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
                                         {entry.title}
                                     </h3>
                                     {entry.subtitle && (
-                                        <p className="text-white/80 text-sm mt-2 uppercase tracking-wider">
+                                        <p className="text-white/65 text-xs mt-1.5 uppercase tracking-[0.2em]">
                                             {entry.subtitle}
                                         </p>
                                     )}
+                                    {/* Hover reveal line */}
+                                    <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-12 transition-all duration-500" />
                                 </div>
                             </Link>
                         </li>

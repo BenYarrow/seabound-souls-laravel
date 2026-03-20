@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, router } from '@inertiajs/react'
 import { usePage } from '@inertiajs/react'
 import { faBars, faSearch, faXmark } from '@fortawesome/free-solid-svg-icons'
@@ -16,7 +16,23 @@ const NavBar = () => {
     const { url } = usePage()
     const [showMobileNav, setShowMobileNav] = useState(false)
     const [showSearch, setShowSearch] = useState(false)
-    const searchRef = useRef<HTMLInputElement>(null)
+    const [scrolled, setScrolled] = useState(false)
+
+    const isHomepage = url === '/'
+
+    useEffect(() => {
+        setScrolled(false)
+        setShowMobileNav(false)
+        setShowSearch(false)
+
+        if (!isHomepage) return
+
+        const handleScroll = () => setScrolled(window.scrollY > 64)
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [url, isHomepage])
+
+    const isTransparent = isHomepage && !scrolled && !showMobileNav
 
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -28,11 +44,18 @@ const NavBar = () => {
         setShowSearch(false)
     }
 
+    const wrapperClasses = [
+        'z-[1000] transition-all duration-500',
+        isHomepage ? 'fixed top-0 left-0 right-0 w-full' : 'relative',
+        isTransparent ? 'bg-transparent' : 'bg-primary shadow-md',
+        !isTransparent ? 'border-b border-white/10' : '',
+    ].filter(Boolean).join(' ')
+
     return (
-        <div className="relative z-[1000] bg-primary" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+        <div className={wrapperClasses}>
             {showSearch && (
-                <div className="w-full container mx-auto">
-                    <form onSubmit={handleSearch} className="py-4">
+                <div className={`w-full container mx-auto ${isHomepage ? 'bg-primary/95 backdrop-blur-sm' : ''}`}>
+                    <form onSubmit={handleSearch} className="py-3">
                         <label htmlFor="search" className="sr-only">Search</label>
                         <input
                             type="text"
@@ -40,7 +63,6 @@ const NavBar = () => {
                             name="q"
                             placeholder="Search the site..."
                             autoFocus
-                            ref={searchRef}
                             className="px-3 py-2 rounded-md w-full text-sm text-gray-900 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary transition duration-200 ease-in-out shadow-sm"
                         />
                     </form>
@@ -59,17 +81,19 @@ const NavBar = () => {
                     </div>
 
                     <nav className={[
-                        'max-lg:absolute max-lg:top-[5rem] max-lg:left-0 max-lg:w-full max-lg:bg-white max-lg:container max-lg:mx-auto max-lg:z-10 max-lg:transition max-lg:duration-500',
+                        'max-lg:absolute max-lg:top-[5rem] max-lg:left-0 max-lg:w-full max-lg:bg-primary max-lg:container max-lg:mx-auto max-lg:z-10 max-lg:transition max-lg:duration-500',
                         showMobileNav ? '' : 'max-lg:translate-y-[calc(100vh+5rem)] max-lg:opacity-0 max-lg:pointer-events-none'
                     ].filter(Boolean).join(' ')}>
-                        <ul className="max-lg:pt-6 flex flex-col lg:flex-row gap-y-2 lg:gap-x-6">
+                        <ul className="max-lg:pt-6 max-lg:pb-8 flex flex-col lg:flex-row gap-y-3 lg:gap-x-6">
                             {navItems.map(({ href, title }) => (
                                 <li key={title}>
                                     <Link
                                         href={href}
                                         className={[
-                                            'text-lg whitespace-nowrap',
-                                            url === href ? 'max-lg:underline text-primary lg:text-white font-semibold' : 'text-primary lg:text-white hover:underline'
+                                            'text-base lg:text-sm uppercase tracking-wide font-medium whitespace-nowrap transition-opacity duration-200',
+                                            url === href
+                                                ? 'text-white opacity-100'
+                                                : 'text-white/70 hover:text-white hover:opacity-100'
                                         ].join(' ')}
                                         onClick={() => setShowMobileNav(false)}
                                     >
@@ -80,24 +104,24 @@ const NavBar = () => {
                         </ul>
                     </nav>
 
-                    <div className="flex items-center gap-x-4">
+                    <div className="flex items-center gap-x-5">
                         <button
-                            onClick={() => {
-                                setShowSearch(prev => !prev)
-                                setTimeout(() => searchRef.current?.focus(), 100)
-                            }}
+                            onClick={() => setShowSearch(prev => !prev)}
                             aria-label="Search"
-                            className={showMobileNav ? 'hidden' : 'block'}
+                            className={[
+                                'text-white/70 hover:text-white transition-colors duration-200',
+                                showMobileNav ? 'hidden' : 'block',
+                            ].join(' ')}
                         >
-                            <Icon icon={faSearch} customClasses="text-white" size="size-6" />
+                            <Icon icon={showSearch ? faXmark : faSearch} size="size-5" />
                         </button>
 
                         <button
                             onClick={() => { setShowMobileNav(!showMobileNav); setShowSearch(false) }}
-                            className="lg:hidden"
+                            className="lg:hidden text-white/70 hover:text-white transition-colors duration-200"
                             aria-label="Navigation menu"
                         >
-                            <Icon icon={showMobileNav ? faXmark : faBars} customClasses="text-white" size="size-6" />
+                            <Icon icon={showMobileNav ? faXmark : faBars} size="size-5" />
                         </button>
                     </div>
                 </div>

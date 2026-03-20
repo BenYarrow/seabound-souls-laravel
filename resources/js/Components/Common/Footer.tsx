@@ -2,7 +2,14 @@ import { Link } from '@inertiajs/react'
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
 import Icon from './Icon'
-import BlockWrapper from './BlockWrapper'
+
+const navLinks = [
+    { title: 'Home', href: '/' },
+    { title: 'About Us', href: '/about-us' },
+    { title: 'Destinations', href: '/destinations' },
+    { title: 'Blog', href: '/blog' },
+    { title: 'Contact', href: '/contact' },
+]
 
 const socialMedia = [
     { icon: faYoutube, link: 'https://www.youtube.com/@seabound_souls', label: 'YouTube' },
@@ -10,47 +17,110 @@ const socialMedia = [
 ]
 
 const Footer = () => {
-    return (
-        <footer>
-            <BlockWrapper options={{ fill: true, bgColourClass: 'bg-primary', relative: true }}>
-                <div className="max-lg:space-y-8 lg:flex lg:items-center lg:justify-start lg:gap-x-12">
-                    <Link href="/" aria-label="Homepage">
-                        <img src="/images/logo.png" alt="Seabound Souls" className="hidden sm:block w-[200px]" loading="lazy" />
-                    </Link>
+    const year = new Date().getFullYear()
 
-                    <div className="space-y-2 text-white">
-                        <h3 className="text-white">
-                            <Link href="/contact" className="text-xl md:text-2xl lg:text-2xl xl:text-3xl">Contact us</Link>
-                        </h3>
-                        <p className="max-w-sm md:text-lg">
-                            Are you looking to book your next adventure and need some advice?{' '}
-                            Or would you like to collaborate with us?{' '}
-                            <Link href="/contact" className="underline">Get in touch</Link>.
+    return (
+        <footer className="relative bg-secondary overflow-hidden">
+            {/* Top accent line */}
+            <div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+
+            {/* Ghost background text */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none"
+            >
+                <span
+                    className="font-title text-white/[0.025] uppercase whitespace-nowrap"
+                    style={{ fontSize: 'clamp(5rem, 18vw, 18rem)', lineHeight: 1 }}
+                >
+                    Seabound Souls
+                </span>
+            </div>
+
+            {/* Main content */}
+            <div className="relative container mx-auto py-16 md:py-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+
+                    {/* Brand column */}
+                    <div className="lg:col-span-2 space-y-5">
+                        <Link href="/" className="flex items-center gap-3" aria-label="Homepage">
+                            <img src="/images/logo.png" alt="" className="w-14" loading="lazy" />
+                            <span className="font-title text-white text-2xl uppercase">Seabound Souls</span>
+                        </Link>
+                        <p className="text-white/45 text-sm leading-relaxed max-w-xs">
+                            Discover the world's finest windsurfing destinations — curated guides,
+                            local knowledge, and everything you need for your next adventure.
                         </p>
+                        <div className="flex gap-4 pt-1">
+                            {socialMedia.map((social) => (
+                                <a
+                                    key={social.label}
+                                    href={social.link}
+                                    target="_blank"
+                                    rel="nofollow external noopener noreferrer"
+                                    aria-label={social.label}
+                                    className="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-primary-lighter transition-all duration-300"
+                                >
+                                    <Icon icon={social.icon} size="size-4" />
+                                </a>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="space-y-4 lg:ml-12 xl:ml-20">
-                        <div className="space-y-2 text-white">
-                            <h3 className="text-white text-xl md:text-2xl">Email</h3>
-                            <a href="mailto:seabound.souls@outlook.com" className="flex items-center gap-x-4 md:text-lg text-white hover:underline">
-                                <Icon icon={faEnvelope} size="size-6" customClasses="text-white" />
+                    {/* Explore links */}
+                    <div>
+                        <h4 className="text-primary-lighter text-[10px] uppercase tracking-[0.25em] mb-6 font-medium">
+                            Explore
+                        </h4>
+                        <ul className="space-y-3">
+                            {navLinks.map(({ href, title }) => (
+                                <li key={href}>
+                                    <Link
+                                        href={href}
+                                        className="text-white/50 hover:text-white text-sm transition-colors duration-200"
+                                    >
+                                        {title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Contact */}
+                    <div>
+                        <h4 className="text-primary-lighter text-[10px] uppercase tracking-[0.25em] mb-6 font-medium">
+                            Get in touch
+                        </h4>
+                        <div className="space-y-4">
+                            <a
+                                href="mailto:seabound.souls@outlook.com"
+                                className="flex items-center gap-3 text-white/50 hover:text-white text-sm transition-colors duration-200 group"
+                            >
+                                <Icon icon={faEnvelope} size="size-4" customClasses="shrink-0 text-primary-lighter/60 group-hover:text-primary-lighter transition-colors" />
                                 seabound.souls@outlook.com
                             </a>
-                        </div>
-
-                        <div className="space-y-2 text-white">
-                            <h3 className="text-white text-xl md:text-2xl">Get social</h3>
-                            <div className="flex gap-x-4">
-                                {socialMedia.map((social) => (
-                                    <a key={social.label} href={social.link} target="_blank" rel="nofollow external noopener noreferrer" aria-label={social.label} className="text-white hover:opacity-80">
-                                        <Icon icon={social.icon} size="size-6" customClasses="text-white" />
-                                    </a>
-                                ))}
-                            </div>
+                            <p className="text-white/30 text-xs leading-relaxed pt-2">
+                                Planning your next trip or want to collaborate?{' '}
+                                <Link href="/contact" className="text-primary-lighter/70 hover:text-primary-lighter underline underline-offset-2 transition-colors">
+                                    Send us a message.
+                                </Link>
+                            </p>
                         </div>
                     </div>
                 </div>
-            </BlockWrapper>
+            </div>
+
+            {/* Copyright bar */}
+            <div className="relative border-t border-white/[0.07]">
+                <div className="container mx-auto py-4 flex items-center justify-between gap-4">
+                    <span className="text-white/25 text-xs">
+                        © {year} Seabound Souls. All rights reserved.
+                    </span>
+                    <span className="text-white/15 text-xs hidden sm:block">
+                        Wind. Water. Freedom.
+                    </span>
+                </div>
+            </div>
         </footer>
     )
 }

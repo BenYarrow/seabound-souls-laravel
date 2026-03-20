@@ -8,6 +8,7 @@ const config: Config = {
         "./vendor/filament/**/*.blade.php",
     ],
     safelist: [
+        'font-display',
         'bg-cream',
         'bg-white',
         'bg-primary',
@@ -35,6 +36,7 @@ const config: Config = {
         extend: {
             fontFamily: {
                 title: ['Knewave', 'cursive'],
+                display: ['Bebas Neue', 'sans-serif'],
             },
             backgroundImage: {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
