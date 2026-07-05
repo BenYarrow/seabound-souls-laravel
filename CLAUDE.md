@@ -6,6 +6,47 @@ A full rebuild of the **Seabound Souls** windsurfing destination guide website. 
 
 **What the site is:** A windsurfing destination guide featuring spot guides with maps, weather data, recommendations, galleries, a blog, and contact form.
 
+**Status & intent:** This is Ben's **personal** project (NOT an IFP repo). It began as a test to see whether Claude could rebuild the old Next.js/Sanity site in Laravel — it could. It is now being polished, at a relaxed pace, toward an actual launch, and is deliberately held to the **same working standard Ben uses on IFP projects day-to-day** (TDD, dark mode, full responsiveness, documented code). The rules below encode that standard.
+
+---
+
+## Working standard — read this first
+
+### Scope — stay in this directory
+All work happens within this repo (or one of its git worktrees). Do **not** read, write, or reference files outside this directory tree — including the sibling design reference `../seabound-souls-sanity-next-js/` — **unless Ben explicitly instructs it in the moment**. The original Next.js/Sanity build is documented throughout this file; that documentation is sufficient for most work. Only navigate to the sibling repo when told to for a specific comparison.
+
+### Session start
+- **Node:** The shell default is Node **v14.16.0** (nvm) which **cannot run Vite 7** (`Cannot find module 'node:path'`). Use v22+ — `export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH"` before `npm run dev` / `npm run build`. (No `.nvmrc` committed yet — pending follow-up.)
+- **Sub-agents must source nvm.** A spawned sub-agent (Agent tool) starts in a fresh shell where nvm is not sourced, so `node` falls back to v14 and npm/vite/npx fail with misleading errors — often the sub-agent wrongly concludes the right Node isn't installed. When delegating any task that may run node/npm, include in the prompt: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && <command>`, and state explicitly that the system `node` is NOT the project version.
+- **Dev servers:** Laravel `:8000` (`php artisan serve`) + Vite HMR `:5173` (`npm run dev`) must BOTH run. The app 500s with "Unable to locate file in Vite manifest" if Vite is down / `public/hot` is missing.
+- **Project status:** `SITREP.md` + `docs/TODO.md` are created by the first `reconcile-everything` run — read them at session start once they exist.
+
+### Git workflow
+- Branch stays **`main`** (not `master`). **No direct commits to `main`** — every change reaches trunk via a feature branch + PR.
+- **Pull `main` before cutting a branch:** `git checkout main && git fetch && git pull` before every `git checkout -b`, even mid-session.
+- **After a merge, verify it landed before any cleanup**, then run the `git-dance` skill. Never trust an unverified "it's merged" claim.
+- **Reconcile — fold into the feature PR:** run `reconcile-everything` on the feature branch *before* its PR merges, so reconcile docs ride in the same PR as the code. If asked to merge/dance/push un-reconciled work, stop and fold reconcile in first.
+
+### Testing (TDD is the default)
+- **Write the test first.** Follow the `test-driven-development` skill for any feature or bugfix — red, green, refactor.
+- **Run `php artisan test` before calling any task done.** All tests must pass; don't dismiss pre-existing failures — fix or flag them.
+- **Mock external dependencies** so tests need no network or live DB: OpenWeatherMap, reCAPTCHA, Mapbox, mail.
+- **Current baseline:** only the two stock Laravel example tests exist — real coverage is a standing backlog item to backfill as areas are touched.
+
+### Code clarity & documentation
+- **JSDoc on every function** (exported or internal) in `.ts`/`.tsx`; PHPDoc equivalent on PHP methods where non-obvious. Explain *why* where the logic isn't self-evident. To be enforced via a husky + lint-staged + eslint-plugin-jsdoc pre-commit hook (setup is a pending follow-up).
+- **No single-letter variables** (except `i` in a trivial numeric loop) and **no cryptic abbreviations** — `fieldName` not `f`, `iterationRows` not `iters`.
+- **Comment the *why*, not the *what*** — business rules, surprising behaviour, non-trivial queries get an inline reason.
+- **Module header comment** at the top of each source file describing its role.
+
+### Web UI
+- **Dark mode is required** alongside light. Use semantic theme tokens (CSS variables on `:root`, overridden under `html.dark`) — never raw `bg-white`/`text-gray-*`/palette-specific utilities that won't flip. Inline-style/SVG colours must reference `var(--…)`. Ship a no-flash theme switch (apply persisted choice before paint). Add a CI regression guard against banned raw colour utilities. Verify every changed screen in both themes before merge. *(Greenfield — the token layer is a pending follow-up.)*
+- **Fully responsive** on all devices — verify layouts at mobile / tablet / desktop breakpoints before merge, not just desktop.
+- Avoid ad-blocker trigger words (`ad`, `banner`, `promo`, `sponsor`, `tracker`) in routes/asset/chunk names — they get silently blocked. Prefer neutral synonyms.
+
+### Database
+- Schema changes go through Laravel migrations (`php artisan make:migration`). **Never edit a migration that has already run** — add a new migration for the change.
+
 ---
 
 ## Original Next.js/Sanity Project
