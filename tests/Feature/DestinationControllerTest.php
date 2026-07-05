@@ -1,0 +1,72 @@
+<?php
+
+// Feature tests for App\Http\Controllers\DestinationController — the /destinations
+// index. Covers published-only listing, title ordering, country inclusion, and the
+// weatherData map (keyed by guide title → year → month rows) the charts consume.
+
+namespace Tests\Feature;
+
+use App\Models\SpotGuide;
+use App\Models\WeatherRecord;
+use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
+
+class DestinationControllerTest extends TestCase
+{
+    public function test_index_renders_published_destinations_with_country(): void
+    {
+        $guide = SpotGuide::factory()->create();
+
+        $response = $this->get(route('destinations.index'));
+
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Destinations/Index')
+                ->has('spotGuides', 1)
+                ->where('spotGuides.0.country.name', $guide->country->name)
+        );
+    }
+
+    public function test_index_excludes_unpublished_destinations(): void
+    {
+        SpotGuide::factory()->count(2)->create();
+        SpotGuide::factory()->unpublished()->count(3)->create();
+
+        $response = $this->get(route('destinations.index'));
+
+        $response->assertInertia(
+            fn (Assert $page) => $page->has('spotGuides', 2)
+        );
+    }
+
+    public function test_index_orders_destinations_by_title(): void
+    {
+        SpotGuide::factory()->create(['title' => 'Zebra Bay', 'slug' => 'zebra-bay']);
+        SpotGuide::factory()->create(['title' => 'Alpha Cove', 'slug' => 'alpha-cove']);
+
+        $response = $this->get(route('destinations.index'));
+
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->where('spotGuides.0.title', 'Alpha Cove')
+                ->where('spotGuides.1.title', 'Zebra Bay')
+        );
+    }
+
+    public function test_index_keys_weather_data_by_title_grouped_by_year(): void
+    {
+        $guide = SpotGuide::factory()->create(['title' => 'Tarifa', 'slug' => 'tarifa']);
+        WeatherRecord::factory()->for($guide)->create(['year' => 2023, 'month' => 2]);
+        WeatherRecord::factory()->for($guide)->create(['year' => 2023, 'month' => 1]);
+
+        $response = $this->get(route('destinations.index'));
+
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->has('weatherData.Tarifa.2023', 2)
+                // Sorted by month within the year, so January comes first.
+                ->where('weatherData.Tarifa.2023.0.month', 'January')
+        );
+    }
+}
