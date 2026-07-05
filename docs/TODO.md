@@ -3,7 +3,6 @@
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
 ## Testing sweep (fan out the blog template)
-- [ ] Contact — index + store (validation, mocked mail + reCAPTCHA) + comments
 - [ ] Pages — catch-all controller + comments
 - [ ] Homepage — controller + featured/recent props + comments
 - [ ] Helpers/logic units — weather-data transforms, `LiveWeatherController` caching
