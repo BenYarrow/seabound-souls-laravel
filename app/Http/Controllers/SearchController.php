@@ -1,5 +1,10 @@
 <?php
 
+// Public search page:
+//   GET /search?q=… — search
+// Runs a Scout full-text search across published spot guides and blogs, merging
+// them into one typed results list for the Inertia page.
+
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
@@ -11,6 +16,12 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
+    /**
+     * Render the search page. Short-circuits to empty results for queries under
+     * two characters (avoids noisy single-letter matches). Otherwise searches
+     * spot guides and blogs via Scout — each constrained to published rows — and
+     * concatenates them into a single `results` array tagged by `type`.
+     */
     public function index(Request $request): Response
     {
         $query = $request->input('q', '');
