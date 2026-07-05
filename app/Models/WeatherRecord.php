@@ -1,12 +1,18 @@
 <?php
 
+// One month of climate averages for a spot guide (temp + wind/gust in kts, mph,
+// kph). Unique per (spot_guide_id, year, month). Feeds the destination charts.
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WeatherRecord extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'spot_guide_id', 'year', 'month',
         'avg_temp', 'kts_wind', 'kts_gust',
@@ -25,6 +31,7 @@ class WeatherRecord extends Model
         9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
     ];
 
+    /** Human-readable month name for the stored month number (1–12), else ''. */
     public function getMonthNameAttribute(): string
     {
         return self::MONTH_NAMES[$this->month] ?? '';
@@ -35,11 +42,13 @@ class WeatherRecord extends Model
         return $this->belongsTo(SpotGuide::class);
     }
 
+    /** Filter to a single year. */
     public function scopeForYear($query, int $year)
     {
         return $query->where('year', $year);
     }
 
+    /** Filter to a single month number (1–12). */
     public function scopeForMonth($query, int $month)
     {
         return $query->where('month', $month);

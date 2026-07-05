@@ -1,7 +1,13 @@
 <?php
 
+// Spot guide (destination) model — the central content type. Soft-deletable and
+// Scout-searchable. Most conditions/sections are JSON columns; images are FKs
+// into the centralised media_library. Denormalises the country name onto the row
+// so search can match on it without a join (see the saving hook below).
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,8 +16,14 @@ use Laravel\Scout\Searchable;
 
 class SpotGuide extends Model
 {
-    use SoftDeletes, Searchable;
+    use HasFactory, SoftDeletes, Searchable;
 
+    /**
+     * Keep the denormalised country_name in step with the country_id FK. Only
+     * re-resolves when country_id actually changed, so unrelated saves stay cheap.
+     * country_name feeds the searchable array (toSearchableArray) so guides can be
+     * found by country without joining the countries table at query time.
+     */
     protected static function booted(): void
     {
         static::saving(function (SpotGuide $guide) {
@@ -89,21 +101,28 @@ class SpotGuide extends Model
         return $this->belongsTo(MediaLibrary::class, 'lessons_and_hire_bg_media_id');
     }
 
+    /** Stay/eat recommendations, admin-ordered via sort_order. */
     public function recommendations(): HasMany
     {
         return $this->hasMany(Recommendation::class)->orderBy('sort_order');
     }
 
+    /** Launch spots within the guide, admin-ordered via sort_order. */
     public function windsurfingLocations(): HasMany
     {
         return $this->hasMany(WindsurfingLocation::class)->orderBy('sort_order');
     }
 
+    /** Monthly climate averages; grouped/sorted for the charts in the controller. */
     public function weatherRecords(): HasMany
     {
         return $this->hasMany(WeatherRecord::class);
     }
 
+    /**
+     * Fields exposed to Laravel Scout. Includes the denormalised country_name and
+     * tag-stripped intro/when-to-go text so free-text search matches on content.
+     */
     public function toSearchableArray(): array
     {
         return [
@@ -116,6 +135,7 @@ class SpotGuide extends Model
         ];
     }
 
+    /** Constrain a query to published guides only — keeps drafts off the site. */
     public function scopePublished($query)
     {
         return $query->where('is_published', true);
