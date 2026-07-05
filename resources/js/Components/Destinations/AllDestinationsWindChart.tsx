@@ -24,8 +24,8 @@ interface Props {
 
 const unitOptions = ['kts', 'mph', 'kph']
 
-const AXIS_TICK = { fill: 'rgba(255,255,255,0.4)', fontSize: 11 }
-const AXIS_LINE = { stroke: 'rgba(255,255,255,0.08)' }
+const AXIS_TICK = { fill: 'rgba(255,255,255,0.7)', fontSize: 11 }
+const AXIS_LINE = { stroke: 'rgba(255,255,255,0.2)' }
 
 const AllDestinationsWindChart = ({
     weatherData,
@@ -81,7 +81,7 @@ const AllDestinationsWindChart = ({
     if (!chartData.length) return null
 
     return (
-        <div className="bg-secondary/60 border border-white/[0.07] p-6 lg:p-8 space-y-6">
+        <div className="bg-secondary/60 border border-white/20 p-6 lg:p-8 space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div>
@@ -137,7 +137,7 @@ const AllDestinationsWindChart = ({
             <div className="h-[22rem]">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 50 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
                         <XAxis
                             dataKey="month"
                             interval={0}
@@ -155,7 +155,7 @@ const AllDestinationsWindChart = ({
                                 value: `Avg ${showAverageGustData ? 'Gust' : 'Wind'} (${activeWindUnit})`,
                                 angle: -90,
                                 position: 'insideLeft',
-                                fill: 'rgba(255,255,255,0.3)',
+                                fill: 'rgba(255,255,255,0.55)',
                                 fontSize: 11,
                             }}
                         />
@@ -166,7 +166,7 @@ const AllDestinationsWindChart = ({
                                 type="monotone"
                                 dataKey={label}
                                 stroke={colours[label]}
-                                strokeWidth={1.5}
+                                strokeWidth={2}
                                 dot={false}
                                 activeDot={{ r: 4, strokeWidth: 0 }}
                             />
@@ -176,8 +176,8 @@ const AllDestinationsWindChart = ({
             </div>
 
             {/* Disclaimer */}
-            <p className="text-white/25 text-xs leading-relaxed border-t border-white/[0.06] pt-4">
-                <strong className="text-white/40">Note:</strong> Wind data calculated from historical records via the{' '}
+            <p className="text-white/45 text-xs leading-relaxed border-t border-white/15 pt-4">
+                <strong className="text-white/60">Note:</strong> Wind data calculated from historical records via the{' '}
                 <a href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-white/50 transition-colors">
                     Open-Meteo API
                 </a>

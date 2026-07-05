@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
 use App\Models\Blog;
 use App\Models\MediaLibrary;
+use App\Models\Page;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,6 +14,11 @@ class BlogController extends Controller
     use ResolvesContentBlockMedia;
     public function index(): Response
     {
+        $page = Page::where('slug', 'blog')
+            ->where('is_published', true)
+            ->with('staticMastheadMedia')
+            ->first();
+
         $blogs = Blog::published()
             ->with(['thumbnailMedia'])
             ->latest('published_at')
@@ -28,6 +34,7 @@ class BlogController extends Controller
 
         return Inertia::render('Blog/Index', [
             'blogs' => $blogs,
+            'static_masthead' => $page?->staticMastheadMedia?->getUrl() ?? '',
             'meta' => [
                 'title' => 'Blog | Seabound Souls',
                 'description' => 'Windsurfing tips, guides and destination insights.',
