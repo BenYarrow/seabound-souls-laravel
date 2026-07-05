@@ -1,5 +1,11 @@
 <?php
 
+// Public-facing blog routes:
+//   GET /blog        — paginated listing of published posts (blog.index)
+//   GET /blog/{slug} — a single published post (blog.show)
+// Both render Inertia pages and reference images from the centralised media
+// library by FK; media getters null-coalesce so posts without images still render.
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
@@ -12,6 +18,12 @@ use Inertia\Response;
 class BlogController extends Controller
 {
     use ResolvesContentBlockMedia;
+
+    /**
+     * Render the blog index: published posts newest-first, 12 per page, each
+     * projected down to the fields the listing card needs. The masthead image
+     * comes from the "blog" landing Page (if one is published).
+     */
     public function index(): Response
     {
         $page = Page::where('slug', 'blog')
@@ -42,6 +54,13 @@ class BlogController extends Controller
         ]);
     }
 
+    /**
+     * Render a single published post by slug, 404ing on drafts or unknown slugs.
+     * Content-block media is resolved to URLs, and the masthead slider images are
+     * fetched in one query then re-ordered to match the stored id order.
+     *
+     * @param  string  $slug  the post's URL slug
+     */
     public function show(string $slug): Response
     {
         $blog = Blog::where('slug', $slug)
@@ -49,6 +68,8 @@ class BlogController extends Controller
             ->with(['thumbnailMedia', 'staticMastheadMedia', 'ogImageMedia'])
             ->firstOrFail();
 
+        // Fetch all slider images in a single whereIn query, keyed by id, then
+        // map back over $sliderIds so the gallery keeps its authored order.
         $sliderIds = $blog->masthead_slider_media_ids ?? [];
         $sliderItems = !empty($sliderIds)
             ? MediaLibrary::whereIn('id', $sliderIds)->get()->keyBy('id')
