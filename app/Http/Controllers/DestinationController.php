@@ -1,5 +1,10 @@
 <?php
 
+// Public destinations index:
+//   GET /destinations — destinations.index
+// Lists published spot guides (grouped by continent on the front end) and builds
+// the weatherData map the comparison charts consume.
+
 namespace App\Http\Controllers;
 
 use App\Models\SpotGuide;
@@ -8,6 +13,13 @@ use Inertia\Response;
 
 class DestinationController extends Controller
 {
+    /**
+     * Render the destinations index. Returns two props built from one query:
+     * `spotGuides` (cards, title-ordered) and `weatherData` — a map keyed by
+     * guide title, each value grouped by year and sorted by month, matching the
+     * shape the wind/temperature comparison charts expect (keyed by the same
+     * title the chart legend uses).
+     */
     public function index(): Response
     {
         $spotGuides = SpotGuide::published()
@@ -29,6 +41,7 @@ class DestinationController extends Controller
             'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
         ]);
 
+        // Keyed by title (not slug) so the chart legend/series labels line up.
         $weatherData = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->weatherRecords
                 ->groupBy('year')
