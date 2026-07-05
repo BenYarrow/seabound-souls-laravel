@@ -1,5 +1,11 @@
 <?php
 
+// Public spot-guide (destination) detail page:
+//   GET /destinations/{slug} — spot-guides.show
+// Assembles the full destination payload for the Inertia page: conditions,
+// gallery, stay/eat recommendations, windsurfing locations, and weather history.
+// All images resolve from the centralised media library and null-coalesce.
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
@@ -11,6 +17,16 @@ use Inertia\Response;
 class SpotGuideController extends Controller
 {
     use ResolvesContentBlockMedia;
+
+    /**
+     * Render a single published spot guide by slug (404 on draft/unknown).
+     * Eager-loads every relation the page needs in one pass, then reshapes:
+     * recommendations are split by type (stay/eat), gallery images are ordered
+     * to match the stored id list, and weather records are grouped by year and
+     * sorted by month for the charts.
+     *
+     * @param  string  $slug  the guide's URL slug
+     */
     public function show(string $slug): Response
     {
         $spotGuide = SpotGuide::where('slug', $slug)
@@ -30,6 +46,8 @@ class SpotGuideController extends Controller
             ])
             ->firstOrFail();
 
+        // Fetch gallery images in one whereIn query, keyed by id, then map back
+        // over the stored id list so the gallery keeps its authored order.
         $galleryIds = $spotGuide->gallery_media_ids ?? [];
         $galleryItems = !empty($galleryIds)
             ? MediaLibrary::whereIn('id', $galleryIds)->get()->keyBy('id')
