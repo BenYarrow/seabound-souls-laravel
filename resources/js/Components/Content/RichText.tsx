@@ -27,7 +27,7 @@ const RichText = ({ content, bgColourClass = '', textAlign = 'text-left', classN
         <div className={`${bgColourClass} w-full`}>
             <div className={`container mx-auto py-10 md:py-14`}>
                 <div
-                    className={proseClasses}
+                    className={`${proseClasses} [&>*:last-child]:!mb-0`}
                     dangerouslySetInnerHTML={{ __html: content }}
                 />
             </div>

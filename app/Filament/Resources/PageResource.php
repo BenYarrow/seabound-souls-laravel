@@ -55,6 +55,7 @@ class PageResource extends Resource
                                     'contact' => 'Contact',
                                     'destinations' => 'Destinations',
                                     'search' => 'Search',
+                                    'blog' => 'Blog',
                                 ])
                                 ->default('standard')
                                 ->required(),

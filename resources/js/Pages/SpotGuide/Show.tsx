@@ -5,6 +5,7 @@ import Layout from '@/Layouts/Layout'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import ContentBuilder from '@/Components/ContentBuilder'
 import SpotOverview from '@/Components/Common/SpotOverview'
+import LiveWeatherData from '@/Components/Common/LiveWeatherData'
 import Icon from '@/Components/Common/Icon'
 import AnimateInView from '@/Components/Common/AnimateInView'
 import ContentWithBackgroundImage from '@/Components/Content/ContentWithBackgroundImage'
@@ -168,6 +169,9 @@ const Show = ({ spotGuide, meta }: Props) => {
             >
                 {spotGuide.spot_overview && (
                     <SpotOverview spotOverview={spotGuide.spot_overview} />
+                )}
+                {spotGuide.latitude && spotGuide.longitude && (
+                    <LiveWeatherData latitude={spotGuide.latitude} longitude={spotGuide.longitude} />
                 )}
             </StaticMasthead>
 

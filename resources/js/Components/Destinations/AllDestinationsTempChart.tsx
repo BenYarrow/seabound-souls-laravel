@@ -18,8 +18,8 @@ interface Props {
     colours: Record<string, string>
 }
 
-const AXIS_TICK = { fill: 'rgba(255,255,255,0.4)', fontSize: 11 }
-const AXIS_LINE = { stroke: 'rgba(255,255,255,0.08)' }
+const AXIS_TICK = { fill: 'rgba(255,255,255,0.7)', fontSize: 11 }
+const AXIS_LINE = { stroke: 'rgba(255,255,255,0.2)' }
 
 const AllDestinationsTempChart = ({
     weatherData,
@@ -67,7 +67,7 @@ const AllDestinationsTempChart = ({
     if (!chartData.length || !activeDestinations.length) return null
 
     return (
-        <div className="bg-secondary/60 border border-white/[0.07] p-6 lg:p-8 space-y-6">
+        <div className="bg-secondary/60 border border-white/20 p-6 lg:p-8 space-y-6">
             {/* Header */}
             <div>
                 <h3 className="font-display text-white tracking-wide"
@@ -81,7 +81,7 @@ const AllDestinationsTempChart = ({
             <div className="h-[22rem]">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 50 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
                         <XAxis
                             dataKey="month"
                             interval={0}
@@ -99,7 +99,7 @@ const AllDestinationsTempChart = ({
                                 value: 'Avg temp (°C)',
                                 angle: -90,
                                 position: 'insideLeft',
-                                fill: 'rgba(255,255,255,0.3)',
+                                fill: 'rgba(255,255,255,0.55)',
                                 fontSize: 11,
                             }}
                         />
@@ -110,7 +110,7 @@ const AllDestinationsTempChart = ({
                                 type="monotone"
                                 dataKey={label}
                                 stroke={colours[label]}
-                                strokeWidth={1.5}
+                                strokeWidth={2}
                                 dot={false}
                                 activeDot={{ r: 4, strokeWidth: 0 }}
                             />
