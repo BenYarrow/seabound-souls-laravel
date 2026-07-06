@@ -1,9 +1,20 @@
 import Layout from '@/Layouts/Layout'
 import Icon from '@/Components/Common/Icon'
 import { useForm } from '@inertiajs/react'
-import { FormEvent } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { faEnvelope, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
+
+// Google reCAPTCHA v3 (invisible / score-based), loaded via a <script> tag keyed
+// to our site key; a token is fetched on submit and verified server-side.
+declare global {
+    interface Window {
+        grecaptcha?: {
+            ready: (callback: () => void) => void
+            execute: (siteKey: string, options: { action: string }) => Promise<string>
+        }
+    }
+}
 
 interface Props {
     recaptchaSiteKey: string
@@ -32,16 +43,45 @@ const inputClass = [
 const labelClass = 'block text-[10px] uppercase tracking-[0.25em] text-secondary/40 font-medium mb-2'
 
 const Contact = ({ recaptchaSiteKey, meta }: Props) => {
-    const { data, setData, post, processing, errors, reset, wasSuccessful } = useForm({
+    const { data, setData, post, processing, errors, reset, wasSuccessful, transform } = useForm({
         name: '',
         email: '',
         message: '',
         recaptcha_token: '',
     })
 
+    // Surfaced when the reCAPTCHA script can't run (slow network / blocked by an
+    // extension) — so a failed submit is never silent.
+    const [recaptchaError, setRecaptchaError] = useState<string | null>(null)
+
+    // Load the invisible reCAPTCHA v3 script once, keyed to our site key.
+    useEffect(() => {
+        if (document.querySelector('script[data-recaptcha]')) return
+        const script = document.createElement('script')
+        script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`
+        script.async = true
+        script.dataset.recaptcha = 'true'
+        document.head.appendChild(script)
+    }, [recaptchaSiteKey])
+
     const submit = (e: FormEvent) => {
         e.preventDefault()
-        post('/contact', { onSuccess: () => reset() })
+        setRecaptchaError(null)
+
+        const grecaptcha = window.grecaptcha
+        if (!grecaptcha?.execute) {
+            setRecaptchaError('Could not load reCAPTCHA. Please disable any ad/script blockers and try again.')
+            return
+        }
+
+        // v3: fetch a fresh token, attach it to the payload, then submit. transform()
+        // guarantees the token is sent regardless of React state-update timing.
+        grecaptcha.ready(() => {
+            grecaptcha.execute(recaptchaSiteKey, { action: 'contact' }).then((token) => {
+                transform((formData) => ({ ...formData, recaptcha_token: token }))
+                post('/contact', { onSuccess: () => reset() })
+            })
+        })
     }
 
     return (
@@ -209,8 +249,10 @@ const Contact = ({ recaptchaSiteKey, meta }: Props) => {
                                     )}
                                 </div>
 
-                                {errors.recaptcha && (
-                                    <p className="text-[10px] text-red-500 uppercase tracking-wider">{errors.recaptcha}</p>
+                                {(recaptchaError || errors.recaptcha || errors.recaptcha_token) && (
+                                    <p className="text-[10px] text-red-500 uppercase tracking-wider">
+                                        {recaptchaError || errors.recaptcha || errors.recaptcha_token}
+                                    </p>
                                 )}
 
                                 <button
