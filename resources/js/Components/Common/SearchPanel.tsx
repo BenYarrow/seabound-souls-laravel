@@ -47,8 +47,8 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
         }
     }, [open])
 
-    // Debounced live search. Cancels the in-flight timer on every keystroke so
-    // we only hit /api/search once the user pauses.
+    // Debounced live search. Cancels the in-flight timer AND request on every
+    // keystroke so results can't arrive out of order (a later query always wins).
     useEffect(() => {
         const query = value.trim()
         if (query.length < MIN_CHARS) {
@@ -57,17 +57,27 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
             return
         }
         setLoading(true)
+        const controller = new AbortController()
         const handle = setTimeout(() => {
             axios
-                .get('/api/search', { params: { q: query } })
+                .get('/api/search', { params: { q: query }, signal: controller.signal })
                 .then(({ data }) => {
                     setResults(data.results ?? [])
                     setHighlighted(-1)
                 })
-                .catch(() => setResults([]))
-                .finally(() => setLoading(false))
+                .catch(error => {
+                    if (!axios.isCancel(error)) setResults([])
+                })
+                .finally(() => {
+                    // Don't clear the spinner if this request was superseded —
+                    // the newer request has already set loading=true.
+                    if (!controller.signal.aborted) setLoading(false)
+                })
         }, DEBOUNCE_MS)
-        return () => clearTimeout(handle)
+        return () => {
+            clearTimeout(handle)
+            controller.abort()
+        }
     }, [value])
 
     /** Navigate to the full /search results page for the current query. */
@@ -129,7 +139,7 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
                 />
 
                 {showDropdown && (
-                    <div className="mt-2 rounded-md bg-white shadow-lg overflow-hidden max-h-[60vh] overflow-y-auto">
+                    <div className="mt-2 rounded-md bg-white shadow-lg max-h-[60vh] overflow-y-auto">
                         {loading && (
                             <div className="flex items-center gap-x-2 px-4 py-3 text-sm text-gray-500">
                                 <Icon icon={faSpinner} size="size-4" customClasses="animate-spin" />
