@@ -15,8 +15,7 @@ class SiteSearch
     public const MIN_QUERY_LENGTH = 2;
 
     /**
-     * Search published spot guides and blogs for the query, newest matches first
-     * within each type. Returns a flat, view-ready array.
+     * Search published spot guides and blogs for the query (Scout default order within each type). Returns a flat, view-ready array.
      *
      * @param  string    $query  raw user query (trimmed here)
      * @param  int|null  $limit  optional cap applied to each content type
