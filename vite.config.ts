@@ -5,7 +5,9 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
     plugins: [
         laravel({
-            input: 'resources/js/app.tsx',
+            // app.tsx = public site; theme.css = custom Filament admin theme
+            // (loaded only in the panel via ->viteTheme()).
+            input: ['resources/js/app.tsx', 'resources/css/filament/admin/theme.css'],
             refresh: true,
         }),
         react(),

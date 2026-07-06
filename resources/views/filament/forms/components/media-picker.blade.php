@@ -31,21 +31,24 @@
         "
     >
         @if(!$isMultiple && isset($selectedItem) && $selectedItem)
-            <div class="mb-3 flex items-start gap-3">
+            {{-- Compact preview card: constrained 16:9 thumbnail + readable name --}}
+            <div class="mb-3 w-64 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                 <div class="relative">
                     <img
                         src="{{ $selectedItem->getUrl() }}"
                         alt="{{ $selectedItem->name }}"
-                        class="w-40 h-28 object-cover rounded-lg border border-gray-200"
+                        class="aspect-video w-full object-cover"
                     >
                     <button
                         type="button"
                         x-on:click="$wire.set('{{ $statePath }}', null)"
-                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none hover:bg-red-600"
+                        class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white hover:bg-red-600"
                         title="Remove"
                     >&times;</button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">{{ $selectedItem->name ?: 'Untitled' }}</p>
+                <p class="truncate px-3 py-2 text-sm text-gray-700 dark:text-gray-200" title="{{ $selectedItem->name }}">
+                    {{ $selectedItem->name ?: 'Untitled' }}
+                </p>
             </div>
         @elseif($isMultiple && isset($selectedItems) && $selectedItems->isNotEmpty())
             <div
