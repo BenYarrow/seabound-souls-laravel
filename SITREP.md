@@ -1,5 +1,5 @@
 ---
-updated: 2026-07-05
+updated: 2026-07-06
 reconcile: 1
 ---
 
@@ -11,7 +11,8 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 - **Test harness working + Vite-independent** (`RefreshDatabase`, `withoutVite()`, `SCOUT_DRIVER=null` with Scout tests on the `collection` engine; external HTTP + mail faked).
 - **All public controllers fully tested + commented** (Blog, SpotGuide, Destinations, Search, Contact, Pages, Homepage) — suite at **45 tests, 323 assertions**.
 - **Search & navigation UX shipped** — live search dropdown (`/api/search` + `SiteSearch` service), animated desktop search, staggered slide-down mobile menu.
-- **Contact enquiries shipped** — submissions persist to `contact_enquiries`; Filament admin inbox (New→Handled + unread nav badge); email demoted to notification (suite now **53 tests, 339 assertions**).
+- **Contact enquiries shipped** — submissions persist to `contact_enquiries`; Filament admin inbox (New→Handled + unread nav badge); email demoted to notification. Contact form fully working (reCAPTCHA v3 + mail render fixed). Suite **54 tests, 341 assertions**.
+- **Filament custom theme** added — fixes custom-view Tailwind classes not compiling (MediaPicker layout). Admin dark mode is Filament's own (follows OS).
 - **Local env on Herd** — app at `https://seaboundsouls.test`; mail captured in Herd's Mail tab (`MAIL_MAILER=smtp`, :2525).
 - Public site renders end-to-end in dev (Laravel + Vite, Node 22).
 
@@ -35,6 +36,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-05 | Pages + Homepage slice; Vite-independent suite | [#7](https://github.com/BenYarrow/seabound-souls-laravel/pull/7) | [2026-07-05-pages-homepage-slice](docs/history/2026-07-05-pages-homepage-slice.md) |
 | 2026-07-05 | Search & navigation UX (live dropdown, animations) | [#8](https://github.com/BenYarrow/seabound-souls-laravel/pull/8) | [2026-07-05-search-nav-ux](docs/history/2026-07-05-search-nav-ux.md) |
 | 2026-07-05 | Contact enquiries (in-app inbox + notification) | [#9](https://github.com/BenYarrow/seabound-souls-laravel/pull/9) | [2026-07-05-contact-enquiries](docs/history/2026-07-05-contact-enquiries.md) |
+| 2026-07-06 | Filament custom theme + MediaPicker layout fix | [#10](https://github.com/BenYarrow/seabound-souls-laravel/pull/10) | [2026-07-06-filament-media-picker-ui](docs/history/2026-07-06-filament-media-picker-ui.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.
