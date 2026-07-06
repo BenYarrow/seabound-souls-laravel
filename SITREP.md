@@ -8,16 +8,17 @@ reconcile: 1
 Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of the original Next.js 15 + Sanity windsurfing destination guide, being polished at a relaxed pace toward launch and held to Ben's IFP working standard (TDD, dark mode, responsive, documented code). See `CLAUDE.md` → "Working standard".
 
 ## Right now
-- **Test harness working** (`RefreshDatabase` + `SCOUT_DRIVER=null`; Scout tests opt into the `collection` engine; external HTTP + mail faked).
-- **Blog + SpotGuide + Destinations + Search + Contact slices fully tested + commented** — suite at **34 tests, 249 assertions**.
+- **Test harness working + Vite-independent** (`RefreshDatabase`, `withoutVite()`, `SCOUT_DRIVER=null` with Scout tests on the `collection` engine; external HTTP + mail faked).
+- **All public controllers fully tested + commented** (Blog, SpotGuide, Destinations, Search, Contact, Pages, Homepage) — suite at **41 tests, 313 assertions**.
 - Public site renders end-to-end in dev (Laravel `:8000` + Vite `:5173`, Node 22).
 
 ## In flight
 - Nothing mid-implementation. Next slice not yet started.
 
 ## Next action
-1. Finish the public-controller sweep — **Pages (catch-all) + Homepage next**.
-2. Then helpers (`LiveWeatherController` caching, weather-data transforms), Filament last.
+1. Public-controller sweep complete. Next: **helper/API units** — `LiveWeatherController` (cached external weather), `Api\WeatherDataController`, weather-data transforms.
+2. Then Filament smoke tests.
+3. Standing tracks: CI pipeline, `.nvmrc`, husky/eslint-jsdoc, dark-mode token layer + responsive audit.
 2. Then helpers (weather-data transforms, `LiveWeatherController` caching), Filament last.
 3. Separate tracks when wanted: `.nvmrc`, husky/eslint-jsdoc enforcement, dark-mode token layer + responsive audit.
 
@@ -29,6 +30,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-05 | Destinations test/comment slice | [#4](https://github.com/BenYarrow/seabound-souls-laravel/pull/4) | [2026-07-05-destinations-slice](docs/history/2026-07-05-destinations-slice.md) |
 | 2026-07-05 | Search test/comment slice | [#5](https://github.com/BenYarrow/seabound-souls-laravel/pull/5) | [2026-07-05-search-slice](docs/history/2026-07-05-search-slice.md) |
 | 2026-07-05 | Contact test/comment slice | [#6](https://github.com/BenYarrow/seabound-souls-laravel/pull/6) | [2026-07-05-contact-slice](docs/history/2026-07-05-contact-slice.md) |
+| 2026-07-05 | Pages + Homepage slice; Vite-independent suite | [#7](https://github.com/BenYarrow/seabound-souls-laravel/pull/7) | [2026-07-05-pages-homepage-slice](docs/history/2026-07-05-pages-homepage-slice.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.

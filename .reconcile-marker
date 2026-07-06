@@ -1,2 +1,2 @@
 date: 2026-07-05
-note: Contact test/comment slice (PR #6) — folded reconcile. Suite at 34 tests, 249 assertions.
+note: Pages + Homepage slice + Vite-independent suite (PR #7) — folded reconcile. All public controllers covered; suite at 41 tests, 313 assertions.
