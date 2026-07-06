@@ -1,5 +1,9 @@
 <?php
 
+// Contact page + form handler:
+//   GET  /contact — contact       (renders the form)
+//   POST /contact — contact.store (validates, verifies reCAPTCHA, emails us)
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactFormRequest;
@@ -13,6 +17,7 @@ use Inertia\Response;
 
 class ContactController extends Controller
 {
+    /** Render the contact form, passing the reCAPTCHA site key for the widget. */
     public function index(): Response
     {
         return Inertia::render('Contact', [
@@ -24,9 +29,14 @@ class ContactController extends Controller
         ]);
     }
 
+    /**
+     * Handle a contact submission. ContactFormRequest validates the input first;
+     * we then server-side verify the reCAPTCHA token with Google (bailing back
+     * with an error if it fails) before emailing the message to the site inbox.
+     */
     public function store(ContactFormRequest $request): RedirectResponse
     {
-        // Verify reCAPTCHA
+        // Server-side reCAPTCHA check — the client token alone can't be trusted.
         $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
             'secret' => config('services.recaptcha.secret_key'),
             'response' => $request->input('recaptcha_token'),
