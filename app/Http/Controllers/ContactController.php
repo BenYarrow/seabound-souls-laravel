@@ -2,7 +2,8 @@
 
 // Contact page + form handler:
 //   GET  /contact — contact       (renders the form)
-//   POST /contact — contact.store (validates, verifies reCAPTCHA, emails us)
+//   POST /contact — contact.store (validates, verifies reCAPTCHA, records the
+//                   enquiry, then emails a notification)
 
 namespace App\Http\Controllers;
 
