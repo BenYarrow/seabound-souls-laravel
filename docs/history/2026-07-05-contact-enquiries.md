@@ -30,5 +30,9 @@ The contact form previously only emailed (and, with `MAIL_MAILER=log`, emailed n
 - **Reply-out / two-way conversation** in the admin — out of scope by decision.
 - **Restrict Filament panel access** (`canAccessPanel`) — pre-existing (any authenticated user can reach `/admin`); stakes rose now that enquiries store visitor PII. Added to backlog.
 
+## Post-review fixes (found when Ben first ran it on Herd)
+- **Dev DB not migrated.** The suite runs on in-memory SQLite (auto-migrated by `RefreshDatabase`), so `php artisan test` was green while the real `database.sqlite` never got the `contact_enquiries` table — the admin badge query and the form's `create()` both 500'd until `php artisan migrate` was run on the dev DB. **Gotcha: after adding a migration, run `php artisan migrate` against the dev database — passing tests don't create dev tables.**
+- **Vite CSS entry (pre-existing, unrelated bug, fixed here).** `app.blade.php` listed `resources/css/app.css` as a separate `@vite` entry, but it isn't a Vite input (`app.tsx` imports it), so it was missing from the build manifest and `npm run build` / production 500'd with "Unable to locate file in Vite manifest". Dev mode hid it (dev server serves files on demand). Fixed to `@vite(['resources/js/app.tsx'])`; the entry's bundled CSS is emitted automatically. Verified `.test` loads in build mode with no dev server.
+
 ## Process
 Spec `docs/superpowers/specs/2026-07-05-contact-enquiries-design.md`; plan `docs/superpowers/plans/2026-07-05-contact-enquiries.md`. Subagent-driven (implementer + reviewer per task, opus final review — clean).
