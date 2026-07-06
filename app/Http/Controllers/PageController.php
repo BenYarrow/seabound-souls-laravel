@@ -1,5 +1,9 @@
 <?php
 
+// Catch-all generic page route:
+//   GET /{slug} — pages.show (registered last; excludes /admin*)
+// Renders a published Page's content builder — used for About, etc.
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
@@ -11,6 +15,13 @@ use Inertia\Response;
 class PageController extends Controller
 {
     use ResolvesContentBlockMedia;
+
+    /**
+     * Render a published page by slug (404 on draft/unknown). Resolves content-
+     * block media to URLs and re-orders the masthead slider to the stored id list.
+     *
+     * @param  string  $slug  the page's URL slug
+     */
     public function show(string $slug): Response
     {
         $page = Page::where('slug', $slug)

@@ -1,5 +1,10 @@
 <?php
 
+// Homepage:
+//   GET / — home
+// Renders the "home" Page's content builder alongside featured spot guides and
+// recent blogs. Infographic blocks are enriched server-side with live counts.
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
@@ -14,6 +19,14 @@ use Inertia\Response;
 class HomepageController extends Controller
 {
     use ResolvesContentBlockMedia;
+
+    /**
+     * Render the homepage. The "home" Page record is optional — the page still
+     * renders with sensible meta defaults if it's absent. Pulls the 6 latest
+     * published guides and 3 latest published blogs, and (only when the content
+     * builder contains one) enriches infographic blocks with live published
+     * counts of continents/countries/spots/hotels/restaurants.
+     */
     public function index(): Response
     {
         $page = Page::where('slug', 'home')
@@ -61,7 +74,8 @@ class HomepageController extends Controller
             }
         }
 
-        // Enrich infographic blocks with server-side stats
+        // Enrich infographic blocks with server-side stats. Only runs the extra
+        // count queries when the page actually contains an infographic block.
         $contentBlocks = $page ? $page->content_blocks : [];
         if (is_array($contentBlocks)) {
             $hasInfographic = collect($contentBlocks)->contains(fn ($block) => ($block['type'] ?? '') === 'infographic');
