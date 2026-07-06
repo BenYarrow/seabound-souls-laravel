@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link, router } from '@inertiajs/react'
+import { Link } from '@inertiajs/react'
 import { usePage } from '@inertiajs/react'
 import { faBars, faSearch, faXmark } from '@fortawesome/free-solid-svg-icons'
 import Icon from './Icon'
+import SearchPanel from './SearchPanel'
 
 const navItems = [
     { title: 'Home', href: '/' },
@@ -34,16 +35,6 @@ const NavBar = () => {
 
     const isTransparent = isHomepage && !scrolled && !showMobileNav
 
-    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        const form = e.currentTarget
-        const input = form.elements.namedItem('q') as HTMLInputElement | null
-        const value = input?.value.trim()
-        if (!value) return
-        router.get('/search', { q: value })
-        setShowSearch(false)
-    }
-
     const wrapperClasses = [
         'z-[1000] transition-all duration-500',
         isHomepage ? 'fixed top-0 left-0 right-0 w-full' : 'relative',
@@ -53,20 +44,15 @@ const NavBar = () => {
 
     return (
         <div className={wrapperClasses}>
-            {showSearch && (
-                <div className={`w-full container mx-auto ${isHomepage ? 'bg-primary/95 backdrop-blur-sm' : ''}`}>
-                    <form onSubmit={handleSearch} className="py-3">
-                        <label htmlFor="search" className="sr-only">Search</label>
-                        <input
-                            type="text"
-                            id="search"
-                            name="q"
-                            placeholder="Search the site..."
-                            autoFocus
-                            className="px-3 py-2 rounded-md w-full text-sm text-gray-900 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary transition duration-200 ease-in-out shadow-sm"
-                        />
-                    </form>
-                </div>
+            <SearchPanel open={showSearch} onClose={() => setShowSearch(false)} transparent={isTransparent} />
+
+            {/* Mobile backdrop — dims the page behind the open menu; click to close. */}
+            {showMobileNav && (
+                <div
+                    className="lg:hidden fixed inset-x-0 bottom-0 top-[5rem] bg-black/40 z-0"
+                    onClick={() => setShowMobileNav(false)}
+                    aria-hidden="true"
+                />
             )}
 
             <header className="h-[5rem] flex items-center">
@@ -81,19 +67,30 @@ const NavBar = () => {
                     </div>
 
                     <nav className={[
-                        'max-lg:absolute max-lg:top-[5rem] max-lg:left-0 max-lg:w-full max-lg:bg-primary max-lg:container max-lg:mx-auto max-lg:z-10 max-lg:transition max-lg:duration-500',
-                        showMobileNav ? '' : 'max-lg:translate-y-[calc(100vh+5rem)] max-lg:opacity-0 max-lg:pointer-events-none'
-                    ].filter(Boolean).join(' ')}>
+                        'max-lg:absolute max-lg:top-[5rem] max-lg:left-0 max-lg:w-full max-lg:bg-primary max-lg:container max-lg:mx-auto max-lg:z-10',
+                        'max-lg:transition-all max-lg:duration-300 max-lg:ease-out',
+                        showMobileNav
+                            ? 'max-lg:translate-y-0 max-lg:opacity-100'
+                            : 'max-lg:-translate-y-3 max-lg:opacity-0 max-lg:pointer-events-none',
+                    ].join(' ')}>
                         <ul className="max-lg:pt-6 max-lg:pb-8 flex flex-col lg:flex-row gap-y-3 lg:gap-x-6">
-                            {navItems.map(({ href, title }) => (
-                                <li key={title}>
+                            {navItems.map(({ href, title }, index) => (
+                                <li
+                                    key={title}
+                                    className={[
+                                        'transition-all duration-300 ease-out',
+                                        'max-lg:opacity-0 max-lg:translate-y-3',
+                                        showMobileNav ? 'max-lg:opacity-100 max-lg:translate-y-0' : '',
+                                    ].join(' ')}
+                                    // Stagger only matters on mobile (menu open); harmless on desktop
+                                    // where the li has no opacity/transform change to delay.
+                                    style={{ transitionDelay: showMobileNav ? `${index * 60}ms` : '0ms' }}
+                                >
                                     <Link
                                         href={href}
                                         className={[
                                             'text-base lg:text-sm uppercase tracking-wide font-medium whitespace-nowrap transition-opacity duration-200',
-                                            url === href
-                                                ? 'text-white opacity-100'
-                                                : 'text-white/70 hover:text-white hover:opacity-100'
+                                            url === href ? 'text-white opacity-100' : 'text-white/70 hover:text-white hover:opacity-100',
                                         ].join(' ')}
                                         onClick={() => setShowMobileNav(false)}
                                     >

@@ -1,2 +1,2 @@
 date: 2026-07-05
-note: Pages + Homepage slice + Vite-independent suite (PR #7) — folded reconcile. All public controllers covered; suite at 41 tests, 313 assertions.
+note: Search & navigation UX (PR #8) — folded reconcile. Live search dropdown + animated search + staggered mobile menu; suite at 45 tests, 323 assertions.
