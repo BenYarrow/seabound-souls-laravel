@@ -126,4 +126,22 @@ class ContactControllerTest extends TestCase
 
         $this->assertDatabaseCount('contact_enquiries', 0);
     }
+
+    public function test_contact_form_mail_renders_without_reserved_message_collision(): void
+    {
+        // Mail::fake() never renders the view, so this renders the mailable for
+        // real — guarding against the reserved $message variable collision that
+        // 500'd in production while the faked test stayed green.
+        $mail = new ContactFormMail([
+            'name' => 'Jane Sailor',
+            'email' => 'jane@example.com',
+            'message' => 'Rendering check for the message body.',
+            'recaptcha_token' => 'token',
+        ]);
+
+        $rendered = $mail->render();
+
+        $this->assertStringContainsString('Rendering check for the message body.', $rendered);
+        $this->assertStringContainsString('jane@example.com', $rendered);
+    }
 }

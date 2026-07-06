@@ -30,7 +30,14 @@ class ContactFormMail extends Mailable
     {
         return new Content(
             view: 'emails.contact',
-            with: $this->formData,
+            with: [
+                'name' => $this->formData['name'],
+                'email' => $this->formData['email'],
+                // NOT 'message': that key is reserved inside Mailable views (it's
+                // the Illuminate\Mail\Message instance), so exposing the form
+                // message as $message collides and throws when rendered.
+                'messageBody' => $this->formData['message'],
+            ],
         );
     }
 
