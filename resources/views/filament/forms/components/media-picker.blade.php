@@ -31,8 +31,8 @@
         "
     >
         @if(!$isMultiple && isset($selectedItem) && $selectedItem)
-            {{-- Compact preview card: constrained 16:9 thumbnail + readable name --}}
-            <div class="mb-3 w-64 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            {{-- Preview card: constrained 16:9 thumbnail + full (wrapping) name --}}
+            <div class="mb-3 w-96 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                 <div class="relative">
                     <img
                         src="{{ $selectedItem->getUrl() }}"
@@ -42,11 +42,11 @@
                     <button
                         type="button"
                         x-on:click="$wire.set('{{ $statePath }}', null)"
-                        class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-sm leading-none text-white hover:bg-red-600"
+                        class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-base leading-none text-white hover:bg-red-600"
                         title="Remove"
                     >&times;</button>
                 </div>
-                <p class="truncate px-3 py-2 text-sm text-gray-700 dark:text-gray-200" title="{{ $selectedItem->name }}">
+                <p class="px-3 py-2.5 text-sm leading-snug text-gray-700 dark:text-gray-200">
                     {{ $selectedItem->name ?: 'Untitled' }}
                 </p>
             </div>
