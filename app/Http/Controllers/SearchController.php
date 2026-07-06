@@ -2,14 +2,13 @@
 
 // Public search page:
 //   GET /search?q=… — search
-// Runs a Scout full-text search across published spot guides and blogs, merging
-// them into one typed results list for the Inertia page.
+// Delegates the actual searching to App\Services\SiteSearch (shared with the
+// live-suggestions API) and renders the full results page.
 
 namespace App\Http\Controllers;
 
-use App\Models\Blog;
 use App\Models\Page;
-use App\Models\SpotGuide;
+use App\Services\SiteSearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,48 +16,18 @@ use Inertia\Response;
 class SearchController extends Controller
 {
     /**
-     * Render the search page. Short-circuits to empty results for queries under
-     * two characters (avoids noisy single-letter matches). Otherwise searches
-     * spot guides and blogs via Scout — each constrained to published rows — and
-     * concatenates them into a single `results` array tagged by `type`.
+     * Render the search page with all published matches for the query
+     * (uncapped — the results page shows everything; the dropdown API caps).
      */
-    public function index(Request $request): Response
+    public function index(Request $request, SiteSearch $search): Response
     {
         $query = $request->input('q', '');
-        $results = [];
+        $results = $search->search($query);
 
         $page = Page::where('slug', 'search')
             ->where('is_published', true)
             ->with('staticMastheadMedia')
             ->first();
-
-        if (strlen($query) >= 2) {
-            $spotGuides = SpotGuide::search($query)
-                ->query(fn($q) => $q->where('is_published', true)->with(['country', 'thumbnailMedia']))
-                ->get()
-                ->map(fn($guide) => [
-                    'type' => 'spot_guide',
-                    'title' => $guide->title,
-                    'slug' => $guide->slug,
-                    'url' => route('spot-guides.show', $guide->slug),
-                    'description' => $guide->country?->name,
-                    'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
-                ]);
-
-            $blogs = Blog::search($query)
-                ->query(fn($q) => $q->where('is_published', true)->with('thumbnailMedia'))
-                ->get()
-                ->map(fn($blog) => [
-                    'type' => 'blog',
-                    'title' => $blog->title,
-                    'slug' => $blog->slug,
-                    'url' => route('blog.show', $blog->slug),
-                    'description' => $blog->seo_description,
-                    'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
-                ]);
-
-            $results = $spotGuides->concat($blogs)->values()->toArray();
-        }
 
         return Inertia::render('Search', [
             'query' => $query,
