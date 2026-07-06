@@ -1,2 +1,2 @@
 date: 2026-07-05
-note: Search & navigation UX (PR #8) — folded reconcile. Live search dropdown + animated search + staggered mobile menu; suite at 45 tests, 323 assertions.
+note: Contact enquiries (PR #9) — folded reconcile. In-app enquiry inbox (Filament) + email notification; local mail on Herd. Suite at 53 tests, 339 assertions.

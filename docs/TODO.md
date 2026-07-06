@@ -19,3 +19,8 @@ Public controllers all covered. Remaining:
 
 ## Backend hardening
 - [ ] Rate-limit `/api/search` (and the other `/api/*` endpoints) before production — first typing-driven endpoint, so higher request volume; add `throttle:` to the api middleware group
+- [ ] Restrict Filament panel access via `User::canAccessPanel()` — currently any authenticated user can reach `/admin`; stakes rose now that contact enquiries store visitor PII
+
+## Project B — go-live (separate effort)
+- [ ] Deploy Laravel to a host (first-ever deploy) + point `seaboundsouls.co.uk` at it, off the old Vercel holding page
+- [ ] Real transactional email (Resend/Postmark) + verify sending domain (SPF/DKIM/DMARC) — then swap `MAIL_MAILER` from Herd's catcher; contact-enquiry notifications go live with no code change

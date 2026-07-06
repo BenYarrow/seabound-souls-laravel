@@ -11,7 +11,10 @@
 
         @routes
         @viteReactRefresh
-        @vite(['resources/css/app.css', 'resources/js/app.tsx'])
+        {{-- app.tsx imports ../css/app.css, so the CSS rides along with this entry.
+             Listing app.css separately breaks production builds (it isn't a Vite
+             input, so it's absent from the manifest). --}}
+        @vite(['resources/js/app.tsx'])
         @inertiaHead
     </head>
     <body class="antialiased font-sans" style="font-family: 'Catamaran', sans-serif;">
