@@ -8,6 +8,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactFormRequest;
 use App\Mail\ContactFormMail;
+use App\Models\ContactEnquiry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -32,7 +33,8 @@ class ContactController extends Controller
     /**
      * Handle a contact submission. ContactFormRequest validates the input first;
      * we then server-side verify the reCAPTCHA token with Google (bailing back
-     * with an error if it fails) before emailing the message to the site inbox.
+     * with an error if it fails), persist the enquiry, and finally email the message
+     * to the site inbox.
      */
     public function store(ContactFormRequest $request): RedirectResponse
     {
@@ -46,8 +48,17 @@ class ContactController extends Controller
             return back()->withErrors(['recaptcha' => 'reCAPTCHA verification failed.']);
         }
 
+        // Persist the enquiry before notifying, so it's captured even if mail fails.
+        $data = $request->validated();
+
+        ContactEnquiry::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'message' => $data['message'],
+        ]);
+
         Mail::to(config('mail.to.address', 'hello@seaboundsouls.com'))
-            ->send(new ContactFormMail($request->validated()));
+            ->send(new ContactFormMail($data));
 
         return back()->with('success', 'Your message has been sent. We\'ll be in touch soon!');
     }
