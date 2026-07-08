@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -58,7 +59,9 @@ class PageResource extends Resource
                                     'blog' => 'Blog',
                                 ])
                                 ->default('standard')
-                                ->required(),
+                                ->required()
+                                // Drives the Content Builder tab's visibility below.
+                                ->live(),
                             Toggle::make('is_published')->label('Published'),
                         ])->columns(2),
 
@@ -73,7 +76,12 @@ class PageResource extends Resource
                                 ->multiple(),
                         ]),
 
+                    // The destinations page is a bespoke layout (map + continent
+                    // groups + charts) driven by DestinationController — it only
+                    // uses this page record's masthead, never its content blocks —
+                    // so hide the builder for that template to avoid a dead field.
                     Tabs\Tab::make('Content Builder')
+                        ->visible(fn (Get $get): bool => $get('template') !== 'destinations')
                         ->schema([
                             Builder::make('content_blocks')
                                 ->label('Content Blocks')
