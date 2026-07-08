@@ -22,7 +22,14 @@ Public controllers all covered. Remaining:
 
 ## Backend hardening
 - [ ] Rate-limit `/api/search` (and the other `/api/*` endpoints) before production — first typing-driven endpoint, so higher request volume; add `throttle:` to the api middleware group
-- [ ] Restrict Filament panel access via `User::canAccessPanel()` — currently any authenticated user can reach `/admin`; stakes rose now that contact enquiries store visitor PII
+
+## Single-admin security (PRE-LAUNCH — required)
+The site is already single-login-only: the only auth is the Filament admin (`/admin`), with **no registration/password-reset and no public user system** (one user: the owner). Before launch, harden that single account:
+- [ ] **Strong production admin password — not the dev credential.** Set it via an env-driven `AdminUserSeeder` (`User::updateOrCreate` from `ADMIN_EMAIL`/`ADMIN_PASSWORD` host secrets, run on deploy) so the password lives only in the host env + a password manager, never in git. Rotatable by changing the env + re-seeding.
+- [ ] **Restrict the panel to the owner** via `User::canAccessPanel()` (owner email only) — so even a stray account can never reach `/admin`. (Currently any authenticated user could; only one exists today. Stakes: contact enquiries store visitor PII.)
+- [ ] Keep Filament **registration off** (already off — never add `->registration()`).
+- [ ] Optional: enable **2FA** (Filament two-factor plugin) on the admin account.
+- [ ] Prod env basics: `APP_DEBUG=false`, `APP_ENV=production`, HTTPS enforced.
 
 ## Project B — go-live (separate effort)
 - [ ] Deploy Laravel to a host (first-ever deploy) + point `seaboundsouls.co.uk` at it, off the old Vercel holding page
