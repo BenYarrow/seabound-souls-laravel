@@ -39,6 +39,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-05 | Contact enquiries (in-app inbox + notification) | [#9](https://github.com/BenYarrow/seabound-souls-laravel/pull/9) | [2026-07-05-contact-enquiries](docs/history/2026-07-05-contact-enquiries.md) |
 | 2026-07-06 | Filament custom theme + MediaPicker layout fix | [#10](https://github.com/BenYarrow/seabound-souls-laravel/pull/10) | [2026-07-06-filament-media-picker-ui](docs/history/2026-07-06-filament-media-picker-ui.md) |
 | 2026-07-06 | Image focal points | [#11](https://github.com/BenYarrow/seabound-souls-laravel/pull/11) | [2026-07-06-image-focal-points](docs/history/2026-07-06-image-focal-points.md) |
+| 2026-07-06 | Content-manageable destinations masthead | [#12](https://github.com/BenYarrow/seabound-souls-laravel/pull/12) | [2026-07-06-destinations-page-masthead](docs/history/2026-07-06-destinations-page-masthead.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.

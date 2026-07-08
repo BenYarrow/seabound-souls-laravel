@@ -7,6 +7,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Page;
 use App\Models\SpotGuide;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +23,14 @@ class DestinationController extends Controller
      */
     public function index(): Response
     {
+        // Masthead comes from a published "destinations" landing Page (like the
+        // blog/search/home indexes). The front end falls back to the first guide's
+        // thumbnail when no such page exists yet.
+        $page = Page::where('slug', 'destinations')
+            ->where('is_published', true)
+            ->with('staticMastheadMedia')
+            ->first();
+
         $spotGuides = SpotGuide::published()
             ->with(['country', 'thumbnailMedia', 'weatherRecords'])
             ->orderBy('title')
@@ -62,6 +71,7 @@ class DestinationController extends Controller
         return Inertia::render('Destinations/Index', [
             'spotGuides' => $spotGuidesData,
             'weatherData' => $weatherData,
+            'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
                 'title' => 'Destinations | Seabound Souls',
                 'description' => 'Explore windsurfing destinations around the world.',

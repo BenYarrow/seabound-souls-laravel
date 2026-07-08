@@ -1,2 +1,2 @@
 date: 2026-07-06
-note: Image focal points (PR #11) — folded reconcile. Per-image focal via object-position through one CoverImage; set in MediaPicker. Suite at 63 tests, 401 assertions.
+note: Content-manageable destinations masthead + hide content builder for the destinations template (PR #12) — folded reconcile. Suite at 67 tests, 428 assertions.
