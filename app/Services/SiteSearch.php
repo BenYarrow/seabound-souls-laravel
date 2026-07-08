@@ -38,7 +38,8 @@ class SiteSearch
                 'slug' => $guide->slug,
                 'url' => route('spot-guides.show', $guide->slug),
                 'description' => $guide->country?->name,
-                'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
+                // Focal-bearing object so search-result thumbnails honour the focal point.
+                'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
             ]);
 
         $blogs = Blog::search($query)
@@ -50,7 +51,7 @@ class SiteSearch
                 'slug' => $blog->slug,
                 'url' => route('blog.show', $blog->slug),
                 'description' => $blog->seo_description,
-                'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
+                'thumbnail' => $blog->thumbnailMedia?->imagePayload(),
             ]);
 
         if ($limit !== null) {

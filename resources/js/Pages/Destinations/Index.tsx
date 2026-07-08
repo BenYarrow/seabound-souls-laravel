@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react'
 import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
+import CoverImage from '@/Components/Common/CoverImage'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import DestinationsMap from '@/Components/Map/DestinationsMap'
 import FilterDataset, { SelectOption } from '@/Components/Destinations/FilterDataset'
@@ -11,6 +12,7 @@ import AllDestinationsTempChart from '@/Components/Destinations/AllDestinationsT
 import AnimateInView from '@/Components/Common/AnimateInView'
 import { getSpotGuideColours } from '@/helpers/colours'
 import type { WeatherDataset } from '@/helpers/weatherDataHelpers'
+import type { FocalImage } from '@/types/media'
 
 interface SpotGuide {
     id: number
@@ -19,7 +21,8 @@ interface SpotGuide {
     latitude: number | null
     longitude: number | null
     country: { name: string; slug: string; continent: string } | null
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
 }
 
 interface Props {
@@ -73,7 +76,8 @@ const Index = ({ spotGuides, weatherData, meta }: Props) => {
         [spotGuides]
     )
 
-    const mastheadImage = spotGuides.find((s) => s.thumbnail)?.thumbnail || ''
+    // Use the first guide with a thumbnail as the masthead — null is fine; StaticMasthead handles it.
+    const mastheadImage = spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
 
     return (
         <Layout title={meta.title} description={meta.description}>
@@ -152,10 +156,10 @@ const Index = ({ spotGuides, weatherData, meta }: Props) => {
                                     className="group relative block w-full h-full overflow-hidden bg-primary-darker"
                                 >
                                     {guide.thumbnail && (
-                                        <img
-                                            src={guide.thumbnail}
+                                        <CoverImage
+                                            image={guide.thumbnail}
                                             alt={guide.title}
-                                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                         />
                                     )}
                                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />

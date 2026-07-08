@@ -4,20 +4,25 @@ import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import { Link } from '@inertiajs/react'
 import { router } from '@inertiajs/react'
 import { useState, FormEvent } from 'react'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface SearchResult {
     type: string
     title: string
     slug: string
+    /** The `url` field here is the page href (not an image URL) — never used as an image. */
     url: string
     description?: string
-    thumbnail?: string
+    /** Focal-bearing image object (or null/undefined when no thumbnail). */
+    thumbnail?: FocalImage | null
 }
 
 interface Props {
     query: string
     results: SearchResult[]
-    static_masthead: string
+    /** Focal-bearing image object (or null when no search page record). */
+    static_masthead: FocalImage | null
     meta: { title: string; description: string }
 }
 
@@ -70,7 +75,7 @@ const Search = ({ query, results, static_masthead, meta }: Props) => {
                         {results.map((result, index) => (
                             <a key={index} href={result.url} className="flex gap-x-4 p-4 rounded-lg border border-gray-200 hover:border-primary transition-colors group">
                                 {result.thumbnail && (
-                                    <img src={result.thumbnail} alt={result.title} className="w-24 h-20 object-cover rounded-md flex-shrink-0" />
+                                    <CoverImage image={result.thumbnail} alt={result.title} className="w-24 h-20 rounded-md flex-shrink-0" />
                                 )}
                                 <div>
                                     <span className={`text-xs font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

@@ -38,7 +38,8 @@ class DestinationController extends Controller
                 'slug' => $guide->country->slug,
                 'continent' => $guide->country->continent,
             ] : null,
-            'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
+            // Focal-bearing object so the card's CoverImage can honour the focal point.
+            'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
         ]);
 
         // Keyed by title (not slug) so the chart legend/series labels line up.

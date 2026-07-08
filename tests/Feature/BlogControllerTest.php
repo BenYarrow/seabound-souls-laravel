@@ -7,6 +7,7 @@
 namespace Tests\Feature;
 
 use App\Models\Blog;
+use App\Models\MediaLibrary;
 use App\Models\Page;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -60,10 +61,11 @@ class BlogControllerTest extends TestCase
         $response = $this->get(route('blog.index'));
 
         $response->assertOk();
-        // No media attached in tests, so the URL null-coalesces to an empty string
-        // rather than erroring — the prop must still be present.
+        // No media attached in tests, so the payload is null rather than an empty
+        // string — imagePayload() is only called when media exists, so null signals
+        // "no image" to the front-end, which handles it via the null-check in StaticMasthead.
         $response->assertInertia(
-            fn (Assert $page) => $page->where('static_masthead', '')
+            fn (Assert $page) => $page->where('static_masthead', null)
         );
     }
 
@@ -92,5 +94,36 @@ class BlogControllerTest extends TestCase
     public function test_show_returns_404_for_an_unknown_slug(): void
     {
         $this->get(route('blog.show', 'does-not-exist'))->assertNotFound();
+    }
+
+    /**
+     * The blog index listing card must expose thumbnail as a focal-bearing
+     * object rather than a plain URL string.
+     */
+    public function test_index_exposes_thumbnail_with_focal_point(): void
+    {
+        $media = MediaLibrary::create(['name' => 'Post Thumb', 'focal_x' => 40, 'focal_y' => 60]);
+        Blog::factory()->create(['thumbnail_media_id' => $media->id]);
+
+        $this->get(route('blog.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('blogs.data.0.thumbnail.focal_x', 40)
+                ->where('blogs.data.0.thumbnail.focal_y', 60)
+            );
+    }
+
+    /**
+     * The blog show page must expose thumbnail as a focal-bearing object.
+     */
+    public function test_show_exposes_thumbnail_with_focal_point(): void
+    {
+        $media = MediaLibrary::create(['name' => 'Post Hero', 'focal_x' => 25, 'focal_y' => 75]);
+        $blog = Blog::factory()->create(['thumbnail_media_id' => $media->id]);
+
+        $this->get(route('blog.show', $blog->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('blog.thumbnail.focal_x', 25)
+                ->where('blog.thumbnail.focal_y', 75)
+            );
     }
 }

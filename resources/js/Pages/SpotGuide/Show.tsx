@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { faDirections } from '@fortawesome/free-solid-svg-icons'
 
 import Layout from '@/Layouts/Layout'
+import CoverImage from '@/Components/Common/CoverImage'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import ContentBuilder from '@/Components/ContentBuilder'
 import SpotOverview from '@/Components/Common/SpotOverview'
@@ -12,6 +13,7 @@ import ContentWithBackgroundImage from '@/Components/Content/ContentWithBackgrou
 import Gallery from '@/Components/Content/Gallery'
 import SpotGuideStatistics from '@/Components/SpotGuide/SpotGuideStatistics'
 import SpotGuideMap, { type MapLocation } from '@/Components/SpotGuide/SpotGuideMap'
+import type { FocalImage } from '@/types/media'
 
 interface Recommendation {
     id: number
@@ -20,7 +22,7 @@ interface Recommendation {
     url?: string
     latitude?: number | null
     longitude?: number | null
-    thumbnail?: string
+    thumbnail?: FocalImage | null
 }
 
 interface WindsurfLocation {
@@ -29,7 +31,7 @@ interface WindsurfLocation {
     description?: string
     latitude?: number | null
     longitude?: number | null
-    thumbnail?: string
+    thumbnail?: FocalImage | null
 }
 
 interface Props {
@@ -51,13 +53,13 @@ interface Props {
         travelling_to: { content: string; text_right: boolean } | null
         lessons_and_hire: { content: string; text_right: boolean } | null
         content_blocks: any[] | null
-        thumbnail: string
-        static_masthead: string
-        gallery: { url: string; alt: string }[]
-        water_conditions_bg: string
-        wind_conditions_bg: string
-        travelling_to_bg: string
-        lessons_and_hire_bg: string
+        thumbnail: FocalImage | null
+        static_masthead: FocalImage | null
+        gallery: FocalImage[]
+        water_conditions_bg: FocalImage | null
+        wind_conditions_bg: FocalImage | null
+        travelling_to_bg: FocalImage | null
+        lessons_and_hire_bg: FocalImage | null
         stay_recommendations: Recommendation[]
         eat_recommendations: Recommendation[]
         windsurfing_locations: WindsurfLocation[]
@@ -90,10 +92,10 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
             <li key={rec.id} className="aspect-[4/3]">
                 <div className="group relative w-full h-full overflow-hidden bg-primary-darker">
                     {rec.thumbnail && (
-                        <img
-                            src={rec.thumbnail}
+                        <CoverImage
+                            image={rec.thumbnail}
                             alt={rec.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />

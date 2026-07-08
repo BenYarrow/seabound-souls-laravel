@@ -40,13 +40,15 @@ class BlogController extends Controller
                 'title' => $blog->title,
                 'slug' => $blog->slug,
                 'published_at' => $blog->published_at?->toDateString(),
-                'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
+                // Focal-bearing object so listing cards can honour the focal point.
+                'thumbnail' => $blog->thumbnailMedia?->imagePayload(),
                 'seo_description' => $blog->seo_description,
             ]);
 
         return Inertia::render('Blog/Index', [
             'blogs' => $blogs,
-            'static_masthead' => $page?->staticMastheadMedia?->getUrl() ?? '',
+            // Display images as objects; the static_masthead feeds StaticMasthead which uses CoverImage.
+            'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
                 'title' => 'Blog | Seabound Souls',
                 'description' => 'Windsurfing tips, guides and destination insights.',
@@ -75,10 +77,11 @@ class BlogController extends Controller
             ? MediaLibrary::whereIn('id', $sliderIds)->get()->keyBy('id')
             : collect();
 
+        // Each slider item becomes a focal-bearing object for MastheadSlider/CoverImage.
         $mastheadSlider = collect($sliderIds)
             ->map(fn ($id) => $sliderItems->get($id))
             ->filter()
-            ->map(fn ($m) => $m->getUrl())
+            ->map(fn ($m) => $m->imagePayload())
             ->values()
             ->toArray();
 
@@ -89,8 +92,9 @@ class BlogController extends Controller
                 'slug' => $blog->slug,
                 'content_blocks' => $this->resolveContentBlockMedia($blog->content_blocks ?? []),
                 'published_at' => $blog->published_at?->toDateString(),
-                'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
-                'static_masthead' => $blog->staticMastheadMedia?->getUrl() ?? '',
+                // Display images as focal-bearing objects; og_image stays a plain URL string.
+                'thumbnail' => $blog->thumbnailMedia?->imagePayload(),
+                'static_masthead' => $blog->staticMastheadMedia?->imagePayload(),
                 'masthead_slider' => $mastheadSlider,
             ],
             'meta' => [

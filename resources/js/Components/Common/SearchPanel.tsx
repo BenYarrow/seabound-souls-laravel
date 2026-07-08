@@ -9,14 +9,18 @@ import { router } from '@inertiajs/react'
 import axios from 'axios'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Icon from './Icon'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface SearchResult {
     type: string
     title: string
     slug: string
+    /** The `url` field here is the page href (not an image URL) — never used as an image. */
     url: string
     description?: string
-    thumbnail?: string
+    /** Focal-bearing image object from the API (or null/undefined when no thumbnail). */
+    thumbnail?: FocalImage | null
 }
 
 interface Props {
@@ -163,7 +167,7 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
                                 ].join(' ')}
                             >
                                 {result.thumbnail
-                                    ? <img src={result.thumbnail} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                                    ? <CoverImage image={result.thumbnail} alt="" className="w-10 h-10 rounded flex-shrink-0" />
                                     : <span className="w-10 h-10 rounded bg-gray-100 flex-shrink-0" />}
                                 <span className="min-w-0">
                                     <span className={`block text-[0.65rem] font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

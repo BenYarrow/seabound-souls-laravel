@@ -3,13 +3,16 @@ import BlockWrapper from '@/Components/Common/BlockWrapper'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import AnimateInView from '@/Components/Common/AnimateInView'
 import { Link } from '@inertiajs/react'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface Blog {
     id: number
     title: string
     slug: string
     published_at: string | null
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
     seo_description: string | null
 }
 
@@ -19,7 +22,8 @@ interface Props {
         links: any[]
         meta: any
     }
-    static_masthead: string
+    /** Focal-bearing image for the masthead, or null when no page record exists. */
+    static_masthead: FocalImage | null
     meta: { title: string; description: string }
 }
 
@@ -73,10 +77,10 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                             {/* Image */}
                             <div className="md:col-span-3 aspect-[16/10] md:aspect-auto overflow-hidden relative min-h-[280px]">
                                 {featured.thumbnail ? (
-                                    <img
-                                        src={featured.thumbnail}
+                                    <CoverImage
+                                        image={featured.thumbnail}
                                         alt={featured.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        className="w-full h-full group-hover:scale-105 transition-transform duration-700"
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-primary-lighter" />
@@ -130,10 +134,10 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                                     {/* Image */}
                                     <div className="relative aspect-[16/10] overflow-hidden shrink-0">
                                         {blog.thumbnail ? (
-                                            <img
-                                                src={blog.thumbnail}
+                                            <CoverImage
+                                                image={blog.thumbnail}
                                                 alt={blog.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-primary-lighter" />

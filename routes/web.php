@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\MediaFocalController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DestinationController;
@@ -17,6 +18,11 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+// Admin: set focal point for a media library item (called by MediaPicker Alpine click handler)
+Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])
+    ->middleware(['web', 'auth'])
+    ->name('admin.media.focal');
 
 // Catch-all for generic pages (must be last, exclude admin paths)
 Route::get('/{slug}', [PageController::class, 'show'])->where('slug', '^(?!admin).*$')->name('pages.show');

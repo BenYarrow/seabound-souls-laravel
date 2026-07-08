@@ -1,5 +1,9 @@
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
+
 interface ContentWithBackgroundImageProps {
-    backgroundImageUrl: string
+    /** Focal-bearing image object (or legacy string URL / null when no background). */
+    backgroundImageUrl: FocalImage | string | null
     content: string
     textRight?: boolean
     title?: string
@@ -15,7 +19,7 @@ const ContentWithBackgroundImage = ({ backgroundImageUrl, content, textRight = f
     return (
         <div className="relative h-[calc(100vh-5rem)] w-full flex overflow-hidden">
             {backgroundImageUrl && (
-                <img src={backgroundImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <CoverImage image={backgroundImageUrl} alt="" className="absolute inset-0 w-full h-full" />
             )}
             <div className={textWrapperClasses}>
                 <div className="relative bg-secondary/90 text-white max-lg:h-[80vh] lg:h-full flex items-center">

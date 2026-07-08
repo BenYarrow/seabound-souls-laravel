@@ -45,7 +45,8 @@ class HomepageController extends Controller
                 'title' => $guide->title,
                 'slug' => $guide->slug,
                 'country' => $guide->country?->name,
-                'thumbnail' => $guide->thumbnailMedia?->getUrl() ?? '',
+                // Focal-bearing object so FeaturedGrid cards can honour the focal point.
+                'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
             ]);
 
         $recentBlogs = Blog::published()
@@ -57,7 +58,7 @@ class HomepageController extends Controller
                 'id' => $blog->id,
                 'title' => $blog->title,
                 'slug' => $blog->slug,
-                'thumbnail' => $blog->thumbnailMedia?->getUrl() ?? '',
+                'thumbnail' => $blog->thumbnailMedia?->imagePayload(),
             ]);
 
         $mastheadSlider = [];
@@ -65,10 +66,11 @@ class HomepageController extends Controller
             $sliderIds = $page->masthead_slider_media_ids ?? [];
             if (!empty($sliderIds)) {
                 $sliderItems = MediaLibrary::whereIn('id', $sliderIds)->get()->keyBy('id');
+                // Each slider item becomes a focal-bearing object for MastheadSlider/CoverImage.
                 $mastheadSlider = collect($sliderIds)
                     ->map(fn ($id) => $sliderItems->get($id))
                     ->filter()
-                    ->map(fn ($m) => $m->getUrl())
+                    ->map(fn ($m) => $m->imagePayload())
                     ->values()
                     ->toArray();
             }
@@ -108,7 +110,8 @@ class HomepageController extends Controller
                 'seo_title' => $page->seo_title,
                 'seo_description' => $page->seo_description,
                 'masthead_slider' => $mastheadSlider,
-                'static_masthead' => $page->staticMastheadMedia?->getUrl() ?? '',
+                // Display image as focal-bearing object for CoverImage in StaticMasthead.
+                'static_masthead' => $page->staticMastheadMedia?->imagePayload(),
             ] : null,
             'featuredSpotGuides' => $featuredSpotGuides,
             'recentBlogs' => $recentBlogs,

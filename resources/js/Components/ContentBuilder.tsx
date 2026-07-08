@@ -35,7 +35,8 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         return (
                             <ContentWithBackgroundImage
                                 key={index}
-                                backgroundImageUrl={block.data.backgroundImageMediaId_url}
+                                // Trait now emits `_image` (focal-bearing object) instead of `_url`.
+                                backgroundImageUrl={block.data.backgroundImageMediaId_image}
                                 content={block.data.content}
                                 textRight={block.data.textRight}
                             />
@@ -44,7 +45,7 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         return (
                             <SingleImage
                                 key={index}
-                                image={block.data.media_library_id_url}
+                                image={block.data.media_library_id_image}
                                 backgroundColour={block.data.backgroundColour}
                             />
                         )
@@ -52,8 +53,8 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         return (
                             <ImagePair
                                 key={index}
-                                imageLeft={block.data.imageLeftMediaId_url}
-                                imageRight={block.data.imageRightMediaId_url}
+                                imageLeft={block.data.imageLeftMediaId_image}
+                                imageRight={block.data.imageRightMediaId_image}
                                 backgroundColour={block.data.backgroundColour}
                             />
                         )
@@ -61,7 +62,8 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         return (
                             <Gallery
                                 key={index}
-                                images={block.data.mediaIds_urls ?? []}
+                                // Trait now emits `_images` (array of focal-bearing objects).
+                                images={block.data.mediaIds_images ?? []}
                                 thumbnailsOnly={block.data.thumbnailsOnly}
                             />
                         )
@@ -69,7 +71,7 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         return (
                             <SplitImageText
                                 key={index}
-                                image={block.data.media_library_id_url}
+                                image={block.data.media_library_id_image}
                                 text={block.data.text}
                                 reverse={block.data.reverse ?? false}
                             />

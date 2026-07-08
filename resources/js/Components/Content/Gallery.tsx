@@ -7,18 +7,16 @@ import FsLightbox from 'fslightbox-react'
 import Icon from '../Common/Icon'
 import AnimateInView from '../Common/AnimateInView'
 import BlockWrapper from '../Common/BlockWrapper'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
-interface GalleryImage {
-    url: string
-    alt: string
-}
-
 interface GalleryProps {
-    images: GalleryImage[]
+    /** Each image is a focal-bearing object; `.url` is used for the lightbox source. */
+    images: FocalImage[]
     thumbnailsOnly?: boolean
 }
 
@@ -37,6 +35,7 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
 
     if (!images || images.length === 0) return null
 
+    // FsLightbox needs raw URL strings — extract from the focal-bearing objects.
     const lightboxSources = images.map((img) => img.url)
 
     return (
@@ -62,10 +61,9 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
                                         }}
                                         className="w-full h-full block relative"
                                     >
-                                        <img
-                                            src={img.url}
-                                            alt={img.alt}
-                                            className="w-full h-full object-cover"
+                                        <CoverImage
+                                            image={img}
+                                            className="w-full h-full"
                                         />
                                     </button>
                                 </SwiperSlide>
@@ -102,10 +100,9 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
                                     }}
                                     className="w-full h-full flex justify-center"
                                 >
-                                    <img
-                                        src={img.url}
-                                        alt={img.alt}
-                                        className="gallery-image w-full h-full aspect-square lg:aspect-video lg:w-[60vw] object-cover"
+                                    <CoverImage
+                                        image={img}
+                                        className="gallery-image w-full h-full aspect-square lg:aspect-video lg:w-[60vw]"
                                     />
                                 </button>
                             </SwiperSlide>

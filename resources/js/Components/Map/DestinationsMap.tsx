@@ -4,6 +4,8 @@ import { faRotateLeft, faWind } from '@fortawesome/free-solid-svg-icons'
 import { usePage } from '@inertiajs/react'
 import { Link } from '@inertiajs/react'
 import Icon from '@/Components/Common/Icon'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface SpotGuide {
@@ -13,7 +15,8 @@ interface SpotGuide {
     latitude: number | null
     longitude: number | null
     country: { name: string; slug: string; continent: string } | null
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
 }
 
 interface Props {
@@ -112,10 +115,10 @@ const DestinationsMap = ({ spotGuides }: Props) => {
                         {popupInfo.thumbnail && (
                             <div className="mt-3 -mx-[14px] -mb-[12px] overflow-hidden">
                                 <Link href={`/destinations/${popupInfo.slug}`}>
-                                    <img
-                                        src={popupInfo.thumbnail}
+                                    <CoverImage
+                                        image={popupInfo.thumbnail}
                                         alt={popupInfo.title}
-                                        className="w-full h-24 object-cover hover:scale-105 transition-transform duration-500"
+                                        className="w-full h-24 hover:scale-105 transition-transform duration-500"
                                     />
                                 </Link>
                             </div>

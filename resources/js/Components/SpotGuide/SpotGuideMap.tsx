@@ -3,6 +3,8 @@ import Map, { Marker, Popup, MapRef } from 'react-map-gl/mapbox'
 import { faWind, faHotel, faUtensils, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import { usePage } from '@inertiajs/react'
 import Icon from '@/Components/Common/Icon'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 export interface MapLocation {
@@ -11,7 +13,8 @@ export interface MapLocation {
     description?: string
     latitude: number | null
     longitude: number | null
-    thumbnail?: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail?: FocalImage | null
     url?: string
     type: 'stay' | 'eat' | 'windsurf'
 }
@@ -96,7 +99,7 @@ const SpotGuideMap = ({ latitude, longitude, locations }: Props) => {
                         </div>
                         {popupInfo.thumbnail && (
                             <div className="mt-2 -mx-[14px] -mb-[12px] overflow-hidden">
-                                <img src={popupInfo.thumbnail} alt={popupInfo.name} className="w-full h-20 object-cover" />
+                                <CoverImage image={popupInfo.thumbnail} alt={popupInfo.name} className="w-full h-20" />
                             </div>
                         )}
                     </Popup>

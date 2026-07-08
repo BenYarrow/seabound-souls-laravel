@@ -6,6 +6,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\MediaLibrary;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -68,5 +69,21 @@ class DestinationControllerTest extends TestCase
                 // Sorted by month within the year, so January comes first.
                 ->where('weatherData.Tarifa.2023.0.month', 'January')
         );
+    }
+
+    /**
+     * Each guide card on the index must expose thumbnail as a focal-bearing
+     * object rather than a plain URL string.
+     */
+    public function test_index_exposes_thumbnail_with_focal_point(): void
+    {
+        $media = MediaLibrary::create(['name' => 'Thumb', 'focal_x' => 30, 'focal_y' => 70]);
+        SpotGuide::factory()->create(['thumbnail_media_id' => $media->id]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('spotGuides.0.thumbnail.focal_x', 30)
+                ->where('spotGuides.0.thumbnail.focal_y', 70)
+            );
     }
 }

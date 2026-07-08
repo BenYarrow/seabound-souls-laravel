@@ -2,6 +2,7 @@ import Layout from '@/Layouts/Layout'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import MastheadSlider from '@/Components/Masthead/MastheadSlider'
 import ContentBuilder from '@/Components/ContentBuilder'
+import type { FocalImage } from '@/types/media'
 
 interface Props {
     page: {
@@ -10,8 +11,9 @@ interface Props {
         slug: string
         template: string
         content_blocks: any[] | null
-        static_masthead: string
-        masthead_slider: string[]
+        /** Focal-bearing image object (or null when no masthead). */
+        static_masthead: FocalImage | null
+        masthead_slider: FocalImage[]
     }
     meta: any
 }

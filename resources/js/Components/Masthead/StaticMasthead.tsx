@@ -1,7 +1,10 @@
 import { ReactNode } from 'react'
+import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface StaticMastheadProps {
-    imageUrl: string
+    /** Focal-bearing image object (or legacy string URL / null when no image). */
+    imageUrl: FocalImage | string | null
     title: string
     subtitle?: string
     eyebrow?: string
@@ -12,10 +15,10 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
     return (
         <div className="relative w-full h-[calc(100vh-5rem)] overflow-visible bg-primary-darker">
             {imageUrl && (
-                <img
-                    src={imageUrl}
+                <CoverImage
+                    image={imageUrl}
                     alt={title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full"
                 />
             )}
 
