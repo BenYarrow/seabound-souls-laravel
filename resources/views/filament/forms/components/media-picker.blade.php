@@ -31,14 +31,30 @@
         "
     >
         @if(!$isMultiple && isset($selectedItem) && $selectedItem)
-            {{-- Preview card: constrained 16:9 thumbnail + full (wrapping) name --}}
+            {{-- Preview card: constrained 16:9 thumbnail + focal-point click-to-set + full (wrapping) name --}}
             <div class="mb-3 w-96 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                 <div class="relative">
-                    <img
-                        src="{{ $selectedItem->getUrl() }}"
-                        alt="{{ $selectedItem->name }}"
-                        class="aspect-video w-full object-cover"
+                    {{-- Focal-point click-to-set: click anywhere on the image to store that point.
+                         fx/fy are initialised from the persisted values (defaulting to 50/50 centre)
+                         and then updated live on each click. The img object-position mirrors the
+                         stored focal point so the editor sees the effect immediately. --}}
+                    <div
+                        x-data="{ fx: {{ $selectedItem->focal_x ?? 50 }}, fy: {{ $selectedItem->focal_y ?? 50 }} }"
+                        class="relative cursor-crosshair"
+                        x-on:click="
+                            const r = $el.getBoundingClientRect();
+                            fx = Math.round((($event.clientX - r.left) / r.width) * 100);
+                            fy = Math.round((($event.clientY - r.top) / r.height) * 100);
+                            fetch('{{ route('admin.media.focal', $selectedItem->id) }}', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({ x: fx, y: fy }),
+                            });
+                        "
                     >
+                        <img src="{{ $selectedItem->getUrl() }}" alt="{{ $selectedItem->name }}" class="aspect-video w-full object-cover" :style="`object-position: ${fx}% ${fy}%`">
+                        <span class="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary-500/70 shadow" :style="`left: ${fx}%; top: ${fy}%`"></span>
+                    </div>
                     <button
                         type="button"
                         x-on:click="$wire.set('{{ $statePath }}', null)"
@@ -49,6 +65,7 @@
                 <p class="px-3 py-2.5 text-sm leading-snug text-gray-700 dark:text-gray-200">
                     {{ $selectedItem->name ?: 'Untitled' }}
                 </p>
+                <p class="px-3 pb-2 text-xs text-gray-500 dark:text-gray-400">Click the photo to set its focal point.</p>
             </div>
         @elseif($isMultiple && isset($selectedItems) && $selectedItems->isNotEmpty())
             <div
