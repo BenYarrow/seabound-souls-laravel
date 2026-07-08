@@ -1,2 +1,2 @@
 date: 2026-07-06
-note: Image focal points (PR #11) — folded reconcile. Per-image focal via object-position through one CoverImage; set in MediaPicker. Suite at 63 tests, 401 assertions.
+note: Content-manageable destinations masthead (PR #12) — folded reconcile. DestinationController uses a "destinations" Page masthead (mirrors blog/search/home). Suite at 65 tests, 423 assertions.
