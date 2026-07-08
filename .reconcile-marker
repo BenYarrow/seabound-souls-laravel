@@ -1,2 +1,2 @@
 date: 2026-07-06
-note: Content-manageable destinations masthead (PR #12) — folded reconcile. DestinationController uses a "destinations" Page masthead (mirrors blog/search/home). Suite at 65 tests, 423 assertions.
+note: Content-manageable destinations masthead + hide content builder for the destinations template (PR #12) — folded reconcile. Suite at 67 tests, 428 assertions.
