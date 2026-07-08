@@ -1,2 +1,2 @@
 date: 2026-07-06
-note: Filament custom theme + MediaPicker layout fix (PR #10) — folded reconcile. Custom-view Tailwind classes now compile; suite at 54 tests, 341 assertions.
+note: Image focal points (PR #11) — folded reconcile. Per-image focal via object-position through one CoverImage; set in MediaPicker. Suite at 63 tests, 401 assertions.
