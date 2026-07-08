@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import AnimateInView from '../Common/AnimateInView'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface SplitImageTextProps {
     image: string
@@ -30,10 +31,10 @@ const SplitImageText = ({ image, text, reverse }: SplitImageTextProps) => {
                                 className="block w-full group"
                             >
                                 <div className="relative overflow-hidden aspect-[4/5] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.28)]">
-                                    <img
-                                        src={image}
+                                    <CoverImage
+                                        image={image}
                                         alt=""
-                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                        className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                     />
                                     {/* Orange corner brackets — opposite corners */}
                                     <div className={`absolute top-0 ${reverse ? 'right-0 border-r-2' : 'left-0 border-l-2'} w-10 h-10 border-t-2 border-orange pointer-events-none`} />

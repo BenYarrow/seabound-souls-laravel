@@ -9,6 +9,7 @@ import { router } from '@inertiajs/react'
 import axios from 'axios'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Icon from './Icon'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface SearchResult {
     type: string
@@ -163,7 +164,7 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
                                 ].join(' ')}
                             >
                                 {result.thumbnail
-                                    ? <img src={result.thumbnail} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                                    ? <CoverImage image={result.thumbnail} alt="" className="w-10 h-10 rounded flex-shrink-0" />
                                     : <span className="w-10 h-10 rounded bg-gray-100 flex-shrink-0" />}
                                 <span className="min-w-0">
                                     <span className={`block text-[0.65rem] font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

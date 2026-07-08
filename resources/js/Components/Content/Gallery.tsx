@@ -7,6 +7,7 @@ import FsLightbox from 'fslightbox-react'
 import Icon from '../Common/Icon'
 import AnimateInView from '../Common/AnimateInView'
 import BlockWrapper from '../Common/BlockWrapper'
+import CoverImage from '@/Components/Common/CoverImage'
 
 import 'swiper/css'
 import 'swiper/css/navigation'
@@ -62,10 +63,10 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
                                         }}
                                         className="w-full h-full block relative"
                                     >
-                                        <img
-                                            src={img.url}
+                                        <CoverImage
+                                            image={img.url}
                                             alt={img.alt}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full"
                                         />
                                     </button>
                                 </SwiperSlide>
@@ -102,10 +103,10 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
                                     }}
                                     className="w-full h-full flex justify-center"
                                 >
-                                    <img
-                                        src={img.url}
+                                    <CoverImage
+                                        image={img.url}
                                         alt={img.alt}
-                                        className="gallery-image w-full h-full aspect-square lg:aspect-video lg:w-[60vw] object-cover"
+                                        className="gallery-image w-full h-full aspect-square lg:aspect-video lg:w-[60vw]"
                                     />
                                 </button>
                             </SwiperSlide>

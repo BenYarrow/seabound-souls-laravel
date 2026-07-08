@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react'
 import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
+import CoverImage from '@/Components/Common/CoverImage'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import DestinationsMap from '@/Components/Map/DestinationsMap'
 import FilterDataset, { SelectOption } from '@/Components/Destinations/FilterDataset'
@@ -152,10 +153,10 @@ const Index = ({ spotGuides, weatherData, meta }: Props) => {
                                     className="group relative block w-full h-full overflow-hidden bg-primary-darker"
                                 >
                                     {guide.thumbnail && (
-                                        <img
-                                            src={guide.thumbnail}
+                                        <CoverImage
+                                            image={guide.thumbnail}
                                             alt={guide.title}
-                                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                         />
                                     )}
                                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />

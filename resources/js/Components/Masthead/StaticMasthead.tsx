@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface StaticMastheadProps {
     imageUrl: string
@@ -12,10 +13,10 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
     return (
         <div className="relative w-full h-[calc(100vh-5rem)] overflow-visible bg-primary-darker">
             {imageUrl && (
-                <img
-                    src={imageUrl}
+                <CoverImage
+                    image={imageUrl}
                     alt={title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full"
                 />
             )}
 

@@ -1,3 +1,5 @@
+import CoverImage from '@/Components/Common/CoverImage'
+
 interface ContentWithBackgroundImageProps {
     backgroundImageUrl: string
     content: string
@@ -15,7 +17,7 @@ const ContentWithBackgroundImage = ({ backgroundImageUrl, content, textRight = f
     return (
         <div className="relative h-[calc(100vh-5rem)] w-full flex overflow-hidden">
             {backgroundImageUrl && (
-                <img src={backgroundImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <CoverImage image={backgroundImageUrl} alt="" className="absolute inset-0 w-full h-full" />
             )}
             <div className={textWrapperClasses}>
                 <div className="relative bg-secondary/90 text-white max-lg:h-[80vh] lg:h-full flex items-center">

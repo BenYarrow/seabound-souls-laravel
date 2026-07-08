@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay } from 'swiper/modules'
 import 'swiper/css'
+import CoverImage from '@/Components/Common/CoverImage'
 
 const DELAY = 5000
 
@@ -29,10 +30,10 @@ const MastheadSlider = ({ slides, title, subtitle }: MastheadSliderProps) => {
             >
                 {slides.map((slide, index) => (
                     <SwiperSlide key={index}>
-                        <img
-                            src={slide}
+                        <CoverImage
+                            image={slide}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="w-full h-full"
                         />
                     </SwiperSlide>
                 ))}

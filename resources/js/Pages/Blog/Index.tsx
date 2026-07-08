@@ -3,6 +3,7 @@ import BlockWrapper from '@/Components/Common/BlockWrapper'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import AnimateInView from '@/Components/Common/AnimateInView'
 import { Link } from '@inertiajs/react'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface Blog {
     id: number
@@ -73,10 +74,10 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                             {/* Image */}
                             <div className="md:col-span-3 aspect-[16/10] md:aspect-auto overflow-hidden relative min-h-[280px]">
                                 {featured.thumbnail ? (
-                                    <img
-                                        src={featured.thumbnail}
+                                    <CoverImage
+                                        image={featured.thumbnail}
                                         alt={featured.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        className="w-full h-full group-hover:scale-105 transition-transform duration-700"
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-primary-lighter" />
@@ -130,10 +131,10 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                                     {/* Image */}
                                     <div className="relative aspect-[16/10] overflow-hidden shrink-0">
                                         {blog.thumbnail ? (
-                                            <img
-                                                src={blog.thumbnail}
+                                            <CoverImage
+                                                image={blog.thumbnail}
                                                 alt={blog.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-primary-lighter" />

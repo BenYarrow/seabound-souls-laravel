@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import BlockWrapper from '../Common/BlockWrapper'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface ImagePairProps {
     imageLeft: string
@@ -28,7 +29,7 @@ const ImagePair = ({ imageLeft, imageRight, backgroundColour }: ImagePairProps) 
                         }}
                         className="block w-full h-full aspect-square"
                     >
-                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <CoverImage image={src} alt="" className="w-full h-full" />
                     </button>
                 ))}
             </div>

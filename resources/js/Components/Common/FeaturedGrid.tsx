@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react'
 import BlockWrapper from './BlockWrapper'
 import AnimateInView from './AnimateInView'
 import Button from './Button'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface FeaturedGridEntry {
     id: number
@@ -69,10 +70,10 @@ const FeaturedGrid = ({
                                 className="group relative block w-full h-full overflow-hidden"
                             >
                                 {entry.thumbnail ? (
-                                    <img
-                                        src={entry.thumbnail}
+                                    <CoverImage
+                                        image={entry.thumbnail}
                                         alt={entry.title}
-                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                        className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                     />
                                 ) : (
                                     <div className="absolute inset-0 bg-primary" />

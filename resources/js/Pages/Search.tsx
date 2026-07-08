@@ -4,6 +4,7 @@ import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import { Link } from '@inertiajs/react'
 import { router } from '@inertiajs/react'
 import { useState, FormEvent } from 'react'
+import CoverImage from '@/Components/Common/CoverImage'
 
 interface SearchResult {
     type: string
@@ -70,7 +71,7 @@ const Search = ({ query, results, static_masthead, meta }: Props) => {
                         {results.map((result, index) => (
                             <a key={index} href={result.url} className="flex gap-x-4 p-4 rounded-lg border border-gray-200 hover:border-primary transition-colors group">
                                 {result.thumbnail && (
-                                    <img src={result.thumbnail} alt={result.title} className="w-24 h-20 object-cover rounded-md flex-shrink-0" />
+                                    <CoverImage image={result.thumbnail} alt={result.title} className="w-24 h-20 rounded-md flex-shrink-0" />
                                 )}
                                 <div>
                                     <span className={`text-xs font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

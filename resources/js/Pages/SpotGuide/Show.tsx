@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { faDirections } from '@fortawesome/free-solid-svg-icons'
 
 import Layout from '@/Layouts/Layout'
+import CoverImage from '@/Components/Common/CoverImage'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import ContentBuilder from '@/Components/ContentBuilder'
 import SpotOverview from '@/Components/Common/SpotOverview'
@@ -90,10 +91,10 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
             <li key={rec.id} className="aspect-[4/3]">
                 <div className="group relative w-full h-full overflow-hidden bg-primary-darker">
                     {rec.thumbnail && (
-                        <img
-                            src={rec.thumbnail}
+                        <CoverImage
+                            image={rec.thumbnail}
                             alt={rec.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />
