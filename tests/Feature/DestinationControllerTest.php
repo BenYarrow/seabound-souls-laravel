@@ -7,6 +7,7 @@
 namespace Tests\Feature;
 
 use App\Models\MediaLibrary;
+use App\Models\Page;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -85,5 +86,26 @@ class DestinationControllerTest extends TestCase
                 ->where('spotGuides.0.thumbnail.focal_x', 30)
                 ->where('spotGuides.0.thumbnail.focal_y', 70)
             );
+    }
+
+    public function test_index_uses_the_destinations_page_masthead_when_present(): void
+    {
+        $media = MediaLibrary::create(['name' => 'Destinations Hero', 'focal_x' => 40, 'focal_y' => 65]);
+        Page::factory()->slug('destinations')->create(['static_masthead_media_id' => $media->id]);
+        SpotGuide::factory()->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('static_masthead.focal_x', 40)
+                ->where('static_masthead.focal_y', 65)
+            );
+    }
+
+    public function test_index_static_masthead_is_null_without_a_destinations_page(): void
+    {
+        SpotGuide::factory()->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('static_masthead', null));
     }
 }

@@ -28,6 +28,8 @@ interface SpotGuide {
 interface Props {
     spotGuides: SpotGuide[]
     weatherData: WeatherDataset
+    /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
+    static_masthead: FocalImage | null
     meta: { title: string; description: string }
 }
 
@@ -40,7 +42,7 @@ const CONTINENT_LABELS: Record<string, string> = {
     oceania: 'Oceania',
 }
 
-const Index = ({ spotGuides, weatherData, meta }: Props) => {
+const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
     const colours = useMemo(() => getSpotGuideColours(titles), [titles])
 
@@ -76,8 +78,9 @@ const Index = ({ spotGuides, weatherData, meta }: Props) => {
         [spotGuides]
     )
 
-    // Use the first guide with a thumbnail as the masthead — null is fine; StaticMasthead handles it.
-    const mastheadImage = spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
+    // Prefer the "destinations" landing-page masthead; fall back to the first guide
+    // with a thumbnail. null is fine — StaticMasthead handles it.
+    const mastheadImage = static_masthead ?? spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
 
     return (
         <Layout title={meta.title} description={meta.description}>
