@@ -1,7 +1,9 @@
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface ContentWithBackgroundImageProps {
-    backgroundImageUrl: string
+    /** Focal-bearing image object (or legacy string URL / null when no background). */
+    backgroundImageUrl: FocalImage | string | null
     content: string
     textRight?: boolean
     title?: string

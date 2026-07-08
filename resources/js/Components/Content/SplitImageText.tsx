@@ -2,9 +2,11 @@ import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import AnimateInView from '../Common/AnimateInView'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface SplitImageTextProps {
-    image: string
+    /** Focal-bearing image object (or legacy string URL / null when no image). */
+    image: FocalImage | string | null
     text: string
     reverse: boolean
 }
@@ -68,7 +70,12 @@ const SplitImageText = ({ image, text, reverse }: SplitImageTextProps) => {
             </div>
 
             {image && (
-                <FsLightbox toggler={toggler} sources={[image]} types={['image']} />
+                // FsLightbox needs a raw URL string — extract from focal object or use directly if string.
+                <FsLightbox
+                    toggler={toggler}
+                    sources={[typeof image === 'string' ? image : image.url]}
+                    types={['image']}
+                />
             )}
         </section>
     )

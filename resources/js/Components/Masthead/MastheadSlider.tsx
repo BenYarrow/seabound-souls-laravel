@@ -3,11 +3,13 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 const DELAY = 5000
 
 interface MastheadSliderProps {
-    slides: string[]
+    /** Each slide is a focal-bearing image object (legacy string URLs also accepted by CoverImage). */
+    slides: FocalImage[]
     title: string
     subtitle?: string
 }

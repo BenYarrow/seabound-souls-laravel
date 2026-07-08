@@ -5,20 +5,24 @@ import { Link } from '@inertiajs/react'
 import { router } from '@inertiajs/react'
 import { useState, FormEvent } from 'react'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface SearchResult {
     type: string
     title: string
     slug: string
+    /** The `url` field here is the page href (not an image URL) — never used as an image. */
     url: string
     description?: string
-    thumbnail?: string
+    /** Focal-bearing image object (or null/undefined when no thumbnail). */
+    thumbnail?: FocalImage | null
 }
 
 interface Props {
     query: string
     results: SearchResult[]
-    static_masthead: string
+    /** Focal-bearing image object (or null when no search page record). */
+    static_masthead: FocalImage | null
     meta: { title: string; description: string }
 }
 

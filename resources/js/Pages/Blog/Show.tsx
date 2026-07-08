@@ -3,6 +3,7 @@ import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import MastheadSlider from '@/Components/Masthead/MastheadSlider'
 import ContentBuilder from '@/Components/ContentBuilder'
 import { formatDate } from '@/Helpers/helpers'
+import type { FocalImage } from '@/types/media'
 
 interface Props {
     blog: {
@@ -11,9 +12,11 @@ interface Props {
         slug: string
         content_blocks: any[] | null
         published_at: string | null
-        thumbnail: string
-        static_masthead: string
-        masthead_slider: string[]
+        /** Focal-bearing image object (or null when no thumbnail). */
+        thumbnail: FocalImage | null
+        /** Focal-bearing image object (or null when no masthead). */
+        static_masthead: FocalImage | null
+        masthead_slider: FocalImage[]
     }
     meta: any
 }

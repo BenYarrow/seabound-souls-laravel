@@ -34,10 +34,11 @@ class PageController extends Controller
             ? MediaLibrary::whereIn('id', $sliderIds)->get()->keyBy('id')
             : collect();
 
+        // Each slider item becomes a focal-bearing object for MastheadSlider/CoverImage.
         $mastheadSlider = collect($sliderIds)
             ->map(fn ($id) => $sliderItems->get($id))
             ->filter()
-            ->map(fn ($m) => $m->getUrl())
+            ->map(fn ($m) => $m->imagePayload())
             ->values()
             ->toArray();
 
@@ -48,7 +49,8 @@ class PageController extends Controller
                 'slug' => $page->slug,
                 'template' => $page->template,
                 'content_blocks' => $this->resolveContentBlockMedia($page->content_blocks ?? []),
-                'static_masthead' => $page->staticMastheadMedia?->getUrl() ?? '',
+                // Display image as focal-bearing object; og_image stays a plain URL string.
+                'static_masthead' => $page->staticMastheadMedia?->imagePayload(),
                 'masthead_slider' => $mastheadSlider,
             ],
             'meta' => [

@@ -3,12 +3,14 @@ import BlockWrapper from './BlockWrapper'
 import AnimateInView from './AnimateInView'
 import Button from './Button'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface FeaturedGridEntry {
     id: number
     title: string
     slug: string
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
     subtitle?: string
 }
 

@@ -10,14 +10,17 @@ import axios from 'axios'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Icon from './Icon'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface SearchResult {
     type: string
     title: string
     slug: string
+    /** The `url` field here is the page href (not an image URL) — never used as an image. */
     url: string
     description?: string
-    thumbnail?: string
+    /** Focal-bearing image object from the API (or null/undefined when no thumbnail). */
+    thumbnail?: FocalImage | null
 }
 
 interface Props {

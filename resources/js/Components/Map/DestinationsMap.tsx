@@ -5,6 +5,7 @@ import { usePage } from '@inertiajs/react'
 import { Link } from '@inertiajs/react'
 import Icon from '@/Components/Common/Icon'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface SpotGuide {
@@ -14,7 +15,8 @@ interface SpotGuide {
     latitude: number | null
     longitude: number | null
     country: { name: string; slug: string; continent: string } | null
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
 }
 
 interface Props {

@@ -53,10 +53,12 @@ class SpotGuideController extends Controller
             ? MediaLibrary::whereIn('id', $galleryIds)->get()->keyBy('id')
             : collect();
 
+        // Each gallery item becomes a full imagePayload object so CoverImage can
+        // use its focal point; lightbox still reads .url from the same object.
         $gallery = collect($galleryIds)
             ->map(fn ($id) => $galleryItems->get($id))
             ->filter()
-            ->map(fn ($m) => ['url' => $m->getUrl(), 'alt' => $m->name])
+            ->map(fn ($m) => $m->imagePayload())
             ->values()
             ->toArray();
 
@@ -83,13 +85,15 @@ class SpotGuideController extends Controller
                 'travelling_to' => $spotGuide->travelling_to,
                 'lessons_and_hire' => $spotGuide->lessons_and_hire,
                 'content_blocks' => $this->resolveContentBlockMedia($spotGuide->content_blocks ?? []),
-                'thumbnail' => $spotGuide->thumbnailMedia?->getUrl() ?? '',
-                'static_masthead' => $spotGuide->staticMastheadMedia?->getUrl() ?? '',
+                // Display images as focal-bearing objects; og_image stays a plain
+                // URL string because it feeds <meta> tags, not <CoverImage>.
+                'thumbnail' => $spotGuide->thumbnailMedia?->imagePayload(),
+                'static_masthead' => $spotGuide->staticMastheadMedia?->imagePayload(),
                 'gallery' => $gallery,
-                'water_conditions_bg' => $spotGuide->waterConditionsBgMedia?->getUrl() ?? '',
-                'wind_conditions_bg' => $spotGuide->windConditionsBgMedia?->getUrl() ?? '',
-                'travelling_to_bg' => $spotGuide->travellingToBgMedia?->getUrl() ?? '',
-                'lessons_and_hire_bg' => $spotGuide->lessonsAndHireBgMedia?->getUrl() ?? '',
+                'water_conditions_bg' => $spotGuide->waterConditionsBgMedia?->imagePayload(),
+                'wind_conditions_bg' => $spotGuide->windConditionsBgMedia?->imagePayload(),
+                'travelling_to_bg' => $spotGuide->travellingToBgMedia?->imagePayload(),
+                'lessons_and_hire_bg' => $spotGuide->lessonsAndHireBgMedia?->imagePayload(),
                 'stay_recommendations' => $spotGuide->recommendations->where('type', 'stay')->values()->map(fn ($r) => [
                     'id' => $r->id,
                     'name' => $r->name,
@@ -97,7 +101,7 @@ class SpotGuideController extends Controller
                     'url' => $r->url,
                     'latitude' => $r->latitude,
                     'longitude' => $r->longitude,
-                    'thumbnail' => $r->thumbnailMedia?->getUrl() ?? '',
+                    'thumbnail' => $r->thumbnailMedia?->imagePayload(),
                 ])->toArray(),
                 'eat_recommendations' => $spotGuide->recommendations->where('type', 'eat')->values()->map(fn ($r) => [
                     'id' => $r->id,
@@ -106,7 +110,7 @@ class SpotGuideController extends Controller
                     'url' => $r->url,
                     'latitude' => $r->latitude,
                     'longitude' => $r->longitude,
-                    'thumbnail' => $r->thumbnailMedia?->getUrl() ?? '',
+                    'thumbnail' => $r->thumbnailMedia?->imagePayload(),
                 ])->toArray(),
                 'windsurfing_locations' => $spotGuide->windsurfingLocations->map(fn ($l) => [
                     'id' => $l->id,
@@ -114,7 +118,7 @@ class SpotGuideController extends Controller
                     'description' => $l->description,
                     'latitude' => $l->latitude,
                     'longitude' => $l->longitude,
-                    'thumbnail' => $l->thumbnailMedia?->getUrl() ?? '',
+                    'thumbnail' => $l->thumbnailMedia?->imagePayload(),
                 ])->toArray(),
                 'weather_records' => $spotGuide->weatherRecords
                     ->groupBy('year')

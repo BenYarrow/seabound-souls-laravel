@@ -1,8 +1,10 @@
 import { ReactNode } from 'react'
 import CoverImage from '@/Components/Common/CoverImage'
+import type { FocalImage } from '@/types/media'
 
 interface StaticMastheadProps {
-    imageUrl: string
+    /** Focal-bearing image object (or legacy string URL / null when no image). */
+    imageUrl: FocalImage | string | null
     title: string
     subtitle?: string
     eyebrow?: string

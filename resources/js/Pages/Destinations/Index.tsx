@@ -12,6 +12,7 @@ import AllDestinationsTempChart from '@/Components/Destinations/AllDestinationsT
 import AnimateInView from '@/Components/Common/AnimateInView'
 import { getSpotGuideColours } from '@/helpers/colours'
 import type { WeatherDataset } from '@/helpers/weatherDataHelpers'
+import type { FocalImage } from '@/types/media'
 
 interface SpotGuide {
     id: number
@@ -20,7 +21,8 @@ interface SpotGuide {
     latitude: number | null
     longitude: number | null
     country: { name: string; slug: string; continent: string } | null
-    thumbnail: string
+    /** Focal-bearing image object (or null when no thumbnail). */
+    thumbnail: FocalImage | null
 }
 
 interface Props {
@@ -74,7 +76,8 @@ const Index = ({ spotGuides, weatherData, meta }: Props) => {
         [spotGuides]
     )
 
-    const mastheadImage = spotGuides.find((s) => s.thumbnail)?.thumbnail || ''
+    // Use the first guide with a thumbnail as the masthead — null is fine; StaticMasthead handles it.
+    const mastheadImage = spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
 
     return (
         <Layout title={meta.title} description={meta.description}>

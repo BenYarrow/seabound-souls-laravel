@@ -32,7 +32,8 @@ class SearchController extends Controller
         return Inertia::render('Search', [
             'query' => $query,
             'results' => $results,
-            'static_masthead' => $page?->staticMastheadMedia?->getUrl() ?? '',
+            // Display image as focal-bearing object for StaticMasthead/CoverImage.
+            'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
                 'title' => $query ? "Search: {$query} | Seabound Souls" : 'Search | Seabound Souls',
                 'description' => 'Search for windsurfing destinations and articles.',
