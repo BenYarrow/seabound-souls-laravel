@@ -20,10 +20,13 @@ class SpotGuide extends Model
     use HasFactory, SoftDeletes, Searchable;
 
     /**
-     * Keep the denormalised country_name in step with the country_id FK. Only
-     * re-resolves when country_id actually changed, so unrelated saves stay cheap.
-     * country_name feeds the searchable array (toSearchableArray) so guides can be
-     * found by country without joining the countries table at query time.
+     * Register model lifecycle hooks.
+     *
+     * saving — denormalises country_name onto the row whenever country_id
+     *   changes, so Scout search can match on country without a JOIN.
+     * created — dispatches FetchSpotWeatherJob for any new spot that already
+     *   has coordinates, giving it weather data immediately rather than waiting
+     *   for the next scheduled fetch-all run.
      */
     protected static function booted(): void
     {

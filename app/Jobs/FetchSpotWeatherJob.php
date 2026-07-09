@@ -29,10 +29,25 @@ class FetchSpotWeatherJob implements ShouldQueue
     /** Seconds to wait between retries. */
     public int $backoff = 10;
 
+    /**
+     * Store the spot guide id so the worker can resolve the model at runtime.
+     * We serialise the id rather than the model itself so stale model state
+     * in the payload can never mask a deletion that happened after dispatch.
+     */
     public function __construct(public int $spotGuideId)
     {
     }
 
+    /**
+     * Execute the weather fetch.
+     *
+     * Two early-exit guards keep the job safe in the face of race conditions:
+     * — deleted-model guard: the spot was soft/hard deleted after dispatch was
+     *   queued, so nothing to fetch for; silently no-op rather than throwing.
+     * — no-coordinates guard: the spot was created without lat/lon (admins
+     *   sometimes add those later); log and bail rather than hitting the API
+     *   with a useless request.
+     */
     public function handle(WeatherFetcher $fetcher): void
     {
         $spot = SpotGuide::find($this->spotGuideId);
