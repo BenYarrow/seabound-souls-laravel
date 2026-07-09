@@ -8,7 +8,7 @@ interface Props {
     page: any
     featuredSpotGuides: any[]
     recentBlogs: any[]
-    meta: { title: string; description: string }
+    meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
 const Homepage = ({ page, featuredSpotGuides, recentBlogs, meta }: Props) => {
@@ -16,7 +16,7 @@ const Homepage = ({ page, featuredSpotGuides, recentBlogs, meta }: Props) => {
     const hasStaticMasthead = !hasSlider && page?.static_masthead
 
     return (
-        <Layout title={meta.title} description={meta.description}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {hasSlider ? (
                 <MastheadSlider slides={page.masthead_slider} title={page?.title || 'Seabound Souls'} />
             ) : hasStaticMasthead ? (

@@ -23,7 +23,7 @@ interface Props {
     results: SearchResult[]
     /** Focal-bearing image object (or null when no search page record). */
     static_masthead: FocalImage | null
-    meta: { title: string; description: string }
+    meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
 const Search = ({ query, results, static_masthead, meta }: Props) => {
@@ -37,7 +37,7 @@ const Search = ({ query, results, static_masthead, meta }: Props) => {
     }
 
     return (
-        <Layout title={meta.title} description={meta.description}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {static_masthead ? (
                 <StaticMasthead imageUrl={static_masthead} title="Search" />
             ) : (

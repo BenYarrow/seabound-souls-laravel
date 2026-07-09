@@ -18,7 +18,7 @@ declare global {
 
 interface Props {
     recaptchaSiteKey: string
-    meta: { title: string; description: string }
+    meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
 const helpTopics = [
@@ -85,7 +85,7 @@ const Contact = ({ recaptchaSiteKey, meta }: Props) => {
     }
 
     return (
-        <Layout title={meta.title} description={meta.description}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] min-h-[calc(100vh-5rem)]">
 
                 {/* ─── Left: dark info panel ─── */}
