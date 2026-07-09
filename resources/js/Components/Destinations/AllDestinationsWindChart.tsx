@@ -8,7 +8,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts'
-import { prepareYearlyWindData, WeatherDataset } from '@/helpers/weatherDataHelpers'
+import { prepareYearlyWindData, WeatherDataset } from '@/Helpers/weatherDataHelpers'
 import type { SelectOption } from './FilterDataset'
 
 interface Props {
