@@ -10,8 +10,8 @@ class LiveWeatherController extends Controller
     public function fetch(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
-            'lat' => 'required|numeric',
-            'lon' => 'required|numeric',
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lon' => ['required', 'numeric', 'between:-180,180'],
         ]);
 
         $apiKey = config('services.openweathermap.key');

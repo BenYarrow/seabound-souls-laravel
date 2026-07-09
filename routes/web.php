@@ -17,7 +17,9 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:contact')
+    ->name('contact.store');
 
 // Admin: set focal point for a media library item (called by MediaPicker Alpine click handler)
 Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])
