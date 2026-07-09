@@ -80,8 +80,6 @@ class SpotGuideResource extends Resource
                                 ->label('Thumbnail'),
                             MediaPicker::make('static_masthead_media_id')
                                 ->label('Static Masthead'),
-                            MediaPicker::make('og_image_media_id')
-                                ->label('OG Image'),
                         ]),
 
                     Tabs\Tab::make('Spot Overview')
@@ -141,13 +139,16 @@ class SpotGuideResource extends Resource
                                 // and added later. (Filament defaults repeaters to 1.)
                                 ->defaultItems(0)
                                 ->schema([
+                                    MediaPicker::make('thumbnail_media_id')
+                                        ->label('Image')
+                                        ->columnSpanFull(),
                                     TextInput::make('name')->required(),
                                     Textarea::make('description'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
@@ -172,9 +173,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
@@ -200,9 +201,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
@@ -248,6 +249,7 @@ class SpotGuideResource extends Resource
                             TextInput::make('seo_title')->label('SEO Title'),
                             Textarea::make('seo_description')->label('SEO Description'),
                             TagsInput::make('seo_keywords')->label('SEO Keywords'),
+                            MediaPicker::make('og_image_media_id')->label('OG Image'),
                         ]),
                 ])
                 ->columnSpanFull(),
