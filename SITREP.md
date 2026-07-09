@@ -1,6 +1,6 @@
 ---
 updated: 2026-07-09
-reconcile: 5
+reconcile: 6
 ---
 
 # Situation Report — Seabound Souls (Laravel)
@@ -8,6 +8,8 @@ reconcile: 5
 Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of the original Next.js 15 + Sanity windsurfing destination guide, being polished at a relaxed pace toward launch and held to Ben's IFP working standard (TDD, dark mode, responsive, documented code). See `CLAUDE.md` → "Working standard".
 
 ## Right now
+- **🚀 LIVE on Laravel Cloud** — `https://seabound-souls-production-ewycw6.laravel.cloud`. Serverless Postgres 17 + public R2 object-storage bucket for media (`MEDIA_DISK=s3`); env-driven admin login seeded on deploy. All local content + 14 media files migrated up. First deploy needed two fixes: import-case (#18) and the `league/flysystem-aws-s3-v3` adapter (#19). See [2026-07-09-laravel-cloud-launch](docs/history/2026-07-09-laravel-cloud-launch.md). **Owner follow-ups:** rotate DB/bucket secrets; queue worker; custom domain + real email.
+- **Spot-guide mobile layout + favicon** — masthead overview drops below the image on mobile (flex-wrapped 3+2), live-weather stays a floating card over the image at all breakpoints; branded favicon served as PNG. Desktop unchanged.
 - **Test harness working + Vite-independent** (`RefreshDatabase`, `withoutVite()`, `SCOUT_DRIVER=null` with Scout tests on the `collection` engine; external HTTP + mail faked).
 - **All public controllers fully tested + commented** (Blog, SpotGuide, Destinations, Search, Contact, Pages, Homepage) — suite at **45 tests, 323 assertions**.
 - **Search & navigation UX shipped** — live search dropdown (`/api/search` + `SiteSearch` service), animated desktop search, staggered slide-down mobile menu.
@@ -22,13 +24,13 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 - Public site renders end-to-end in dev (Laravel + Vite, Node 22).
 
 ## In flight
-- **Single-admin security** — PR #17 open (folded reconcile rides in it). Deploy step (owner, on Cloud): set `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars, then `php artisan db:seed --class=AdminUserSeeder`.
+- **Spot-guide mobile layout + favicon** — PR #20 open (folded reconcile rides in it, and captures the #18/#19/go-live gap).
 
 ## Next action
-1. Test the remaining **helper/API units** — `Api\WeatherDataController`, weather-data transforms, `LiveWeatherController` caching (its coordinate-validation path is now covered); then Filament smoke tests.
-2. Remaining pre-launch security: optional **2FA** (deferred — Filament plugin + TOTP) and the **production-env checklist** (`APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, HTTPS, supervised worker) — see `docs/TODO.md`.
-3. Standing tracks: CI pipeline (**against Postgres** — closes the engine-parity gap the SQLite test suite leaves), `.nvmrc`, husky/eslint-jsdoc, dark-mode token layer + responsive audit. Smaller follow-ups: `->afterCommit()` weather-dispatch hardening, soft-delete/slug reuse fix, remove the one-off SQLite→Postgres migration tooling once proven.
-4. **Project B — go-live:** deploy Laravel (Postgres now matches the target host), point `seaboundsouls.co.uk` at it, real transactional email + DNS, `APP_DEBUG=false` + supervised queue worker.
+1. **Post-launch owner tasks:** rotate the production DB password + bucket access key (Cloud dashboard); decide the queue-worker approach (on-demand drain vs background process); custom domain (`seaboundsouls.co.uk`) + real transactional email/DNS.
+2. Remaining pre-launch security: optional **2FA** (deferred — Filament plugin + TOTP). (Production-env basics `APP_ENV`/`APP_DEBUG=false`/`SESSION_SECURE_COOKIE` are set on Cloud.)
+3. Standing tracks: CI pipeline (**against Postgres**, + a Linux `npm run build` to catch import-case bugs — see #18), `.nvmrc`, husky/eslint-jsdoc, dark-mode token layer + responsive audit. Smaller follow-ups: `->afterCommit()` weather-dispatch hardening, soft-delete/slug reuse fix, remove the one-off SQLite→Postgres migration tooling once proven.
+4. Test the remaining **helper/API units** — `Api\WeatherDataController`, weather-data transforms, `LiveWeatherController` caching; then Filament smoke tests.
 
 ## Roadmap
 | Date | Work | PR | History doc |
@@ -49,6 +51,8 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-09 | Security hardening (rate limits, coordinate validation, dependency bumps) | [#15](https://github.com/BenYarrow/seabound-souls-laravel/pull/15) | [2026-07-09-security-hardening](docs/history/2026-07-09-security-hardening.md) |
 | 2026-07-09 | Local dev database switched from SQLite to PostgreSQL | [#16](https://github.com/BenYarrow/seabound-souls-laravel/pull/16) | [2026-07-09-postgres-local-dev](docs/history/2026-07-09-postgres-local-dev.md) |
 | 2026-07-09 | Single-admin security (env-driven password + owner-only panel) | [#17](https://github.com/BenYarrow/seabound-souls-laravel/pull/17) | [2026-07-09-single-admin-security](docs/history/2026-07-09-single-admin-security.md) |
+| 2026-07-09 | **Launched on Laravel Cloud** (deploy + data/media migration) | [#18](https://github.com/BenYarrow/seabound-souls-laravel/pull/18), [#19](https://github.com/BenYarrow/seabound-souls-laravel/pull/19) | [2026-07-09-laravel-cloud-launch](docs/history/2026-07-09-laravel-cloud-launch.md) |
+| 2026-07-09 | Spot-guide mobile masthead layout + branded favicon | [#20](https://github.com/BenYarrow/seabound-souls-laravel/pull/20) | [2026-07-09-spotguide-mobile-and-favicon](docs/history/2026-07-09-spotguide-mobile-and-favicon.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.
