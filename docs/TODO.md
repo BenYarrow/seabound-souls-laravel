@@ -37,7 +37,11 @@ The site is already single-login-only: the only auth is the Filament admin (`/ad
 - [ ] **Restrict the panel to the owner** via `User::canAccessPanel()` (owner email only) — so even a stray account can never reach `/admin`. (Currently any authenticated user could; only one exists today. Stakes: contact enquiries store visitor PII.)
 - [ ] Keep Filament **registration off** (already off — never add `->registration()`).
 - [ ] Optional: enable **2FA** (Filament two-factor plugin) on the admin account.
-- [ ] Prod env basics: `APP_DEBUG=false`, `APP_ENV=production`, HTTPS enforced.
+- [ ] **Production environment (deploy-time, not code):**
+  - `APP_ENV=production`, `APP_DEBUG=false` (no stack-trace/query leakage)
+  - `SESSION_SECURE_COOKIE=true`, HTTPS enforced
+  - `QUEUE_CONNECTION=database` with a supervised worker process running (weather triggers)
+  - Real transactional mail configured (see Project B)
 
 ## Project B — go-live (separate effort)
 - [ ] Deploy Laravel to a host (first-ever deploy) + point `seaboundsouls.co.uk` at it, off the old Vercel holding page
