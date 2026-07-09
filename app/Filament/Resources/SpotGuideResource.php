@@ -141,13 +141,16 @@ class SpotGuideResource extends Resource
                                 // and added later. (Filament defaults repeaters to 1.)
                                 ->defaultItems(0)
                                 ->schema([
+                                    MediaPicker::make('thumbnail_media_id')
+                                        ->label('Image')
+                                        ->columnSpanFull(),
                                     TextInput::make('name')->required(),
                                     Textarea::make('description'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
@@ -172,9 +175,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
@@ -200,9 +203,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
-                                    TextInput::make('sort_order')->numeric()->default(0),
                                 ])
                                 ->columns(2)
+                                // Drag rows to reorder — Filament persists the order into sort_order.
                                 ->orderColumn('sort_order'),
                         ]),
 
