@@ -40,7 +40,6 @@ interface Props {
         title: string
         slug: string
         country: { name: string; slug: string; continent: string } | null
-        timezone: string | null
         latitude: number | null
         longitude: number | null
         introduction_text: string | null

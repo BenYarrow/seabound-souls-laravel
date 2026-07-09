@@ -26,7 +26,6 @@ class SpotGuideFactory extends Factory
             'title' => $title,
             'slug' => Str::slug($title),
             'country_id' => Country::factory(),
-            'timezone' => 'Europe/London',
             'latitude' => $this->faker->latitude(),
             'longitude' => $this->faker->longitude(),
             'introduction_text' => $this->faker->paragraph(),

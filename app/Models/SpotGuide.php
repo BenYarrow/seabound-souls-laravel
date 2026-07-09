@@ -48,7 +48,7 @@ class SpotGuide extends Model
     }
 
     protected $fillable = [
-        'title', 'slug', 'country_id', 'country_name', 'timezone', 'latitude', 'longitude',
+        'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
         'introduction_text', 'spot_overview', 'water_conditions', 'wind_conditions',
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
