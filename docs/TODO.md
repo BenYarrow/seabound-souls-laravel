@@ -9,7 +9,7 @@ Public controllers all covered. Remaining:
 - [ ] Filament resources — smoke tests (lowest priority)
 
 ## Tooling
-- [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — would have caught the Vite-dependent-suite fragility immediately
+- [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — **against PostgreSQL** (the suite runs on SQLite locally for speed; a Postgres CI job closes the dev/prod engine-parity gap and would have caught the Vite-dependent-suite fragility immediately)
 - [ ] Add `.nvmrc` pinning Node 22 so the correct version is auto-selected
 - [ ] Set up husky + lint-staged + eslint-plugin-jsdoc pre-commit enforcement (JSDoc-on-every-function rule)
 
@@ -22,6 +22,7 @@ Public controllers all covered. Remaining:
 
 ## Backend hardening
 - [ ] Dispatch `FetchSpotWeatherJob` from the `SpotGuide::created` hook with `->afterCommit()` so the auto-fetch stays correct even if the Filament panel later enables `->databaseTransactions()`. Correct today (panel has no DB transactions, so the row is committed before dispatch), but the guarantee is currently implicit. Note: a naive `->afterCommit()` breaks the dispatch test under `RefreshDatabase`'s wrapping transaction — needs test-config care.
+- [ ] Remove the one-off SQLite→Postgres migration tooling once the migration is proven and no longer needed: the `sqlite_legacy` connection in `config/database.php`, the `db:import-from-sqlite` command, and the stale `database/database.sqlite` file.
 - [ ] Dependency advisories: 4 low-severity, **dev-only** advisories remain (`symfony/dom-crawler` XXE, `symfony/yaml` ReDoS / Billion-Laughs) — no fix published in the 7.4.x constraint window; revisit on a future `composer update`.
 - [ ] Soft-delete/slug reuse: deleting a spot guide / blog / page soft-deletes it, so its unique slug stays reserved and recreating with the same slug fails with a confusing "already been taken". Improve the message (point to Restore / permanent-delete) — applies to SpotGuide, Blog, Page.
 
