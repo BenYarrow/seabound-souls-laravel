@@ -80,8 +80,6 @@ class SpotGuideResource extends Resource
                                 ->label('Thumbnail'),
                             MediaPicker::make('static_masthead_media_id')
                                 ->label('Static Masthead'),
-                            MediaPicker::make('og_image_media_id')
-                                ->label('OG Image'),
                         ]),
 
                     Tabs\Tab::make('Spot Overview')
@@ -251,6 +249,7 @@ class SpotGuideResource extends Resource
                             TextInput::make('seo_title')->label('SEO Title'),
                             Textarea::make('seo_description')->label('SEO Description'),
                             TagsInput::make('seo_keywords')->label('SEO Keywords'),
+                            MediaPicker::make('og_image_media_id')->label('OG Image'),
                         ]),
                 ])
                 ->columnSpanFull(),
