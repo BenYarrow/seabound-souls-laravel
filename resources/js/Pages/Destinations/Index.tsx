@@ -30,7 +30,7 @@ interface Props {
     weatherData: WeatherDataset
     /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
     static_masthead: FocalImage | null
-    meta: { title: string; description: string }
+    meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
 const CONTINENT_LABELS: Record<string, string> = {
@@ -83,7 +83,7 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
     const mastheadImage = static_masthead ?? spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
 
     return (
-        <Layout title={meta.title} description={meta.description}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
 
             {/* ─── Masthead ─── */}
             <StaticMasthead

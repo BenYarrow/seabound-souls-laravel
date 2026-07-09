@@ -7,15 +7,19 @@ interface LayoutProps {
     children: ReactNode
     title?: string
     description?: string
+    keywords?: string[]
     ogImage?: string
 }
 
-const Layout = ({ children, title, description, ogImage }: LayoutProps) => {
+const Layout = ({ children, title, description, keywords, ogImage }: LayoutProps) => {
     return (
         <>
             <Head>
                 {title && <title>{title}</title>}
                 {description && <meta name="description" content={description} />}
+                {keywords && keywords.length > 0 && (
+                    <meta name="keywords" content={keywords.join(', ')} />
+                )}
                 {ogImage && <meta property="og:image" content={ogImage} />}
             </Head>
             <main className="w-full relative">

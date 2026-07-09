@@ -22,7 +22,7 @@ const Show = ({ page, meta }: Props) => {
     const hasSlider = page.masthead_slider?.length > 0
 
     return (
-        <Layout title={meta.title} description={meta.description} ogImage={meta.og_image}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {hasSlider ? (
                 <MastheadSlider slides={page.masthead_slider} title={page.title} />
             ) : page.static_masthead ? (

@@ -24,7 +24,7 @@ interface Props {
     }
     /** Focal-bearing image for the masthead, or null when no page record exists. */
     static_masthead: FocalImage | null
-    meta: { title: string; description: string }
+    meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
 const formatDate = (dateStr: string | null): string => {
@@ -42,7 +42,7 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
     const [featured, ...rest] = blogs.data
 
     return (
-        <Layout title={meta.title} description={meta.description}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {static_masthead ? (
                 <StaticMasthead
                     imageUrl={static_masthead}

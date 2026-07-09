@@ -160,7 +160,7 @@ const Show = ({ spotGuide, meta }: Props) => {
     }, [spotGuide])
 
     return (
-        <Layout title={meta.title} description={meta.description} ogImage={meta.og_image}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
 
             {/* ── Masthead ── */}
             <div className="relative">

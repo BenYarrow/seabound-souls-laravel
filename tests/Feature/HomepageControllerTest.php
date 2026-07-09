@@ -24,7 +24,7 @@ class HomepageControllerTest extends TestCase
             fn (Assert $assert) => $assert
                 ->component('Homepage')
                 ->where('page', null)
-                ->where('meta.title', 'Seabound Souls - Windsurfing Destination Guide')
+                ->where('meta.title', 'Windsurfing Destination Guide')
         );
     }
 

@@ -26,7 +26,7 @@ class SearchController extends Controller
 
         $page = Page::where('slug', 'search')
             ->where('is_published', true)
-            ->with('staticMastheadMedia')
+            ->with(['staticMastheadMedia', 'ogImageMedia'])
             ->first();
 
         return Inertia::render('Search', [
@@ -35,8 +35,10 @@ class SearchController extends Controller
             // Display image as focal-bearing object for StaticMasthead/CoverImage.
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
-                'title' => $query ? "Search: {$query} | Seabound Souls" : 'Search | Seabound Souls',
-                'description' => 'Search for windsurfing destinations and articles.',
+                'title' => $query ? "Search: {$query}" : ($page?->seo_title ?: 'Search'),
+                'description' => $page?->seo_description ?: 'Search for windsurfing destinations and articles.',
+                'keywords' => $page?->seo_keywords ?? [],
+                'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
         ]);
     }

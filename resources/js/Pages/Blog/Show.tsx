@@ -25,7 +25,7 @@ const Show = ({ blog, meta }: Props) => {
     const hasSlider = blog.masthead_slider?.length > 0
 
     return (
-        <Layout title={meta.title} description={meta.description} ogImage={meta.og_image}>
+        <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {hasSlider ? (
                 <MastheadSlider slides={blog.masthead_slider} title={blog.title} />
             ) : (

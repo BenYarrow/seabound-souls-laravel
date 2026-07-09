@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Launched on Laravel Cloud (Serverless Postgres 17 + R2 media bucket; content+media migrated up) with two deploy fixes — import-case (#18) and flysystem-aws-s3-v3 (#19). Plus spot-guide mobile masthead layout + branded favicon (#20). Folded reconcile captures the #18/#19/go-live gap. Suite 100 tests, 516 assertions.
+note: Site-wide editable SEO — listing/system pages read title/description/keywords/OG from their Page record (contact Page seeded); Layout renders keywords meta; doubled title suffix fixed. PR #21, folded reconcile. Suite 107 tests, 625 assertions.
