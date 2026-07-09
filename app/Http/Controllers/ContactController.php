@@ -10,6 +10,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ContactFormRequest;
 use App\Mail\ContactFormMail;
 use App\Models\ContactEnquiry;
+use App\Models\Page;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -22,11 +23,15 @@ class ContactController extends Controller
     /** Render the contact form, passing the reCAPTCHA site key for the widget. */
     public function index(): Response
     {
+        $page = Page::where('slug', 'contact')->with('ogImageMedia')->first();
+
         return Inertia::render('Contact', [
             'recaptchaSiteKey' => config('services.recaptcha.site_key'),
             'meta' => [
-                'title' => 'Contact | Seabound Souls',
-                'description' => 'Get in touch with the Seabound Souls team.',
+                'title' => $page?->seo_title ?: 'Contact',
+                'description' => $page?->seo_description ?: 'Get in touch with the Seabound Souls team.',
+                'keywords' => $page?->seo_keywords ?? [],
+                'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
         ]);
     }

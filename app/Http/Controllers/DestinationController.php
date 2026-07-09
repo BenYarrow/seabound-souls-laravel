@@ -28,7 +28,7 @@ class DestinationController extends Controller
         // thumbnail when no such page exists yet.
         $page = Page::where('slug', 'destinations')
             ->where('is_published', true)
-            ->with('staticMastheadMedia')
+            ->with(['staticMastheadMedia', 'ogImageMedia'])
             ->first();
 
         $spotGuides = SpotGuide::published()
@@ -73,8 +73,10 @@ class DestinationController extends Controller
             'weatherData' => $weatherData,
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
-                'title' => 'Destinations | Seabound Souls',
-                'description' => 'Explore windsurfing destinations around the world.',
+                'title' => $page?->seo_title ?: 'Destinations',
+                'description' => $page?->seo_description ?: 'Explore windsurfing destinations around the world.',
+                'keywords' => $page?->seo_keywords ?? [],
+                'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
         ]);
     }

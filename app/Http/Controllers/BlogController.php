@@ -28,7 +28,7 @@ class BlogController extends Controller
     {
         $page = Page::where('slug', 'blog')
             ->where('is_published', true)
-            ->with('staticMastheadMedia')
+            ->with(['staticMastheadMedia', 'ogImageMedia'])
             ->first();
 
         $blogs = Blog::published()
@@ -50,8 +50,10 @@ class BlogController extends Controller
             // Display images as objects; the static_masthead feeds StaticMasthead which uses CoverImage.
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
-                'title' => 'Blog | Seabound Souls',
-                'description' => 'Windsurfing tips, guides and destination insights.',
+                'title' => $page?->seo_title ?: 'Blog',
+                'description' => $page?->seo_description ?: 'Windsurfing tips, guides and destination insights.',
+                'keywords' => $page?->seo_keywords ?? [],
+                'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
         ]);
     }
