@@ -25,4 +25,17 @@ class ImportFromSqliteTest extends TestCase
             config('database.connections.sqlite_legacy.database')
         );
     }
+
+    /**
+     * Safety guard: the command must refuse to run unless Postgres is the
+     * default connection, so it can never fire against SQLite (or, in future,
+     * a mis-targeted DB). The test env default is sqlite, so this exercises the
+     * abort path directly.
+     */
+    public function test_import_command_refuses_to_run_without_pgsql(): void
+    {
+        $this->artisan('db:import-from-sqlite')
+            ->expectsOutputToContain('requires the pgsql connection')
+            ->assertExitCode(1);
+    }
 }
