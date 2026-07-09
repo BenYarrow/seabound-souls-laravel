@@ -44,6 +44,17 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        'sqlite_legacy' => [
+            'driver' => 'sqlite',
+            // Fixed path to the pre-Postgres SQLite file — the migration
+            // source. Deliberately NOT env-driven: DB_DATABASE now points at
+            // Postgres. Remove once the one-off migration is proven (see
+            // docs/TODO.md).
+            'database' => database_path('database.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => false,
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
