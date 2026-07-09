@@ -268,6 +268,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 **URL:** `/admin` | **Color:** Amber
 
+**Auth (single owner):** the only login is the Filament admin — no registration, no password reset. Panel access is gated to the owner email via `User::canAccessPanel()` against `config('admin.email')`. The owner credentials come from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (env) through `config/admin.php`, seeded by `AdminUserSeeder` (`updateOrCreate` — re-seed to rotate). Locally these are unset, so the dev default `seabound.souls@outlook.com` / `password` applies. Never read the `ADMIN_*` env vars outside `config/admin.php`.
+
 ### Resources
 | Resource | Key Tabs |
 |---------|---------|
