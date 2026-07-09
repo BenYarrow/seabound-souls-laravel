@@ -61,9 +61,17 @@ class SpotGuideResource extends Resource
                             TextInput::make('timezone')
                                 ->placeholder('Europe/Athens'),
                             TextInput::make('latitude')
-                                ->numeric(),
+                                ->numeric()
+                                ->required()
+                                ->minValue(-90)
+                                ->maxValue(90)
+                                ->helperText('Required — the weather fetch uses this.'),
                             TextInput::make('longitude')
-                                ->numeric(),
+                                ->numeric()
+                                ->required()
+                                ->minValue(-180)
+                                ->maxValue(180)
+                                ->helperText('Required — the weather fetch uses this.'),
                             Toggle::make('is_published')
                                 ->label('Published'),
                         ])->columns(2),
