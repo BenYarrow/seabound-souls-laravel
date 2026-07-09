@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Site-wide editable SEO — listing/system pages read title/description/keywords/OG from their Page record (contact Page seeded); Layout renders keywords meta; doubled title suffix fixed. PR #21, folded reconcile. Suite 107 tests, 625 assertions.
+note: Spot-guide admin polish (PR #22) — windsurfing-locations image picker, drag-only ordering (removed redundant sort_order inputs), OG image moved to the SEO tab. Standalone reconcile catching up #22 (its docs were deferred to avoid a concurrent SITREP/marker conflict with the SEO PR #21). Suite 101 on branch / 107+ on trunk.

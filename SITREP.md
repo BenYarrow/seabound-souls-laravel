@@ -1,6 +1,6 @@
 ---
 updated: 2026-07-09
-reconcile: 7
+reconcile: 8
 ---
 
 # Situation Report — Seabound Souls (Laravel)
@@ -10,6 +10,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 ## Right now
 - **🚀 LIVE on Laravel Cloud** — `https://seabound-souls-production-ewycw6.laravel.cloud`. Serverless Postgres 17 + public R2 object-storage bucket for media (`MEDIA_DISK=s3`); env-driven admin login seeded on deploy. All local content + 14 media files migrated up. First deploy needed two fixes: import-case (#18) and the `league/flysystem-aws-s3-v3` adapter (#19). See [2026-07-09-laravel-cloud-launch](docs/history/2026-07-09-laravel-cloud-launch.md). **Owner follow-ups:** rotate DB/bucket secrets; queue worker; custom domain + real email.
 - **Site-wide editable SEO** — title/description/keywords/OG image are now editable per page via the Pages admin (system/listing pages read SEO from their `Page` record, like the homepage already did; a `contact` Page is seeded). The Layout renders `<meta name="keywords">` (was never output before) and the doubled `| Seabound Souls` title suffix is fixed (bare titles + one global suffix). Suite **107 tests, 625 assertions**.
+- **Spot-guide admin polish** — windsurfing-locations repeater gained an image picker (renders on the card); the redundant manual `sort_order` number field is gone from all three repeaters (drag to reorder, persisted via `orderColumn`; both relations `orderBy('sort_order')` so the public page reflects it); OG-image field moved into the SEO tab.
 - **Spot-guide mobile layout + favicon** — masthead overview drops below the image on mobile (flex-wrapped 3+2), live-weather stays a floating card over the image at all breakpoints; branded favicon served as PNG. Desktop unchanged.
 - **Test harness working + Vite-independent** (`RefreshDatabase`, `withoutVite()`, `SCOUT_DRIVER=null` with Scout tests on the `collection` engine; external HTTP + mail faked).
 - **All public controllers fully tested + commented** (Blog, SpotGuide, Destinations, Search, Contact, Pages, Homepage) — suite at **45 tests, 323 assertions**.
@@ -25,8 +26,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 - Public site renders end-to-end in dev (Laravel + Vite, Node 22).
 
 ## In flight
-- **Site-wide editable SEO** — PR #21 open (folded reconcile rides in it). After merge, the `contact` Page migration runs on deploy.
-- **Windsurfing-spot repeater polish** — brainstormed/agreed, not yet started: drop the redundant `sort_order` number field (drag-reorder already works via `orderColumn`) and add an image MediaPicker to the windsurfing-locations repeater (model+card already support it).
+- Nothing actively in flight. Pending items are owner-side (Cloud): **set `MEDIA_DISK=s3`** (new `/admin` uploads persist to R2), **rotate the DB/bucket secrets**, redeploy to pick up the SEO changes + the `contact` Page migration.
 
 ## Next action
 1. **Post-launch owner tasks:** rotate the production DB password + bucket access key (Cloud dashboard); decide the queue-worker approach (on-demand drain vs background process); custom domain (`seaboundsouls.co.uk`) + real transactional email/DNS.
@@ -56,6 +56,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-09 | **Launched on Laravel Cloud** (deploy + data/media migration) | [#18](https://github.com/BenYarrow/seabound-souls-laravel/pull/18), [#19](https://github.com/BenYarrow/seabound-souls-laravel/pull/19) | [2026-07-09-laravel-cloud-launch](docs/history/2026-07-09-laravel-cloud-launch.md) |
 | 2026-07-09 | Spot-guide mobile masthead layout + branded favicon | [#20](https://github.com/BenYarrow/seabound-souls-laravel/pull/20) | [2026-07-09-spotguide-mobile-and-favicon](docs/history/2026-07-09-spotguide-mobile-and-favicon.md) |
 | 2026-07-09 | Site-wide editable SEO (title/description/keywords/OG) | [#21](https://github.com/BenYarrow/seabound-souls-laravel/pull/21) | [2026-07-09-site-wide-seo](docs/history/2026-07-09-site-wide-seo.md) |
+| 2026-07-09 | Spot-guide admin polish (windsurfing image, drag ordering, OG in SEO tab) | [#22](https://github.com/BenYarrow/seabound-souls-laravel/pull/22) | [2026-07-09-windsurfing-repeater-image-ordering](docs/history/2026-07-09-windsurfing-repeater-image-ordering.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.
