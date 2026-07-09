@@ -72,7 +72,6 @@ class SpotGuideController extends Controller
                     'slug' => $spotGuide->country->slug,
                     'continent' => $spotGuide->country->continent,
                 ] : null,
-                'timezone' => $spotGuide->timezone,
                 'latitude' => $spotGuide->latitude,
                 'longitude' => $spotGuide->longitude,
                 'introduction_text' => $spotGuide->introduction_text,

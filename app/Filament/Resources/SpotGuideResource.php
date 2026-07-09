@@ -58,12 +58,18 @@ class SpotGuideResource extends Resource
                                 ->options(Country::pluck('name', 'id'))
                                 ->searchable()
                                 ->required(),
-                            TextInput::make('timezone')
-                                ->placeholder('Europe/Athens'),
                             TextInput::make('latitude')
-                                ->numeric(),
+                                ->numeric()
+                                ->required()
+                                ->minValue(-90)
+                                ->maxValue(90)
+                                ->helperText('Required — the weather fetch uses this.'),
                             TextInput::make('longitude')
-                                ->numeric(),
+                                ->numeric()
+                                ->required()
+                                ->minValue(-180)
+                                ->maxValue(180)
+                                ->helperText('Required — the weather fetch uses this.'),
                             Toggle::make('is_published')
                                 ->label('Published'),
                         ])->columns(2),
@@ -131,6 +137,9 @@ class SpotGuideResource extends Resource
                         ->schema([
                             Repeater::make('windsurfingLocations')
                                 ->relationship()
+                                // Start empty — a spot can be created without any,
+                                // and added later. (Filament defaults repeaters to 1.)
+                                ->defaultItems(0)
                                 ->schema([
                                     TextInput::make('name')->required(),
                                     Textarea::make('description'),
@@ -149,6 +158,8 @@ class SpotGuideResource extends Resource
                                 ->columnSpanFull(),
                             Repeater::make('stayRecommendations')
                                 ->label('Hotels & Accommodation')
+                                // Optional — no forced empty row on create.
+                                ->defaultItems(0)
                                 ->relationship('recommendations', modifyQueryUsing: fn ($query) => $query->where('type', 'stay'))
                                 ->mutateRelationshipDataBeforeCreateUsing(fn(array $data) => array_merge($data, ['type' => 'stay']))
                                 ->mutateRelationshipDataBeforeSaveUsing(fn(array $data) => array_merge($data, ['type' => 'stay']))
@@ -174,6 +185,9 @@ class SpotGuideResource extends Resource
                                 ->columnSpanFull(),
                             Repeater::make('eatRecommendations')
                                 ->label('Restaurants & Cafes')
+                                // Optional — no forced empty row on create (e.g. a
+                                // bare UK beach spot with no restaurants).
+                                ->defaultItems(0)
                                 ->relationship('recommendations', modifyQueryUsing: fn ($query) => $query->where('type', 'eat'))
                                 ->mutateRelationshipDataBeforeCreateUsing(fn(array $data) => array_merge($data, ['type' => 'eat']))
                                 ->mutateRelationshipDataBeforeSaveUsing(fn(array $data) => array_merge($data, ['type' => 'eat']))

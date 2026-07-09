@@ -35,6 +35,14 @@ return [
             'driver' => 'sync',
         ],
 
+        // In-memory queue alias: jobs are accepted but never executed automatically.
+        // Used in tests (phpunit.xml sets QUEUE_CONNECTION=array) so the created
+        // hook can dispatch without triggering real HTTP calls. Tests that need to
+        // assert dispatches call Queue::fake(), which intercepts before the driver.
+        'array' => [
+            'driver' => 'null',
+        ],
+
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_QUEUE_CONNECTION'),

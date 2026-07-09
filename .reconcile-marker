@@ -1,2 +1,2 @@
-date: 2026-07-06
-note: Content-manageable destinations masthead + hide content builder for the destinations template (PR #12) — folded reconcile. Suite at 67 tests, 428 assertions.
+date: 2026-07-09
+note: Weather fetch triggers + post-testing refinements (fetch feedback toast/status, repeater defaultItems(0), timezone field removed, admin "View site" link) — PR #14, folded reconcile. Suite at 84 tests, 475 assertions. Pre-launch security audit findings recorded in docs/TODO.md.

@@ -22,6 +22,14 @@ Public controllers all covered. Remaining:
 
 ## Backend hardening
 - [ ] Rate-limit `/api/search` (and the other `/api/*` endpoints) before production — first typing-driven endpoint, so higher request volume; add `throttle:` to the api middleware group
+- [ ] Dispatch `FetchSpotWeatherJob` from the `SpotGuide::created` hook with `->afterCommit()` so the auto-fetch stays correct even if the Filament panel later enables `->databaseTransactions()`. Correct today (panel has no DB transactions, so the row is committed before dispatch), but the guarantee is currently implicit. Note: a naive `->afterCommit()` breaks the dispatch test under `RefreshDatabase`'s wrapping transaction — needs test-config care.
+
+## Security audit fixes (PRE-LAUNCH — from 2026-07-09 audit)
+Findings from the pre-launch security audit. Ben asked to tackle these in the branch after weather-fetch-triggers (#14). Blockers first:
+- [ ] **Bump vulnerable dependencies.** `composer audit` flags a **Filament forms RichEditor XSS** (CVE-2026-55409, high) affecting ≤3.3.52 — we're on 3.3.49; update to ≥3.3.54. Also Filament unauth temp-file-upload (CVE-2026-48500, fixed 3.3.53+) and guzzle CRLF/proxy advisories (`≥7.12.1`). `composer update filament/filament guzzlehttp/guzzle guzzlehttp/psr7`, then `npm audit fix` (vite/shell-quote are dev-only). Re-run the suite + smoke the admin after.
+- [ ] **Range-validate `/api/live-weather` lat/lon** — currently `numeric` but unbounded; add `between:-90,90` / `between:-180,180`. Pairs with the rate-limit item below (the endpoint proxies OpenWeatherMap with our key, so it's abusable for quota/cost).
+- [ ] Rate-limiting and prod config (`APP_DEBUG=false`, HTTPS) are tracked under **Backend hardening** and **Single-admin security** below — part of the same pre-launch pass.
+- Note: stored RichEditor HTML is rendered raw via `dangerouslySetInnerHTML`, but only the single trusted admin authors it (self-XSS only); the Filament dependency bump above closes the associated field-state CVE.
 
 ## Single-admin security (PRE-LAUNCH — required)
 The site is already single-login-only: the only auth is the Filament admin (`/admin`), with **no registration/password-reset and no public user system** (one user: the owner). Before launch, harden that single account:

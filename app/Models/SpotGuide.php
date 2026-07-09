@@ -7,6 +7,7 @@
 
 namespace App\Models;
 
+use App\Jobs\FetchSpotWeatherJob;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,10 +20,13 @@ class SpotGuide extends Model
     use HasFactory, SoftDeletes, Searchable;
 
     /**
-     * Keep the denormalised country_name in step with the country_id FK. Only
-     * re-resolves when country_id actually changed, so unrelated saves stay cheap.
-     * country_name feeds the searchable array (toSearchableArray) so guides can be
-     * found by country without joining the countries table at query time.
+     * Register model lifecycle hooks.
+     *
+     * saving — denormalises country_name onto the row whenever country_id
+     *   changes, so Scout search can match on country without a JOIN.
+     * created — dispatches FetchSpotWeatherJob for any new spot that already
+     *   has coordinates, giving it weather data immediately rather than waiting
+     *   for the next scheduled fetch-all run.
      */
     protected static function booted(): void
     {
@@ -31,10 +35,20 @@ class SpotGuide extends Model
                 $guide->country_name = Country::find($guide->country_id)?->name;
             }
         });
+
+        // Auto-fetch weather for a newly created spot as soon as it has
+        // coordinates, so admins don't wait for the weekly command. Create-only
+        // by design — editing coordinates later is handled by the dashboard
+        // "Fetch all weather" button.
+        static::created(function (SpotGuide $guide) {
+            if ($guide->latitude !== null && $guide->longitude !== null) {
+                FetchSpotWeatherJob::dispatch($guide->id);
+            }
+        });
     }
 
     protected $fillable = [
-        'title', 'slug', 'country_id', 'country_name', 'timezone', 'latitude', 'longitude',
+        'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
         'introduction_text', 'spot_overview', 'water_conditions', 'wind_conditions',
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
