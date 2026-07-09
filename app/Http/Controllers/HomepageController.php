@@ -117,7 +117,7 @@ class HomepageController extends Controller
             'recentBlogs' => $recentBlogs,
             'meta' => [
                 'title' => $page?->seo_title ?: 'Windsurfing Destination Guide',
-                'description' => $page?->seo_description ?? 'Discover the best windsurfing destinations around the world.',
+                'description' => $page?->seo_description ?: 'Discover the best windsurfing destinations around the world.',
                 'keywords' => $page?->seo_keywords ?? [],
                 'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
