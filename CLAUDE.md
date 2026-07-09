@@ -396,7 +396,8 @@ Rewritten to match the Next.js design:
 - Panel floats left (`lg:mr-auto`) or right (`lg:ml-auto`) based on `textRight` prop
 - Content rendered via `dangerouslySetInnerHTML` (HTML from Filament RichEditor, not Sanity PortableText)
 
-### Helpers (`resources/js/helpers/`)
+### Helpers (`resources/js/Helpers/`)
+> **Case matters:** the directory is `Helpers/` (capital H) — import as `@/Helpers/…`. macOS is case-insensitive so lowercase `@/helpers/…` works locally but breaks the case-sensitive Linux build on Laravel Cloud (`vite:load-fallback … ENOENT`). Match the tracked case for every `@/…` import.
 - **`colours.ts`** — `chartColors` for single-spot charts; `getSpotGuideColours()` auto-assigns from a 16-colour palette for multi-destination charts
 - **`weatherDataHelpers.ts`** — `prepareYearlyWindData()` and `prepareYearlyTempData()` transform `{ [title]: { [year]: months[] } }` into Recharts-friendly `[{ month, Title1: value, ... }]`
 - **`helpers.ts`** — `formatDate()`, `truncateText()`

@@ -10,8 +10,8 @@ import FilterDataset, { SelectOption } from '@/Components/Destinations/FilterDat
 import AllDestinationsWindChart from '@/Components/Destinations/AllDestinationsWindChart'
 import AllDestinationsTempChart from '@/Components/Destinations/AllDestinationsTempChart'
 import AnimateInView from '@/Components/Common/AnimateInView'
-import { getSpotGuideColours } from '@/helpers/colours'
-import type { WeatherDataset } from '@/helpers/weatherDataHelpers'
+import { getSpotGuideColours } from '@/Helpers/colours'
+import type { WeatherDataset } from '@/Helpers/weatherDataHelpers'
 import type { FocalImage } from '@/types/media'
 
 interface SpotGuide {
