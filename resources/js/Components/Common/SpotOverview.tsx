@@ -29,20 +29,25 @@ const SpotOverview = ({ spotOverview }: SpotOverviewProps) => {
     if (spotOverviewData.length === 0) return null
 
     const wrapperClasses = [
-        'max-lg:container max-lg:mx-auto max-lg:flex max-lg:items-center max-lg:justify-center',
+        // Mobile/tablet: full-width dark band below the masthead image (so the
+        // white icons/text stay legible against the page background).
+        'max-lg:bg-secondary max-lg:flex max-lg:items-center max-lg:justify-center max-lg:py-8',
         'md:min-h-[20vh]',
         'lg:absolute lg:right-0 lg:top-0 lg:h-full lg:bg-secondary/90 lg:transition-all lg:duration-300',
         overviewIsOpen ? 'lg:w-[20vw]' : 'lg:w-[5rem]'
     ].join(' ')
 
     const listClasses = [
-        'relative w-full h-full grid grid-cols-3 py-4 gap-4',
-        'md:grid-cols-5',
-        'lg:gap-x-0 lg:flex lg:flex-col lg:justify-evenly lg:gap-y-20'
+        // Mobile: flex-wrap so the 5 items land 3-on-top / 2-centred-below.
+        // Tablet: 5 across. Desktop: vertical sidebar.
+        'relative w-full h-full py-4 gap-4 flex flex-wrap justify-center max-lg:container max-lg:mx-auto',
+        'md:grid md:grid-cols-5',
+        'lg:flex lg:flex-col lg:flex-nowrap lg:justify-evenly lg:gap-x-0 lg:gap-y-20'
     ].join(' ')
 
     const buttonClasses = [
-        'absolute top-1/2 left-0 z-10 p-2 -translate-y-1/2 -translate-x-full',
+        // Desktop-only: drives the collapsible sidebar, meaningless on mobile.
+        'absolute top-1/2 left-0 z-10 p-2 -translate-y-1/2 -translate-x-full max-lg:hidden',
         'bg-secondary/90 rounded-l-md flex items-center justify-center',
     ].join(' ')
 
@@ -56,7 +61,8 @@ const SpotOverview = ({ spotOverview }: SpotOverviewProps) => {
             <ul className={listClasses}>
                 {spotOverviewData.map(({ title, icon, value }, index) => {
                     const itemClasses = [
-                        'flex flex-col gap-4 items-center lg:flex-row lg:gap-6 lg:px-4',
+                        // basis-1/4 → 3 items fit per row on mobile (the 4th+ wrap); reset on desktop sidebar.
+                        'flex flex-col gap-4 items-center basis-1/4 lg:basis-auto lg:flex-row lg:gap-6 lg:px-4',
                         overviewIsOpen ? 'lg:justify-start' : 'lg:justify-center'
                     ].join(' ')
 

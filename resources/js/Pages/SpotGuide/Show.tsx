@@ -163,18 +163,22 @@ const Show = ({ spotGuide, meta }: Props) => {
         <Layout title={meta.title} description={meta.description} ogImage={meta.og_image}>
 
             {/* ── Masthead ── */}
-            <StaticMasthead
-                imageUrl={spotGuide.static_masthead}
-                title={spotGuide.title}
-                subtitle={spotGuide.country?.name}
-            >
+            <div className="relative">
+                <StaticMasthead
+                    imageUrl={spotGuide.static_masthead}
+                    title={spotGuide.title}
+                    subtitle={spotGuide.country?.name}
+                >
+                    {spotGuide.latitude && spotGuide.longitude && (
+                        <LiveWeatherData latitude={spotGuide.latitude} longitude={spotGuide.longitude} />
+                    )}
+                </StaticMasthead>
+
+                {/* Overview: desktop = right sidebar over the image; mobile = block below the image */}
                 {spotGuide.spot_overview && (
                     <SpotOverview spotOverview={spotGuide.spot_overview} />
                 )}
-                {spotGuide.latitude && spotGuide.longitude && (
-                    <LiveWeatherData latitude={spotGuide.latitude} longitude={spotGuide.longitude} />
-                )}
-            </StaticMasthead>
+            </div>
 
             {/* ── Introduction ── */}
             {spotGuide.introduction_text && (
