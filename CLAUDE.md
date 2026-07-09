@@ -17,6 +17,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 ### Session start
 - **Node:** The shell default is Node **v14.16.0** (nvm) which **cannot run Vite 7** (`Cannot find module 'node:path'`). Use v22+ — `export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH"` before `npm run dev` / `npm run build`. (No `.nvmrc` committed yet — pending follow-up.)
+- **Database:** Local dev runs on **PostgreSQL** (matches Laravel Cloud), DB `seabound_souls_dev` on `127.0.0.1:5432`. It's served by the Homebrew `postgresql@16` service (`brew services list` to check; `brew services start postgresql@16` if down) — the app 500s on a DB connection error if it isn't running. The **test suite** runs on in-memory SQLite (`phpunit.xml`), so `php artisan test` needs no Postgres.
 - **Sub-agents must source nvm.** A spawned sub-agent (Agent tool) starts in a fresh shell where nvm is not sourced, so `node` falls back to v14 and npm/vite/npx fail with misleading errors — often the sub-agent wrongly concludes the right Node isn't installed. When delegating any task that may run node/npm, include in the prompt: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && <command>`, and state explicitly that the system `node` is NOT the project version.
 - **One-command dev startup:** `composer dev` runs Vite HMR + the queue worker (`queue:listen`) + logs (`pail`) together via `concurrently` — this is the recommended way to work locally, since it guarantees a worker is running for the weather-fetch triggers. It does **not** start `php artisan serve` (Herd serves the app at `seaboundsouls.test`). Prefix with the Node 22 PATH export (Vite runs inside it). Stop with Ctrl-C (kills all three).
 - **Dev servers (manual alt.):** Herd serves the app; Vite HMR `:5173` (`npm run dev`) must run or the app 500s with "Unable to locate file in Vite manifest" (Vite down / `public/hot` missing). Without Herd, `php artisan serve` on `:8000` also works.
@@ -47,6 +48,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - Avoid ad-blocker trigger words (`ad`, `banner`, `promo`, `sponsor`, `tracker`) in routes/asset/chunk names — they get silently blocked. Prefer neutral synonyms.
 
 ### Database
+- **Local dev + production: PostgreSQL** (`pgsql`). Tests: in-memory SQLite. The pre-Postgres SQLite file was migrated once via `php artisan db:import-from-sqlite` (reads the `sqlite_legacy` connection). Don't reintroduce SQLite as the app's default connection.
 - Schema changes go through Laravel migrations (`php artisan make:migration`). **Never edit a migration that has already run** — add a new migration for the change.
 
 ---

@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Pre-launch security hardening (rate limiters search 60/weather-api 30/contact 5 per min, lat/lon range validation, within-major dependency bumps clearing all high/medium composer advisories, prod-config checklist) — PR #15, folded reconcile. Suite at 94 tests, 505 assertions. 4 low dev-only advisories + Filament admin smoke-check remain pre-launch.
+note: Local dev database switched from SQLite to PostgreSQL (seabound_souls_dev on Homebrew pg@16), matching Laravel Cloud. One-off db:import-from-sqlite command migrated all content intact (FK-safe order, PKs preserved, sequences reset); read-only sqlite_legacy source connection. Tests stay on in-memory SQLite. PR #16, folded reconcile. Suite 96 tests, 509 assertions.
