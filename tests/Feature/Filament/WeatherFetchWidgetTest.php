@@ -7,7 +7,6 @@ namespace Tests\Feature\Filament;
 use App\Filament\Widgets\WeatherFetchWidget;
 use App\Jobs\FetchAllWeatherJob;
 use App\Models\SpotGuide;
-use App\Models\User;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -19,7 +18,7 @@ class WeatherFetchWidgetTest extends TestCase
     public function test_button_dispatches_the_fetch_all_job(): void
     {
         Queue::fake();
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
 
         Livewire::test(WeatherFetchWidget::class)
             ->call('fetchAll');
@@ -59,7 +58,7 @@ class WeatherFetchWidgetTest extends TestCase
 
     public function test_fetch_button_is_disabled_and_relabelled_while_a_fetch_is_pending(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
 
         // No pending job → the button is enabled with its normal label.
         Livewire::test(WeatherFetchWidget::class)

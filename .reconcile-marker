@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Local dev database switched from SQLite to PostgreSQL (seabound_souls_dev on Homebrew pg@16), matching Laravel Cloud. One-off db:import-from-sqlite command migrated all content intact (FK-safe order, PKs preserved, sequences reset); read-only sqlite_legacy source connection. Tests stay on in-memory SQLite. PR #16, folded reconcile. Suite 96 tests, 509 assertions.
+note: Single-admin security hardening — env-driven admin password (config/admin.php + ADMIN_EMAIL/ADMIN_PASSWORD, dev defaults preserved), owner-only Filament panel gate (User::canAccessPanel), AdminUserSeeder with updateOrCreate password rotation. PR #17, folded reconcile. Suite 100 tests, 516 assertions. Remaining pre-launch: 2FA (deferred) + production-env checklist.

@@ -7,14 +7,13 @@
 namespace Tests\Feature\Filament;
 
 use App\Models\MediaLibrary;
-use App\Models\User;
 use Tests\TestCase;
 
 class MediaPickerFocalTest extends TestCase
 {
     public function test_focal_point_can_be_saved_for_a_media_item(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
         $media = MediaLibrary::create(['name' => 'Hero']);
 
         $this->postJson("/admin/media/{$media->id}/focal", ['x' => 25, 'y' => 75])
@@ -34,7 +33,7 @@ class MediaPickerFocalTest extends TestCase
 
     public function test_focal_values_are_clamped_to_0_100(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
         $media = MediaLibrary::create(['name' => 'Hero']);
         $this->postJson("/admin/media/{$media->id}/focal", ['x' => 250, 'y' => -5])
             ->assertUnprocessable();

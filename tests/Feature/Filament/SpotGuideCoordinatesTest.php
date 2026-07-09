@@ -7,7 +7,6 @@ namespace Tests\Feature\Filament;
 
 use App\Filament\Resources\SpotGuideResource\Pages\CreateSpotGuide;
 use App\Models\Country;
-use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -18,7 +17,7 @@ class SpotGuideCoordinatesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
     }
 
     public function test_coordinates_are_required(): void

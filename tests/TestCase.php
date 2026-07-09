@@ -6,6 +6,7 @@
 
 namespace Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
@@ -22,5 +23,17 @@ abstract class TestCase extends BaseTestCase
         // otherwise tests 500 with "Unable to locate file in Vite manifest" whenever
         // `npm run dev` isn't running and public/hot is absent.
         $this->withoutVite();
+    }
+
+    /**
+     * Create the owner user (email matching config('admin.email')) and act as
+     * them, so panel tests satisfy User::canAccessPanel's owner-only gate.
+     */
+    protected function actingAsOwner(): User
+    {
+        $owner = User::factory()->create(['email' => config('admin.email')]);
+        $this->actingAs($owner);
+
+        return $owner;
     }
 }

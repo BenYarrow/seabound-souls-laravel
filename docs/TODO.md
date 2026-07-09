@@ -27,9 +27,7 @@ Public controllers all covered. Remaining:
 - [ ] Soft-delete/slug reuse: deleting a spot guide / blog / page soft-deletes it, so its unique slug stays reserved and recreating with the same slug fails with a confusing "already been taken". Improve the message (point to Restore / permanent-delete) — applies to SpotGuide, Blog, Page.
 
 ## Single-admin security (PRE-LAUNCH — required)
-The site is already single-login-only: the only auth is the Filament admin (`/admin`), with **no registration/password-reset and no public user system** (one user: the owner). Before launch, harden that single account:
-- [ ] **Strong production admin password — not the dev credential.** Set it via an env-driven `AdminUserSeeder` (`User::updateOrCreate` from `ADMIN_EMAIL`/`ADMIN_PASSWORD` host secrets, run on deploy) so the password lives only in the host env + a password manager, never in git. Rotatable by changing the env + re-seeding.
-- [ ] **Restrict the panel to the owner** via `User::canAccessPanel()` (owner email only) — so even a stray account can never reach `/admin`. (Currently any authenticated user could; only one exists today. Stakes: contact enquiries store visitor PII.)
+The single owner login has been hardened with a strong env-driven password (set at deploy-time via `AdminUserSeeder`) and panel access restricted to the owner email only. What remains is optional 2FA and production environment configuration:
 - [ ] Keep Filament **registration off** (already off — never add `->registration()`).
 - [ ] Optional: enable **2FA** (Filament two-factor plugin) on the admin account.
 - [ ] **Production environment (deploy-time, not code):**
