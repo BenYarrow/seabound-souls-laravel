@@ -80,4 +80,66 @@ class WeatherFetcherTest extends TestCase
         $this->assertSame(2, $processed);
         $this->assertSame([true, true], array_values($reported));
     }
+
+    /**
+     * Guarantees that a single spot's HTTP 500 does not abort the entire batch.
+     *
+     * When fetchForSpots is called with two spots, the first of which receives an
+     * HTTP 500 from the Open-Meteo archive API, the service must:
+     *  - catch the RuntimeException thrown by fetchForSpot for the failing spot,
+     *  - continue and successfully process the second spot,
+     *  - report false (+ an error message) for the failing spot and true for the succeeding one,
+     *  - return 1 (only the successful fetch counted),
+     *  - write a weather_records row only for the succeeding spot.
+     */
+    public function test_fetch_for_spots_isolates_per_spot_failures(): void
+    {
+        Sleep::fake();
+
+        $failingSpot = SpotGuide::factory()->create(['latitude' => 10.0, 'longitude' => -6.0]);
+        $succeedingSpot = SpotGuide::factory()->create(['latitude' => 36.0, 'longitude' => -6.0]);
+
+        // Return HTTP 500 for any request whose latitude matches the failing spot;
+        // return a valid archive response for everything else.
+        Http::fake(function ($request) use ($failingSpot) {
+            $requestedLatitude = (float) $request->data()['latitude'];
+
+            if ($requestedLatitude === (float) $failingSpot->latitude) {
+                return Http::response([], 500);
+            }
+
+            return Http::response($this->fakeArchiveResponse(), 200);
+        });
+
+        $reportedResults = [];
+
+        $successCount = app(WeatherFetcher::class)->fetchForSpots(
+            [$failingSpot, $succeedingSpot],
+            function (SpotGuide $spot, bool $succeeded, ?string $errorMessage) use (&$reportedResults) {
+                $reportedResults[$spot->id] = [
+                    'succeeded' => $succeeded,
+                    'errorMessage' => $errorMessage,
+                ];
+            }
+        );
+
+        // Only the succeeding spot contributes to the return count.
+        $this->assertSame(1, $successCount);
+
+        // Reporter must have been called for both spots.
+        $this->assertArrayHasKey($failingSpot->id, $reportedResults);
+        $this->assertArrayHasKey($succeedingSpot->id, $reportedResults);
+
+        // Failing spot: reporter receives false and a non-empty error message.
+        $this->assertFalse($reportedResults[$failingSpot->id]['succeeded']);
+        $this->assertNotEmpty($reportedResults[$failingSpot->id]['errorMessage']);
+
+        // Succeeding spot: reporter receives true and no error message.
+        $this->assertTrue($reportedResults[$succeedingSpot->id]['succeeded']);
+        $this->assertNull($reportedResults[$succeedingSpot->id]['errorMessage']);
+
+        // Only the succeeding spot must have a weather_records row in the database.
+        $this->assertSame(0, WeatherRecord::where('spot_guide_id', $failingSpot->id)->count());
+        $this->assertSame(1, WeatherRecord::where('spot_guide_id', $succeedingSpot->id)->count());
+    }
 }
