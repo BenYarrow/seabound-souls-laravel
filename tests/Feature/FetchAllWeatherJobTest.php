@@ -8,7 +8,6 @@ namespace Tests\Feature;
 use App\Jobs\FetchAllWeatherJob;
 use App\Models\SpotGuide;
 use App\Models\User;
-use App\Models\WeatherRecord;
 use App\Services\WeatherFetcher;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;

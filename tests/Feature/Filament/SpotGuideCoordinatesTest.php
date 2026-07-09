@@ -42,6 +42,6 @@ class SpotGuideCoordinatesTest extends TestCase
                 'longitude' => 500,
             ])
             ->call('create')
-            ->assertHasFormErrors(['latitude', 'longitude']);
+            ->assertHasFormErrors(['latitude' => 'max', 'longitude' => 'max']);
     }
 }
