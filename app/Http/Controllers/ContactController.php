@@ -23,7 +23,7 @@ class ContactController extends Controller
     /** Render the contact form, passing the reCAPTCHA site key for the widget. */
     public function index(): Response
     {
-        $page = Page::where('slug', 'contact')->with('ogImageMedia')->first();
+        $page = Page::where('slug', 'contact')->where('is_published', true)->with('ogImageMedia')->first();
 
         return Inertia::render('Contact', [
             'recaptchaSiteKey' => config('services.recaptcha.site_key'),

@@ -55,4 +55,43 @@ class SeoMetaTest extends TestCase
             ->where('meta.keywords', ['contact'])
         );
     }
+
+    public function test_destinations_index_falls_back_then_reads_from_its_page(): void
+    {
+        $this->get('/destinations')->assertInertia(fn (Assert $page) => $page
+            ->where('meta.title', 'Destinations')
+            ->where('meta.keywords', [])
+            ->where('meta.og_image', '')
+        );
+
+        Page::factory()->create([
+            'slug' => 'destinations',
+            'is_published' => true,
+            'seo_title' => 'Windsurf Spots',
+            'seo_keywords' => ['spots'],
+        ]);
+
+        $this->get('/destinations')->assertInertia(fn (Assert $page) => $page
+            ->where('meta.title', 'Windsurf Spots')
+            ->where('meta.keywords', ['spots'])
+        );
+    }
+
+    public function test_search_index_falls_back_then_reads_from_its_page(): void
+    {
+        $this->get('/search')->assertInertia(fn (Assert $page) => $page
+            ->where('meta.title', 'Search')
+            ->where('meta.og_image', '')
+        );
+
+        Page::factory()->create([
+            'slug' => 'search',
+            'is_published' => true,
+            'seo_title' => 'Find a Spot',
+        ]);
+
+        $this->get('/search')->assertInertia(fn (Assert $page) => $page
+            ->where('meta.title', 'Find a Spot')
+        );
+    }
 }
