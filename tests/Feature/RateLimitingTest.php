@@ -7,6 +7,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\RateLimiter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class RateLimitingTest extends TestCase
@@ -18,9 +19,7 @@ class RateLimitingTest extends TestCase
         $this->assertNotNull(RateLimiter::limiter('contact'));
     }
 
-    /**
-     * @dataProvider throttledRoutes
-     */
+    #[DataProvider('throttledRoutes')]
     public function test_route_has_throttle_middleware(string $routeName, string $expectedMiddleware): void
     {
         $route = app('router')->getRoutes()->getByName($routeName);
