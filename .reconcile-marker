@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Weather fetch triggers + post-testing refinements (fetch feedback toast/status, repeater defaultItems(0), timezone field removed, admin "View site" link) — PR #14, folded reconcile. Suite at 84 tests, 475 assertions. Pre-launch security audit findings recorded in docs/TODO.md.
+note: Pre-launch security hardening (rate limiters search 60/weather-api 30/contact 5 per min, lat/lon range validation, within-major dependency bumps clearing all high/medium composer advisories, prod-config checklist) — PR #15, folded reconcile. Suite at 94 tests, 505 assertions. 4 low dev-only advisories + Filament admin smoke-check remain pre-launch.

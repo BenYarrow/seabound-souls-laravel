@@ -1,6 +1,6 @@
 ---
 updated: 2026-07-09
-reconcile: 2
+reconcile: 3
 ---
 
 # Situation Report — Seabound Souls (Laravel)
@@ -15,17 +15,18 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 - **Filament custom theme** added — fixes custom-view Tailwind classes not compiling (MediaPicker layout). Admin dark mode is Filament's own (follows OS).
 - **Image focal points** — per-image focal point (`media_library`) applied via `object-position` everywhere through one `<CoverImage>`; set by clicking the MediaPicker preview. Fixes mobile masthead cropping.
 - **Weather fetch triggers** — shared `WeatherFetcher` service (one fetch path for the weekly command + both jobs); auto-fetch on spot-guide create (`FetchSpotWeatherJob`) with a "queued" toast; dashboard "Fetch all weather" button (`FetchAllWeatherJob` + in-app bell notification) with a status line (in-progress / last-updated); coordinates required + range-validated. Also: repeaters no longer force an empty row (`defaultItems(0)`), unused `timezone` field removed, "View site" link in the admin top bar. Needs a queue worker running. Suite **84 tests, 475 assertions**.
+- **Security hardening** — per-IP rate limits (`search` 60/`weather-api` 30/`contact` 5 per min) on `/api/*` + `/contact`; lat/lon range-validation on `/api/live-weather`; within-major dependency bumps clearing all high/medium `composer audit` advisories (Filament XSS, guzzle, laravel/symfony/spatie); prod-config launch checklist. Suite **94 tests, 505 assertions**; `composer audit` clear of high/medium (4 low dev-only remain).
 - **Local env on Herd** — app at `https://seaboundsouls.test`; mail captured in Herd's Mail tab (`MAIL_MAILER=smtp`, :2525).
 - Public site renders end-to-end in dev (Laravel + Vite, Node 22).
 
 ## In flight
-- **Weather fetch triggers** — PR #14 open (folded reconcile rides in it).
+- **Security hardening** — PR #15 open (folded reconcile rides in it). Pending: manual Filament admin smoke-check before deploy.
 
 ## Next action
-1. **Security fixes before launch** (audit ran 2026-07-09 — see `docs/TODO.md`): bump vulnerable deps (Filament ≥3.3.53 for the RichEditor XSS CVE, guzzle; `npm audit fix`); rate-limit `/api/*` + `/contact` (+ lat/lon range validation on `/api/live-weather`); `APP_DEBUG=false`/`APP_ENV=production` for prod. **Ben asked to do this next.**
-2. Test the remaining **helper/API units** — `LiveWeatherController` (cached external weather), `Api\WeatherDataController`, weather-data transforms; then Filament smoke tests.
-3. Standing tracks: CI pipeline, `.nvmrc`, husky/eslint-jsdoc, dark-mode token layer + responsive audit, restrict Filament panel access, single-admin production password.
-4. **Project B — go-live:** deploy Laravel, point `seaboundsouls.co.uk` at it, real transactional email + DNS.
+1. Test the remaining **helper/API units** — `Api\WeatherDataController`, weather-data transforms, `LiveWeatherController` caching (its coordinate-validation path is now covered); then Filament smoke tests.
+2. Standing pre-launch security: strong production admin password, `User::canAccessPanel()` owner-only, optional 2FA (see `docs/TODO.md`).
+3. Standing tracks: CI pipeline, `.nvmrc`, husky/eslint-jsdoc, dark-mode token layer + responsive audit. Smaller follow-ups: `->afterCommit()` weather-dispatch hardening, soft-delete/slug reuse fix.
+4. **Project B — go-live:** deploy Laravel, point `seaboundsouls.co.uk` at it, real transactional email + DNS, `APP_DEBUG=false` + supervised queue worker.
 
 ## Roadmap
 | Date | Work | PR | History doc |
@@ -43,6 +44,7 @@ Personal project (not IFP). A Laravel 12 / Inertia / React / Filament rebuild of
 | 2026-07-06 | Content-manageable destinations masthead | [#12](https://github.com/BenYarrow/seabound-souls-laravel/pull/12) | [2026-07-06-destinations-page-masthead](docs/history/2026-07-06-destinations-page-masthead.md) |
 | 2026-07-09 | Single-admin security captured as pre-launch task | [#13](https://github.com/BenYarrow/seabound-souls-laravel/pull/13) | _(docs-only; see `docs/TODO.md`)_ |
 | 2026-07-09 | Weather fetch triggers (auto-on-create + dashboard button) | [#14](https://github.com/BenYarrow/seabound-souls-laravel/pull/14) | [2026-07-09-weather-fetch-triggers](docs/history/2026-07-09-weather-fetch-triggers.md) |
+| 2026-07-09 | Security hardening (rate limits, coordinate validation, dependency bumps) | [#15](https://github.com/BenYarrow/seabound-souls-laravel/pull/15) | [2026-07-09-security-hardening](docs/history/2026-07-09-security-hardening.md) |
 
 ## Baseline (pre-reconcile)
 Initial Laravel rebuild + "Editorial Coastal Cinema" redesign of homepage, destinations, contact, spot guide, and search pages predate this first reconcile (commits `ded8a4e`..`5212534`). Design work on those pages is still WIP.
