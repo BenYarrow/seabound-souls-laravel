@@ -8,7 +8,6 @@ namespace Tests\Feature\Filament;
 
 use App\Filament\Resources\PageResource\Pages\EditPage;
 use App\Models\Page;
-use App\Models\User;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -17,7 +16,7 @@ class PageResourceContentBuilderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
     }
 
     public function test_content_builder_is_hidden_for_the_destinations_template(): void

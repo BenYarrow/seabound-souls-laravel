@@ -8,7 +8,6 @@ namespace Tests\Feature\Filament;
 use App\Filament\Resources\ContactEnquiryResource;
 use App\Filament\Resources\ContactEnquiryResource\Pages\ListContactEnquiries;
 use App\Models\ContactEnquiry;
-use App\Models\User;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -17,7 +16,7 @@ class ContactEnquiryResourceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->actingAs(User::factory()->create());
+        $this->actingAsOwner();
     }
 
     public function test_list_page_lists_enquiries(): void
