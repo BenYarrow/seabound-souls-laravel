@@ -3,7 +3,7 @@ title: Weather fetch triggers (auto-on-create + dashboard button)
 tags: [weather, queue, filament, jobs, admin]
 status: stable
 completed: 2026-07-09
-commits: [819b06b, 10aed88, b283e08, 4ea3ff1, 3d7604e, 75e48d1, f4d04c1, 427beea, 06295a2]
+commits: [819b06b, 10aed88, b283e08, 4ea3ff1, 3d7604e, 75e48d1, f4d04c1, 427beea, 06295a2, 03b8899, da8ddac, ee3e08d]
 pr: 14
 ---
 
@@ -59,10 +59,30 @@ Plan: `docs/superpowers/plans/2026-07-09-weather-fetch-triggers.md`.
 - **A queue worker must run** for either trigger to do anything (jobs use the
   `database` connection). Documented in `CLAUDE.md`. Locally: `php artisan queue:work`.
 
+## Post-testing refinements (same PR)
+
+Found while Ben test-drove the feature:
+
+- **Auto-fetch was silent + no worker.** The first symptom ("no data for the new
+  spot") was simply that no queue worker was running — the job sat in `jobs`.
+  Added feedback so it's not a mystery: a **toast on spot-guide create**
+  ("Weather fetch queued for X", via `CreateSpotGuide::afterCreate`) and a
+  **dashboard status line** on `WeatherFetchWidget` (in-progress count from the
+  `jobs` table + last-updated from `weather_records`).
+- **Repeaters forced an empty required row.** Filament repeaters default to one
+  item, so the create form demanded a windsurfing-location / where-to-stay /
+  where-to-eat row (each with a required `name`) — a bare spot (a UK beach)
+  couldn't save. Fixed with `->defaultItems(0)` on all three; a test asserts a
+  valid spot saves with none.
+- **`timezone` removed.** It was collected + stored + passed to the front end but
+  never rendered (fetch uses `timezone=auto`), so the column and all references
+  were dropped.
+- **"View site" link** added to the admin top bar (opens the homepage in a new tab).
+
 ## Test plan
 
 TDD throughout; all external I/O faked (`Http::fake`, `Sleep::fake`, `Queue::fake`,
-notification DB assertions). Suite went 67 → **80 passing (466 assertions)**.
+notification DB assertions). Suite went 67 → **84 passing (475 assertions)**.
 Coverage added: service upsert + idempotency + failure-isolation; auto-dispatch
 on create-with-coords and no-dispatch/​no-op without coords (incl. deleted-model
 guard); fetch-all writes all spots + notifies; widget button dispatches the job;

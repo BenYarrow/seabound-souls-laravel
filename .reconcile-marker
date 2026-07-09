@@ -1,2 +1,2 @@
 date: 2026-07-09
-note: Weather fetch triggers (WeatherFetcher service, FetchSpotWeatherJob auto-on-create, FetchAllWeatherJob dashboard button + in-app notification, required coordinates) — PR #14, folded reconcile. Suite at 80 tests, 466 assertions. Pre-launch security audit findings recorded in docs/TODO.md.
+note: Weather fetch triggers + post-testing refinements (fetch feedback toast/status, repeater defaultItems(0), timezone field removed, admin "View site" link) — PR #14, folded reconcile. Suite at 84 tests, 475 assertions. Pre-launch security audit findings recorded in docs/TODO.md.
