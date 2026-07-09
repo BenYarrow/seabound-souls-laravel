@@ -39,18 +39,10 @@ const LiveWeatherData = ({ latitude, longitude }: Props) => {
     /* ── Loading skeleton ── */
     if (loading) {
         return (
-            <>
-                {/* Desktop */}
-                <div className="hidden lg:flex absolute bottom-8 left-8 bg-secondary/90 backdrop-blur-sm border border-white/10 rounded-xl p-5 flex-col gap-3 animate-pulse">
-                    <div className="h-4 w-20 bg-white/15 rounded" />
-                    <div className="h-4 w-24 bg-white/15 rounded" />
-                </div>
-                {/* Mobile */}
-                <div className="lg:hidden w-full bg-secondary/90 backdrop-blur-sm border-t border-white/10 flex gap-6 px-5 py-3 animate-pulse">
-                    <div className="h-4 w-16 bg-white/15 rounded" />
-                    <div className="h-4 w-20 bg-white/15 rounded" />
-                </div>
-            </>
+            <div className="absolute bottom-6 left-6 lg:bottom-8 lg:left-8 bg-secondary/90 backdrop-blur-sm border border-white/10 rounded-xl p-5 flex flex-col gap-3 animate-pulse">
+                <div className="h-4 w-20 bg-white/15 rounded" />
+                <div className="h-4 w-24 bg-white/15 rounded" />
+            </div>
         )
     }
 
@@ -61,41 +53,23 @@ const LiveWeatherData = ({ latitude, longitude }: Props) => {
         : `${weather.windSpeed} kts`
 
     return (
-        <>
-            {/* ── Desktop: absolute bottom-left panel ── */}
-            <div className="hidden lg:flex absolute bottom-8 left-8 bg-secondary/90 backdrop-blur-sm border border-white/10 rounded-xl p-5 flex-col gap-2.5">
-                {weather.description && (
-                    <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
-                        {weather.description}
-                    </p>
-                )}
-                <div className="flex items-center gap-3 text-white">
-                    <Icon icon={faSun} size="size-4" customClasses="text-white/60 shrink-0" />
-                    <span className="text-sm tabular-nums">{weather.temp} °C</span>
-                </div>
-                <div className="flex items-center gap-3 text-white">
-                    <Icon icon={faWind} size="size-4" customClasses="text-white/60 shrink-0" />
-                    <span className="text-sm tabular-nums">{windLabel}</span>
-                </div>
+        /* Floating panel over the masthead image at every breakpoint (inset from
+           the bottom-left corner — a touch tighter on mobile). */
+        <div className="absolute bottom-6 left-6 lg:bottom-8 lg:left-8 bg-secondary/90 backdrop-blur-sm border border-white/10 rounded-xl p-5 flex flex-col gap-2.5">
+            {weather.description && (
+                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
+                    {weather.description}
+                </p>
+            )}
+            <div className="flex items-center gap-3 text-white">
+                <Icon icon={faSun} size="size-4" customClasses="text-white/60 shrink-0" />
+                <span className="text-sm tabular-nums">{weather.temp} °C</span>
             </div>
-
-            {/* ── Mobile: horizontal bar ── */}
-            <div className="lg:hidden w-full bg-secondary/90 backdrop-blur-sm border-t border-white/10 flex items-center gap-6 px-5 py-3">
-                {weather.description && (
-                    <p className="text-white/40 text-[10px] uppercase tracking-wider mr-1 hidden sm:block">
-                        {weather.description}
-                    </p>
-                )}
-                <div className="flex items-center gap-2 text-white">
-                    <Icon icon={faSun} size="size-3.5" customClasses="text-white/60 shrink-0" />
-                    <span className="text-xs tabular-nums">{weather.temp} °C</span>
-                </div>
-                <div className="flex items-center gap-2 text-white">
-                    <Icon icon={faWind} size="size-3.5" customClasses="text-white/60 shrink-0" />
-                    <span className="text-xs tabular-nums">{windLabel}</span>
-                </div>
+            <div className="flex items-center gap-3 text-white">
+                <Icon icon={faWind} size="size-4" customClasses="text-white/60 shrink-0" />
+                <span className="text-sm tabular-nums">{windLabel}</span>
             </div>
-        </>
+        </div>
     )
 }
 
