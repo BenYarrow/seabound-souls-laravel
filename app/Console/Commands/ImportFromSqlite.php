@@ -117,9 +117,14 @@ class ImportFromSqlite extends Command
      */
     private function resetSequence(string $table, bool $isCalled, int $value): void
     {
+        // Inline the is_called flag as a SQL literal: Laravel's prepareBindings()
+        // coerces a bound PHP bool to int (1/0), but setval()'s third argument is
+        // a boolean — pass a real literal rather than relying on Postgres coercion.
+        $called = $isCalled ? 'true' : 'false';
+
         DB::statement(
-            "SELECT setval(pg_get_serial_sequence(?, 'id'), ?, ?)",
-            [$table, max($value, 1), $isCalled]
+            "SELECT setval(pg_get_serial_sequence(?, 'id'), ?, {$called})",
+            [$table, max($value, 1)]
         );
     }
 }
