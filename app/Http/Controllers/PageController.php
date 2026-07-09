@@ -56,6 +56,7 @@ class PageController extends Controller
             'meta' => [
                 'title' => $page->seo_title ?? $page->title,
                 'description' => $page->seo_description ?? '',
+                'keywords' => $page->seo_keywords ?? [],
                 'og_image' => $page->ogImageMedia?->getUrl() ?? '',
             ],
         ]);

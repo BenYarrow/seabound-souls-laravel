@@ -94,4 +94,26 @@ class SeoMetaTest extends TestCase
             ->where('meta.title', 'Find a Spot')
         );
     }
+
+    public function test_blog_show_exposes_keywords(): void
+    {
+        $blog = \App\Models\Blog::factory()->create([
+            'is_published' => true,
+            'published_at' => now()->subDay(),
+            'seo_keywords' => ['mauritius', 'wave'],
+        ]);
+
+        $this->get("/blog/{$blog->slug}")->assertInertia(fn (Assert $page) => $page
+            ->where('meta.keywords', ['mauritius', 'wave'])
+        );
+    }
+
+    public function test_homepage_exposes_keywords_and_bare_fallback_title(): void
+    {
+        // No home Page → fallback title with no brand baked in (suffix is global).
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->where('meta.title', 'Windsurfing Destination Guide')
+            ->where('meta.keywords', [])
+        );
+    }
 }

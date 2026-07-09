@@ -102,6 +102,7 @@ class BlogController extends Controller
             'meta' => [
                 'title' => $blog->seo_title ?? $blog->title,
                 'description' => $blog->seo_description ?? '',
+                'keywords' => $blog->seo_keywords ?? [],
                 'og_image' => $blog->ogImageMedia?->getUrl() ?: ($blog->thumbnailMedia?->getUrl() ?? ''),
             ],
         ]);

@@ -116,8 +116,10 @@ class HomepageController extends Controller
             'featuredSpotGuides' => $featuredSpotGuides,
             'recentBlogs' => $recentBlogs,
             'meta' => [
-                'title' => $page?->seo_title ?? 'Seabound Souls - Windsurfing Destination Guide',
+                'title' => $page?->seo_title ?: 'Windsurfing Destination Guide',
                 'description' => $page?->seo_description ?? 'Discover the best windsurfing destinations around the world.',
+                'keywords' => $page?->seo_keywords ?? [],
+                'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],
         ]);
     }
