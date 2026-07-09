@@ -7,6 +7,7 @@
 
 namespace App\Models;
 
+use App\Jobs\FetchSpotWeatherJob;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +30,16 @@ class SpotGuide extends Model
         static::saving(function (SpotGuide $guide) {
             if ($guide->isDirty('country_id')) {
                 $guide->country_name = Country::find($guide->country_id)?->name;
+            }
+        });
+
+        // Auto-fetch weather for a newly created spot as soon as it has
+        // coordinates, so admins don't wait for the weekly command. Create-only
+        // by design — editing coordinates later is handled by the dashboard
+        // "Fetch all weather" button.
+        static::created(function (SpotGuide $guide) {
+            if ($guide->latitude !== null && $guide->longitude !== null) {
+                FetchSpotWeatherJob::dispatch($guide->id);
             }
         });
     }

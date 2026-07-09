@@ -19,6 +19,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - **Node:** The shell default is Node **v14.16.0** (nvm) which **cannot run Vite 7** (`Cannot find module 'node:path'`). Use v22+ — `export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH"` before `npm run dev` / `npm run build`. (No `.nvmrc` committed yet — pending follow-up.)
 - **Sub-agents must source nvm.** A spawned sub-agent (Agent tool) starts in a fresh shell where nvm is not sourced, so `node` falls back to v14 and npm/vite/npx fail with misleading errors — often the sub-agent wrongly concludes the right Node isn't installed. When delegating any task that may run node/npm, include in the prompt: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && <command>`, and state explicitly that the system `node` is NOT the project version.
 - **Dev servers:** Laravel `:8000` (`php artisan serve`) + Vite HMR `:5173` (`npm run dev`) must BOTH run. The app 500s with "Unable to locate file in Vite manifest" if Vite is down / `public/hot` is missing.
+- **Queue worker:** the weather-fetch triggers (auto-on-create + dashboard "Fetch all") dispatch to the `database` queue. Run `php artisan queue:work` (or `queue:listen`) or the jobs sit unprocessed in the `jobs` table. In production a worker process must run.
 - **Project status — read at session start:** [`SITREP.md`](SITREP.md) (current state, next actions, roadmap) and [`docs/TODO.md`](docs/TODO.md) (backlog). Per-feature history lives in `docs/history/`.
 
 ### Git workflow
