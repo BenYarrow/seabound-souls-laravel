@@ -60,4 +60,14 @@ class WeatherFetchWidget extends Widget
             ->orWhere('payload', 'like', '%FetchAllWeatherJob%')
             ->count();
     }
+
+    /**
+     * Whether a weather fetch is currently queued/running. Used to disable the
+     * "Fetch all" button so the admin can't stack a second run on top of one
+     * already in progress.
+     */
+    public function hasFetchInProgress(): bool
+    {
+        return $this->getPendingCount() > 0;
+    }
 }

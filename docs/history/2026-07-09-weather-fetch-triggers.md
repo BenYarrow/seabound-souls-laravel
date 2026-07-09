@@ -68,7 +68,10 @@ Found while Ben test-drove the feature:
   Added feedback so it's not a mystery: a **toast on spot-guide create**
   ("Weather fetch queued for X", via `CreateSpotGuide::afterCreate`) and a
   **dashboard status line** on `WeatherFetchWidget` (in-progress count from the
-  `jobs` table + last-updated from `weather_records`).
+  `jobs` table + last-updated from `weather_records`). The "Fetch all weather"
+  button disables + relabels to "Fetch in progress…" while a fetch is queued, so
+  a second run can't be stacked on one already running. (A worker must be running
+  or the count never clears — the same queue-worker requirement as the triggers.)
 - **Repeaters forced an empty required row.** Filament repeaters default to one
   item, so the create form demanded a windsurfing-location / where-to-stay /
   where-to-eat row (each with a required `name`) — a bare spot (a UK beach)

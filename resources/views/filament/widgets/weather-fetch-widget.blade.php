@@ -24,8 +24,15 @@
                     @endif
                 </div>
             </div>
-            <x-filament::button wire:click="fetchAll" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">
-                Fetch all weather
+            {{-- Disabled while a fetch is queued/running so a second run can't be
+                 stacked on top of one already in progress. --}}
+            <x-filament::button
+                wire:click="fetchAll"
+                wire:loading.attr="disabled"
+                :disabled="$pendingCount > 0"
+                icon="heroicon-o-arrow-path"
+            >
+                {{ $pendingCount > 0 ? 'Fetch in progress…' : 'Fetch all weather' }}
             </x-filament::button>
         </div>
     </x-filament::section>

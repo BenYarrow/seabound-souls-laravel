@@ -56,4 +56,28 @@ class WeatherFetchWidgetTest extends TestCase
 
         $this->assertSame(1, (new WeatherFetchWidget())->getPendingCount());
     }
+
+    public function test_fetch_button_is_disabled_and_relabelled_while_a_fetch_is_pending(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        // No pending job → the button is enabled with its normal label.
+        Livewire::test(WeatherFetchWidget::class)
+            ->assertSee('Fetch all weather')
+            ->assertDontSee('Fetch in progress');
+
+        DB::table('jobs')->insert([
+            'queue' => 'default',
+            'payload' => json_encode(['displayName' => 'App\\Jobs\\FetchAllWeatherJob']),
+            'attempts' => 0,
+            'reserved_at' => null,
+            'available_at' => 0,
+            'created_at' => 0,
+        ]);
+
+        // With a job queued → the in-progress label shows (button disabled).
+        Livewire::test(WeatherFetchWidget::class)
+            ->assertSee('Fetch in progress')
+            ->assertDontSee('Fetch all weather');
+    }
 }
