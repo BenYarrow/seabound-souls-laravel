@@ -108,4 +108,32 @@ class DestinationControllerTest extends TestCase
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page->where('static_masthead', null));
     }
+
+    public function test_index_passes_the_featured_spot_guide_and_keeps_it_in_the_grid(): void
+    {
+        SpotGuide::factory()->create(['title' => 'Featured Bay', 'slug' => 'featured-bay', 'is_featured' => true]);
+        SpotGuide::factory()->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('featuredSpotGuide.title', 'Featured Bay')
+                ->has('spotGuides', 2) // the featured guide is still listed in its continent grid
+            );
+    }
+
+    public function test_index_featured_spot_guide_is_null_when_none_flagged(): void
+    {
+        SpotGuide::factory()->count(2)->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('featuredSpotGuide', null));
+    }
+
+    public function test_index_featured_spot_guide_is_null_when_unpublished(): void
+    {
+        SpotGuide::factory()->create(['is_published' => false, 'is_featured' => true]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('featuredSpotGuide', null));
+    }
 }

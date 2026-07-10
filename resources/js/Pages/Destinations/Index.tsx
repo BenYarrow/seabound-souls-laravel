@@ -4,6 +4,7 @@ import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
 import CoverImage from '@/Components/Common/CoverImage'
+import FeaturedHero from '@/Components/Common/FeaturedHero'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import DestinationsMap from '@/Components/Map/DestinationsMap'
 import FilterDataset, { SelectOption } from '@/Components/Destinations/FilterDataset'
@@ -30,6 +31,13 @@ interface Props {
     weatherData: WeatherDataset
     /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
     static_masthead: FocalImage | null
+    featuredSpotGuide: {
+        id: number
+        title: string
+        slug: string
+        country: string | null
+        thumbnail: FocalImage | null
+    } | null
     meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
@@ -42,7 +50,7 @@ const CONTINENT_LABELS: Record<string, string> = {
     oceania: 'Oceania',
 }
 
-const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
+const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
     const colours = useMemo(() => getSpotGuideColours(titles), [titles])
 
@@ -119,6 +127,22 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
                     </div>
                 </div>
             </section>
+
+            {/* ─── Featured destination ─── */}
+            {featuredSpotGuide && (
+                <section className="bg-white">
+                    <div className="container mx-auto py-14 lg:py-16">
+                        <FeaturedHero
+                            image={featuredSpotGuide.thumbnail}
+                            eyebrow="Featured Destination"
+                            title={featuredSpotGuide.title}
+                            metaLabel={featuredSpotGuide.country}
+                            href={`/destinations/${featuredSpotGuide.slug}`}
+                            ctaLabel="Explore guide"
+                        />
+                    </div>
+                </section>
+            )}
 
             {/* ─── Map ─── */}
             <DestinationsMap spotGuides={spotGuides} />

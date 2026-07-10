@@ -51,6 +51,15 @@ class DestinationController extends Controller
             'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
         ]);
 
+        // The featured guide is an explicit, owner-set choice (no fallback). Null
+        // when nothing is flagged or the flagged guide is a draft. It is NOT
+        // removed from $spotGuides — the hero is a spotlight, the grids remain the
+        // complete directory.
+        $featured = SpotGuide::published()
+            ->where('is_featured', true)
+            ->with(['country', 'thumbnailMedia'])
+            ->first();
+
         // Keyed by title (not slug) so the chart legend/series labels line up.
         $weatherData = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->weatherRecords
@@ -70,6 +79,13 @@ class DestinationController extends Controller
 
         return Inertia::render('Destinations/Index', [
             'spotGuides' => $spotGuidesData,
+            'featuredSpotGuide' => $featured ? [
+                'id' => $featured->id,
+                'title' => $featured->title,
+                'slug' => $featured->slug,
+                'country' => $featured->country?->name,
+                'thumbnail' => $featured->thumbnailMedia?->imagePayload(),
+            ] : null,
             'weatherData' => $weatherData,
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
