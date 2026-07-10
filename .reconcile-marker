@@ -1,2 +1,2 @@
 date: 2026-07-10
-note: Featured flag + standout (blogs & spot guides) — sub-project A; single-featured trait, shared FeaturedHero, blog+destinations heroes. PR #25 (reconcile 10, folded).
+note: List-content builder blocks fixed + rendered (FeaturedGrid); homepage content-managed (hardcoded grids removed); destinations ranked by gusts. Sub-project B. PR #26 (reconcile 11, folded).
