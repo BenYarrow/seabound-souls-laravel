@@ -57,7 +57,7 @@ const SpotGuideNav = ({ sections }: Props) => {
     }
 
     return (
-        <div className="sticky top-0 z-40 bg-white border-b border-secondary/10">
+        <nav aria-label="Spot guide sections" className="sticky top-0 z-40 bg-white border-b border-secondary/10">
             <div className="relative container mx-auto">
                 <div className="flex items-stretch">
                     <div className="w-1 bg-orange shrink-0 my-2 rounded-full" />
@@ -72,6 +72,7 @@ const SpotGuideNav = ({ sections }: Props) => {
                                 <button
                                     key={section.id}
                                     data-section={section.id}
+                                    aria-current={active ? 'true' : undefined}
                                     onClick={() => goTo(section.id)}
                                     className={`shrink-0 text-[11px] uppercase tracking-[0.15em] px-3 py-1.5 rounded-sm transition-colors duration-200 ${
                                         active ? 'bg-primary text-white' : 'text-secondary/70 hover:text-secondary'
@@ -86,7 +87,7 @@ const SpotGuideNav = ({ sections }: Props) => {
                 {/* Right-edge fade hints there are more chips to swipe (mobile). */}
                 <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white md:hidden" />
             </div>
-        </div>
+        </nav>
     )
 }
 

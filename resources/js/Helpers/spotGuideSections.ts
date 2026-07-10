@@ -35,24 +35,24 @@ interface SpotGuideLike {
  * SpotGuide/Show.tsx, in DOM order (Content Builder omitted).
  */
 const SECTION_RULES: { id: string; label: string; present: (guide: SpotGuideLike) => boolean }[] = [
-    { id: 'introduction', label: 'Introduction', present: (g) => !!g.introduction_text },
-    { id: 'gallery', label: 'Gallery', present: (g) => g.gallery.length > 0 },
-    { id: 'water-conditions', label: 'Water Conditions', present: (g) => !!g.water_conditions?.content },
-    { id: 'wind-conditions', label: 'Wind Conditions', present: (g) => !!g.wind_conditions?.content },
-    { id: 'when-to-go', label: 'When To Go', present: (g) => !!g.when_to_go },
-    { id: 'weather', label: 'Weather', present: (g) => Object.keys(g.weather_records).length > 0 },
-    { id: 'where-to-stay', label: 'Where To Stay', present: (g) => !!g.where_to_stay_intro || g.stay_recommendations.length > 0 },
-    { id: 'where-to-eat', label: 'Where To Eat', present: (g) => !!g.where_to_eat_intro || g.eat_recommendations.length > 0 },
-    { id: 'windsurfing-spots', label: 'Windsurfing Spots', present: (g) => g.windsurfing_locations.length > 0 },
+    { id: 'introduction', label: 'Introduction', present: (guide) => !!guide.introduction_text },
+    { id: 'gallery', label: 'Gallery', present: (guide) => guide.gallery.length > 0 },
+    { id: 'water-conditions', label: 'Water Conditions', present: (guide) => !!guide.water_conditions?.content },
+    { id: 'wind-conditions', label: 'Wind Conditions', present: (guide) => !!guide.wind_conditions?.content },
+    { id: 'when-to-go', label: 'When To Go', present: (guide) => !!guide.when_to_go },
+    { id: 'weather', label: 'Weather', present: (guide) => Object.keys(guide.weather_records).length > 0 },
+    { id: 'where-to-stay', label: 'Where To Stay', present: (guide) => !!guide.where_to_stay_intro || guide.stay_recommendations.length > 0 },
+    { id: 'where-to-eat', label: 'Where To Eat', present: (guide) => !!guide.where_to_eat_intro || guide.eat_recommendations.length > 0 },
+    { id: 'windsurfing-spots', label: 'Windsurfing Spots', present: (guide) => guide.windsurfing_locations.length > 0 },
     {
         id: 'explore-the-area',
         label: 'Explore The Area',
         // Mirrors Show.tsx: needs coords AND at least one mappable location.
-        present: (g) => !!(g.latitude && g.longitude)
-            && (g.stay_recommendations.length + g.eat_recommendations.length + g.windsurfing_locations.length) > 0,
+        present: (guide) => !!(guide.latitude && guide.longitude)
+            && (guide.stay_recommendations.length + guide.eat_recommendations.length + guide.windsurfing_locations.length) > 0,
     },
-    { id: 'getting-there', label: 'Getting There', present: (g) => !!g.travelling_to?.content },
-    { id: 'lessons-and-hire', label: 'Lessons & Hire', present: (g) => !!g.lessons_and_hire?.content },
+    { id: 'getting-there', label: 'Getting There', present: (guide) => !!guide.travelling_to?.content },
+    { id: 'lessons-and-hire', label: 'Lessons & Hire', present: (guide) => !!guide.lessons_and_hire?.content },
 ]
 
 /**
