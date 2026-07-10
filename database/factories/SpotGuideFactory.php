@@ -32,6 +32,7 @@ class SpotGuideFactory extends Factory
             'when_to_go' => $this->faker->sentence(),
             'seo_keywords' => [],
             'is_published' => true,
+            'is_featured' => false,
             'published_at' => now()->subDays($this->faker->numberBetween(1, 100)),
         ];
     }

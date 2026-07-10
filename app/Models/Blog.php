@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSingleFeatured;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,12 +15,12 @@ use Laravel\Scout\Searchable;
 
 class Blog extends Model
 {
-    use HasFactory, SoftDeletes, Searchable;
+    use HasFactory, SoftDeletes, Searchable, HasSingleFeatured;
 
     protected $fillable = [
         'title', 'slug', 'content_blocks',
         'seo_title', 'seo_description', 'seo_keywords',
-        'is_published', 'published_at',
+        'is_published', 'is_featured', 'published_at',
         'thumbnail_media_id', 'static_masthead_media_id', 'og_image_media_id',
         'masthead_slider_media_ids',
     ];
@@ -29,6 +30,7 @@ class Blog extends Model
         'seo_keywords' => 'array',
         'masthead_slider_media_ids' => 'array',
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
         'published_at' => 'datetime',
     ];
 

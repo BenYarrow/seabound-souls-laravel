@@ -8,6 +8,7 @@
 namespace App\Models;
 
 use App\Jobs\FetchSpotWeatherJob;
+use App\Models\Concerns\HasSingleFeatured;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +18,7 @@ use Laravel\Scout\Searchable;
 
 class SpotGuide extends Model
 {
-    use HasFactory, SoftDeletes, Searchable;
+    use HasFactory, SoftDeletes, Searchable, HasSingleFeatured;
 
     /**
      * Register model lifecycle hooks.
@@ -53,7 +54,7 @@ class SpotGuide extends Model
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
         'seo_title', 'seo_description', 'seo_keywords',
-        'is_published', 'published_at',
+        'is_published', 'is_featured', 'published_at',
         'thumbnail_media_id', 'static_masthead_media_id', 'og_image_media_id',
         'wind_conditions_bg_media_id', 'water_conditions_bg_media_id',
         'travelling_to_bg_media_id', 'lessons_and_hire_bg_media_id',
@@ -70,6 +71,7 @@ class SpotGuide extends Model
         'seo_keywords' => 'array',
         'gallery_media_ids' => 'array',
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
         'published_at' => 'datetime',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
