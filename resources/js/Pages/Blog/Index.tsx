@@ -2,6 +2,7 @@ import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import AnimateInView from '@/Components/Common/AnimateInView'
+import FeaturedHero from '@/Components/Common/FeaturedHero'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
@@ -20,8 +21,12 @@ interface Props {
     blogs: {
         data: Blog[]
         links: any[]
-        meta: any
+        /** Laravel paginator serialises flat — current_page / last_page are top-level (there is no `meta`). */
+        current_page: number
+        last_page: number
     }
+    /** The owner-flagged post, or null when nothing is flagged (no fallback). */
+    featured: Blog | null
     /** Focal-bearing image for the masthead, or null when no page record exists. */
     static_masthead: FocalImage | null
     meta: { title: string; description: string; keywords?: string[]; og_image?: string }
@@ -38,9 +43,7 @@ const ArrowIcon = ({ className }: { className?: string }) => (
     </svg>
 )
 
-const Index = ({ blogs, static_masthead, meta }: Props) => {
-    const [featured, ...rest] = blogs.data
-
+const Index = ({ blogs, featured, static_masthead, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {static_masthead ? (
@@ -67,60 +70,23 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                     <div className="h-px flex-1 bg-primary/20" />
                 </div>
 
-                {/* Featured post */}
-                {featured && (
-                    <AnimateInView classes="mb-12 md:mb-16" outViewClasses="translate-y-8 opacity-0" delayClasses="delay-0" durationClasses="duration-700">
-                        <Link
-                            href={`/blog/${featured.slug}`}
-                            className="group block md:grid md:grid-cols-5 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
-                        >
-                            {/* Image */}
-                            <div className="md:col-span-3 aspect-[16/10] md:aspect-auto overflow-hidden relative min-h-[280px]">
-                                {featured.thumbnail ? (
-                                    <CoverImage
-                                        image={featured.thumbnail}
-                                        alt={featured.title}
-                                        className="w-full h-full group-hover:scale-105 transition-transform duration-700"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-primary-lighter" />
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/15 hidden md:block pointer-events-none" />
-                            </div>
-
-                            {/* Content */}
-                            <div className="md:col-span-2 flex flex-col justify-center p-8 md:p-10 lg:p-14 border-l-[3px] border-l-transparent group-hover:border-l-primary transition-all duration-500">
-                                <span className="text-[10px] uppercase tracking-[0.4em] text-orange font-semibold mb-4">
-                                    Featured
-                                </span>
-                                <h2
-                                    className="font-title text-secondary uppercase leading-[1.0] group-hover:text-primary transition-colors duration-300"
-                                    style={{ fontSize: 'clamp(1.75rem, 3vw, 2.75rem)' }}
-                                >
-                                    {featured.title}
-                                </h2>
-                                {featured.seo_description && (
-                                    <p className="text-gray-500 mt-5 text-sm leading-relaxed line-clamp-3">
-                                        {featured.seo_description}
-                                    </p>
-                                )}
-                                {featured.published_at && (
-                                    <p className="text-primary/60 text-[10px] uppercase tracking-[0.35em] mt-6">
-                                        {formatDate(featured.published_at)}
-                                    </p>
-                                )}
-                                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-4 transition-all duration-300">
-                                    Read article <ArrowIcon className="w-4 h-4" />
-                                </span>
-                            </div>
-                        </Link>
-                    </AnimateInView>
+                {/* Featured post — owner-flagged, shown on page 1 only */}
+                {featured && blogs.current_page === 1 && (
+                    <FeaturedHero
+                        image={featured.thumbnail}
+                        eyebrow="Featured"
+                        title={featured.title}
+                        description={featured.seo_description}
+                        metaLabel={featured.published_at ? formatDate(featured.published_at) : null}
+                        href={`/blog/${featured.slug}`}
+                        ctaLabel="Read article"
+                    />
                 )}
 
                 {/* Article grid */}
-                {rest.length > 0 && (
+                {blogs.data.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {rest.map((blog, i) => (
+                        {blogs.data.map((blog, i) => (
                             <AnimateInView
                                 key={blog.id}
                                 outViewClasses="translate-y-8 opacity-0"
@@ -182,7 +148,7 @@ const Index = ({ blogs, static_masthead, meta }: Props) => {
                 )}
 
                 {/* Pagination */}
-                {blogs.meta?.last_page > 1 && (
+                {blogs.last_page > 1 && (
                     <div className="mt-14 flex justify-center items-center gap-2">
                         {blogs.links.map((link: any, i: number) =>
                             link.url ? (

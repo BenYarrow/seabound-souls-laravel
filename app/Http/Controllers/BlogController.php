@@ -31,7 +31,17 @@ class BlogController extends Controller
             ->with(['staticMastheadMedia', 'ogImageMedia'])
             ->first();
 
+        // The featured post is an explicit, owner-set choice — no fallback to
+        // "latest". Null when nothing is flagged (or the flagged post is a draft),
+        // in which case the index shows no hero. Excluded from the grid so it
+        // only ever appears once, as the hero.
+        $featured = Blog::published()
+            ->where('is_featured', true)
+            ->with(['thumbnailMedia'])
+            ->first();
+
         $blogs = Blog::published()
+            ->when($featured, fn ($query) => $query->whereKeyNot($featured->id))
             ->with(['thumbnailMedia'])
             ->latest('published_at')
             ->paginate(12)
@@ -47,6 +57,14 @@ class BlogController extends Controller
 
         return Inertia::render('Blog/Index', [
             'blogs' => $blogs,
+            'featured' => $featured ? [
+                'id' => $featured->id,
+                'title' => $featured->title,
+                'slug' => $featured->slug,
+                'published_at' => $featured->published_at?->toDateString(),
+                'thumbnail' => $featured->thumbnailMedia?->imagePayload(),
+                'seo_description' => $featured->seo_description,
+            ] : null,
             // Display images as objects; the static_masthead feeds StaticMasthead which uses CoverImage.
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [

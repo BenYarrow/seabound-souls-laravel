@@ -108,4 +108,78 @@ class DestinationControllerTest extends TestCase
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page->where('static_masthead', null));
     }
+
+    public function test_index_passes_the_featured_spot_guide_and_keeps_it_in_the_grid(): void
+    {
+        SpotGuide::factory()->create(['title' => 'Featured Bay', 'slug' => 'featured-bay', 'is_featured' => true]);
+        SpotGuide::factory()->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('featuredSpotGuide.title', 'Featured Bay')
+                ->has('spotGuides', 2) // the featured guide is still listed in its continent grid
+            );
+    }
+
+    public function test_index_featured_spot_guide_is_null_when_none_flagged(): void
+    {
+        SpotGuide::factory()->count(2)->create();
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('featuredSpotGuide', null));
+    }
+
+    public function test_index_featured_spot_guide_is_null_when_unpublished(): void
+    {
+        SpotGuide::factory()->create(['is_published' => false, 'is_featured' => true]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('featuredSpotGuide', null));
+    }
+
+    public function test_index_orders_guides_windiest_first_for_the_current_month(): void
+    {
+        $calm = SpotGuide::factory()->create(['title' => 'Calm Bay', 'slug' => 'calm-bay']);
+        $windy = SpotGuide::factory()->create(['title' => 'Windy Point', 'slug' => 'windy-point']);
+        // Rank uses THIS year + current month; front end groups the ranked array.
+        WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 8]);
+        WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 20]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('spotGuides.0.title', 'Windy Point')
+                ->where('spotGuides.1.title', 'Calm Bay')
+            );
+    }
+
+    public function test_index_sorts_guides_without_current_month_data_last(): void
+    {
+        // "Aaa Bay" is alphabetically first but has no current-month reading, so it
+        // must sort AFTER a guide that does — proving no-data falls to the end.
+        SpotGuide::factory()->create(['title' => 'Aaa Bay', 'slug' => 'aaa-bay']);
+        $withData = SpotGuide::factory()->create(['title' => 'Zephyr Cove', 'slug' => 'zephyr-cove']);
+        WeatherRecord::factory()->for($withData)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 5]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('spotGuides.0.title', 'Zephyr Cove')
+                ->where('spotGuides.1.title', 'Aaa Bay')
+            );
+    }
+
+    public function test_index_ignores_other_years_and_months_when_ranking(): void
+    {
+        // A big wind reading in a different year must not lift a guide — only the
+        // current year+month counts (else it's treated as no current data → last).
+        $stale = SpotGuide::factory()->create(['title' => 'Stale Bay', 'slug' => 'stale-bay']);
+        $fresh = SpotGuide::factory()->create(['title' => 'Fresh Point', 'slug' => 'fresh-point']);
+        WeatherRecord::factory()->for($stale)->create(['year' => now()->subYear()->year, 'month' => now()->month, 'kts_wind' => 40]);
+        WeatherRecord::factory()->for($fresh)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 3]);
+
+        $this->get(route('destinations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('spotGuides.0.title', 'Fresh Point') // current data, even at 3kt
+                ->where('spotGuides.1.title', 'Stale Bay')    // 40kt but wrong year → no current data → last
+            );
+    }
 }

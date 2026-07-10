@@ -2,6 +2,10 @@
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
+## Content curation (from the featured/content brainstorm — sub-project A shipped in #25)
+- [ ] **Sub-project B — list-content builder blocks.** Finish `list_content_blogs` + `list_content_spot_guides` (`app/Filament/Forms/ContentBuilderBlocks.php`): they're broken stubs — the entry picker is `Select::make(...)->relationship('', 'title')` with an empty relationship name, which crashes Filament (`RelationshipJoiner::prepareQueryForNoConstraints(): …null given`), and neither block is rendered by `ContentBuilder.tsx`. Fix the picker (options from the model, store IDs in the JSON block), add an editable "View all" link, resolve selected entries server-side, and render via the existing `FeaturedGrid`. This is the answer to "how do we control what shows on the homepage / in a list block."
+- [ ] **Sub-project C — spot-guide quick-nav.** A sticky secondary nav on spot-guide pages listing only the sections that have content (e.g. "Travelling to") with smooth-scroll to each.
+
 ## Testing sweep
 Public controllers all covered. Remaining:
 - [ ] Helpers/logic units — weather-data transforms, `LiveWeatherController` caching (external HTTP + response cache)
@@ -13,6 +17,9 @@ Public controllers all covered. Remaining:
 - [ ] Add `.nvmrc` pinning Node 22 so the correct version is auto-selected
 - [ ] Set up husky + lint-staged + eslint-plugin-jsdoc pre-commit enforcement (JSDoc-on-every-function rule)
 - [ ] Case-sensitivity guard for `@/…` imports — macOS resolves mismatched-case paths (e.g. `@/helpers` → tracked `@/Helpers`) but the case-sensitive Linux/Cloud build fails with `vite:load-fallback ENOENT` (bit us on the first deploy, fixed in #18). Add `eslint-plugin-import` case-sensitive resolution, or a Linux CI `npm run build`, so it fails locally not on deploy.
+
+## Authoring UX
+- [ ] **Draft / live preview** — let the owner preview content that isn't live yet: unpublished (draft) Pages / Blogs / Spot Guides, brand-new unsaved records, and *edited-but-unsaved* changes, without publishing. Today the public controllers hard-filter `is_published`, so drafts 404 and there's no way to see edits before they go live. Needs scoping (signed preview URLs / a Filament "Preview" action that renders the Inertia page with the in-progress form state; how to feed unsaved edits through to the front end). Raised by Ben 2026-07-10 — discuss in more detail before designing.
 
 ## Frontend
 - [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.

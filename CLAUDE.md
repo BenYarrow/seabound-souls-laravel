@@ -139,10 +139,10 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - `content_blocks` (JSON) — flexible block builder
 - `when_to_go`, `where_to_stay_intro`, `where_to_eat_intro` (longText)
 - `seo_title`, `seo_description`, `seo_keywords` (JSON)
-- `is_published` (bool), `published_at`, soft deletes
+- `is_published` (bool), `is_featured` (bool — one featured guide, enforced by the `HasSingleFeatured` trait), `published_at`, soft deletes
 
 **`blogs`**
-- `title`, `slug`, `content_blocks` (JSON), SEO fields, `is_published`, soft deletes
+- `title`, `slug`, `content_blocks` (JSON), SEO fields, `is_published`, `is_featured` (bool — one featured post, `HasSingleFeatured`), soft deletes
 
 **`pages`**
 - `title`, `slug`, `template` (default: standard), `content_blocks` (JSON), SEO fields, `is_published`, soft deletes

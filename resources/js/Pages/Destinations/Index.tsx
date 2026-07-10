@@ -4,6 +4,7 @@ import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
 import CoverImage from '@/Components/Common/CoverImage'
+import FeaturedHero from '@/Components/Common/FeaturedHero'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import DestinationsMap from '@/Components/Map/DestinationsMap'
 import FilterDataset, { SelectOption } from '@/Components/Destinations/FilterDataset'
@@ -30,6 +31,13 @@ interface Props {
     weatherData: WeatherDataset
     /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
     static_masthead: FocalImage | null
+    featuredSpotGuide: {
+        id: number
+        title: string
+        slug: string
+        country: string | null
+        thumbnail: FocalImage | null
+    } | null
     meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
@@ -42,7 +50,13 @@ const CONTINENT_LABELS: Record<string, string> = {
     oceania: 'Oceania',
 }
 
-const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
+/**
+ * Display priority for continent sections — Europe first (most of our visitors),
+ * then Africa, then the rest. Continents not listed fall to the end alphabetically.
+ */
+const CONTINENT_ORDER = ['europe', 'africa', 'asia', 'north-america', 'south-america', 'oceania']
+
+const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
     const colours = useMemo(() => getSpotGuideColours(titles), [titles])
 
@@ -82,6 +96,20 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
     // with a thumbnail. null is fine — StaticMasthead handles it.
     const mastheadImage = static_masthead ?? spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
 
+    // Continent sections in display priority (Europe, Africa, then the rest). Within
+    // each, guides arrive already ranked windiest-first from the server.
+    const orderedContinents = Object.entries(groupedByContinent).sort(([a], [b]) => {
+        const rank = (continent: string) => {
+            const index = CONTINENT_ORDER.indexOf(continent)
+            return index === -1 ? CONTINENT_ORDER.length : index
+        }
+        return rank(a) - rank(b) || a.localeCompare(b)
+    })
+
+    // "Month Year" label for the ordering note — client-side "now", matching the
+    // server's now()-based wind ranking.
+    const orderingPeriod = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
 
@@ -120,11 +148,37 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
                 </div>
             </section>
 
+            {/* ─── Featured destination ─── */}
+            {featuredSpotGuide && (
+                <section className="bg-white">
+                    <div className="container mx-auto py-14 lg:py-16">
+                        <FeaturedHero
+                            image={featuredSpotGuide.thumbnail}
+                            eyebrow="Featured Destination"
+                            title={featuredSpotGuide.title}
+                            metaLabel={featuredSpotGuide.country}
+                            href={`/destinations/${featuredSpotGuide.slug}`}
+                            ctaLabel="Explore guide"
+                        />
+                    </div>
+                </section>
+            )}
+
             {/* ─── Map ─── */}
             <DestinationsMap spotGuides={spotGuides} />
 
+            {/* ─── Ordering note — explains how the continent listings below are sorted ─── */}
+            <section className="bg-white">
+                <div className="container mx-auto pt-14 lg:pt-18">
+                    <p className="text-gray-500 text-sm italic leading-relaxed border-l-2 border-primary-lighter pl-3 max-w-2xl">
+                        Ordered by wind for {orderingPeriod} — each region's spots are ranked on
+                        this year's readings, so wherever's firing now rises to the top.
+                    </p>
+                </div>
+            </section>
+
             {/* ─── Continent sections ─── */}
-            {Object.entries(groupedByContinent).map(([continent, guides], sectionIndex) => (
+            {orderedContinents.map(([continent, guides], sectionIndex) => (
                 <section key={continent} className={sectionIndex % 2 === 0 ? 'bg-white' : 'bg-cream'}>
                     <div className="container mx-auto pt-14 lg:pt-18 pb-0">
 

@@ -126,4 +126,35 @@ class BlogControllerTest extends TestCase
                 ->where('blog.thumbnail.focal_y', 75)
             );
     }
+
+    public function test_index_passes_the_featured_blog_and_excludes_it_from_the_grid(): void
+    {
+        Blog::factory()->create(['title' => 'Featured Star', 'slug' => 'featured-star', 'is_featured' => true]);
+        Blog::factory()->count(2)->create();
+
+        $this->get(route('blog.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('featured.title', 'Featured Star')
+                ->has('blogs.data', 2) // 3 published, featured excluded from the grid
+            );
+    }
+
+    public function test_index_featured_is_null_when_none_flagged(): void
+    {
+        Blog::factory()->count(2)->create();
+
+        $this->get(route('blog.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('featured', null)
+                ->has('blogs.data', 2)
+            );
+    }
+
+    public function test_index_featured_is_null_when_the_flagged_blog_is_unpublished(): void
+    {
+        Blog::factory()->create(['is_published' => false, 'is_featured' => true]);
+
+        $this->get(route('blog.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('featured', null));
+    }
 }

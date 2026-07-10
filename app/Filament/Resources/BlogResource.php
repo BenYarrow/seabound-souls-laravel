@@ -18,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -48,6 +49,9 @@ class BlogResource extends Resource
                                 ->required()
                                 ->unique(ignoreRecord: true),
                             Toggle::make('is_published')->label('Published'),
+                            Toggle::make('is_featured')
+                                ->label('Featured')
+                                ->helperText('Only one blog can be featured — turning this on clears it from any other post.'),
                         ])->columns(2),
 
                     Tabs\Tab::make('Masthead')
@@ -89,6 +93,7 @@ class BlogResource extends Resource
             ->columns([
                 TextColumn::make('title')->searchable()->sortable(),
                 IconColumn::make('is_published')->label('Published')->boolean(),
+                ToggleColumn::make('is_featured')->label('Featured'),
                 TextColumn::make('updated_at')->label('Updated')->dateTime()->sortable(),
             ])
             ->filters([
