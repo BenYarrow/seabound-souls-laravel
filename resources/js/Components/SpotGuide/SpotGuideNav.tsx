@@ -1,6 +1,6 @@
 // Sticky, content-aware quick-nav for the spot-guide page. Renders a horizontal
 // bar of section links that pins to the top as you scroll the guide; the active
-// section (via IntersectionObserver) is highlighted, clicking smooth-scrolls to
+// section (via a throttled scroll listener) is highlighted, clicking smooth-scrolls to
 // it, and on mobile the row scrolls horizontally with the active chip auto-
 // centred. Renders nothing for fewer than 2 sections. Frontend-only; targets are
 // the #id anchors on the sections in SpotGuide/Show.tsx.
