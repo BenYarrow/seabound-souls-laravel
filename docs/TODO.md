@@ -2,6 +2,10 @@
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
+## Content curation (from the featured/content brainstorm — sub-project A shipped in #25)
+- [ ] **Sub-project B — list-content builder blocks.** Finish `list_content_blogs` + `list_content_spot_guides` (`app/Filament/Forms/ContentBuilderBlocks.php`): they're broken stubs — the entry picker is `Select::make(...)->relationship('', 'title')` with an empty relationship name, which crashes Filament (`RelationshipJoiner::prepareQueryForNoConstraints(): …null given`), and neither block is rendered by `ContentBuilder.tsx`. Fix the picker (options from the model, store IDs in the JSON block), add an editable "View all" link, resolve selected entries server-side, and render via the existing `FeaturedGrid`. This is the answer to "how do we control what shows on the homepage / in a list block."
+- [ ] **Sub-project C — spot-guide quick-nav.** A sticky secondary nav on spot-guide pages listing only the sections that have content (e.g. "Travelling to") with smooth-scroll to each.
+
 ## Testing sweep
 Public controllers all covered. Remaining:
 - [ ] Helpers/logic units — weather-data transforms, `LiveWeatherController` caching (external HTTP + response cache)
