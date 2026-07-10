@@ -3,7 +3,7 @@ title: Featured flag + standout (blogs & spot guides) — sub-project A
 tags: [featured, blogs, spot-guides, filament, inertia, react, hero, content-curation]
 status: stable
 completed: 2026-07-10
-commits: [14b13cc, 15e934e, d21c304, 94ea7ea, cca9817, d4a2920, 009bccf, 2295540]
+commits: [14b13cc, 15e934e, d21c304, 94ea7ea, cca9817, d4a2920, 009bccf, 2295540, 46b8092, 772022a]
 pr: 25
 ---
 
@@ -77,6 +77,29 @@ Design decision (owner): **no fallback.** If nothing is flagged, the prop is
   a page renders; drive the page.
 - Single-owner soft-delete edge (out of scope): restoring a trashed featured row
   won't re-enforce single (`restored` ≠ `saved`). Acceptable for now.
+
+## Also in this PR — relevance-ordered destination listings
+
+Folded in before merge (owner request; related to the listing display). Spec:
+`docs/superpowers/specs/2026-07-10-destination-ordering-design.md`.
+
+- **Continent priority** (frontend, `Destinations/Index.tsx`): sections render in
+  a fixed order — Europe, then Africa, then the rest (`CONTINENT_ORDER`; unlisted
+  continents fall to the end alphabetically). More European visitors expected.
+- **Windiest-this-month first** (backend, `DestinationController@index`): guides
+  within a continent are ranked by their `kts_wind` for **`now()->year` +
+  `now()->month`**, descending. `weather_records` is unique per (guide, year,
+  month), so it's a single current reading, not an average. No current-month
+  record → sorts last; ties break by title. Read per request, so the order
+  re-ranks automatically as the month/year turns and as the weekly fetch
+  refreshes data — no stored order, no job change. (`WeatherFetcher` pulls 3
+  years up to now, so the current year+month is populated once it has run.)
+- **Site-voice note** near the intro: "Ordered by wind for {Month Year} — each
+  region's spots are ranked on this year's readings, so wherever's firing now
+  rises to the top."
+- Tests: 3 new `DestinationControllerTest` cases (windiest-first; no-data-last;
+  ignores other years/months). Continent order verified in the live preview
+  (Europe before Africa) + the note text. Suite **122 passed**.
 
 ## Follow-ups
 
