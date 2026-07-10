@@ -21,9 +21,9 @@ interface Props {
     blogs: {
         data: Blog[]
         links: any[]
-        /** Laravel paginator serialises flat — current_page is top-level (there is no `meta`). */
+        /** Laravel paginator serialises flat — current_page / last_page are top-level (there is no `meta`). */
         current_page: number
-        meta?: any
+        last_page: number
     }
     /** The owner-flagged post, or null when nothing is flagged (no fallback). */
     featured: Blog | null
@@ -148,7 +148,7 @@ const Index = ({ blogs, featured, static_masthead, meta }: Props) => {
                 )}
 
                 {/* Pagination */}
-                {blogs.meta?.last_page > 1 && (
+                {blogs.last_page > 1 && (
                     <div className="mt-14 flex justify-center items-center gap-2">
                         {blogs.links.map((link: any, i: number) =>
                             link.url ? (
