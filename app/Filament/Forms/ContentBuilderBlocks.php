@@ -3,6 +3,8 @@
 namespace App\Filament\Forms;
 
 use App\Filament\Forms\Components\MediaPicker;
+use App\Models\Blog;
+use App\Models\SpotGuide;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -112,9 +114,17 @@ class ContentBuilderBlocks
                     Select::make('customBlogEntries')
                         ->label('Blog Posts')
                         ->multiple()
-                        ->relationship('', 'title')
+                        // Lists ALL posts (drafts included) so one can be lined up
+                        // before it's live; the public page renders published only.
+                        ->options(fn () => Blog::orderBy('title')->pluck('title', 'id'))
                         ->searchable()
                         ->preload(),
+                    TextInput::make('viewAllUrl')
+                        ->label('"View all" link URL')
+                        ->helperText('Optional — defaults to /blog.'),
+                    TextInput::make('viewAllLabel')
+                        ->label('"View all" link text')
+                        ->default('View all'),
                 ]),
 
             Builder\Block::make('list_content_spot_guides')
@@ -126,9 +136,15 @@ class ContentBuilderBlocks
                     Select::make('customSpotGuideEntries')
                         ->label('Spot Guides')
                         ->multiple()
-                        ->relationship('', 'title')
+                        ->options(fn () => SpotGuide::orderBy('title')->pluck('title', 'id'))
                         ->searchable()
                         ->preload(),
+                    TextInput::make('viewAllUrl')
+                        ->label('"View all" link URL')
+                        ->helperText('Optional — defaults to /destinations.'),
+                    TextInput::make('viewAllLabel')
+                        ->label('"View all" link text')
+                        ->default('View all'),
                 ]),
 
             Builder\Block::make('infographic')
