@@ -36,34 +36,32 @@ class DestinationController extends Controller
             ->orderBy('title')
             ->get();
 
-        // Rank guides "windiest first" for the CURRENT month using THIS year's
-        // reading (weather_records is unique per year+month, so it's a single
-        // value, not an average). Guides with no current-year/current-month
-        // record sort last; ties break alphabetically by title. Read per request
-        // via now(), so the order re-ranks as the month/year turns and as the
-        // weekly weather fetch refreshes the data — no stored order, no job change.
         $currentYear = now()->year;
         $currentMonth = now()->month;
-        $windThisMonth = fn (SpotGuide $guide) => optional($guide->weatherRecords->first(
+
+        // Rank "gustiest first" for the CURRENT month using THIS year's reading —
+        // gusts are what light up a session. weather_records is unique per
+        // year+month, so it's a single value. No current record → sorts last;
+        // ties break by title. Read per request so it re-ranks as the month turns.
+        $gustThisMonth = fn (SpotGuide $guide) => optional($guide->weatherRecords->first(
             fn ($record) => (int) $record->year === $currentYear && (int) $record->month === $currentMonth
-        ))->kts_wind;
+        ))->kts_gust;
 
-        $spotGuides = $spotGuides->sort(function (SpotGuide $first, SpotGuide $second) use ($windThisMonth) {
-            $windFirst = $windThisMonth($first);
-            $windSecond = $windThisMonth($second);
+        $spotGuides = $spotGuides->sort(function (SpotGuide $first, SpotGuide $second) use ($gustThisMonth) {
+            $gustFirst = $gustThisMonth($first);
+            $gustSecond = $gustThisMonth($second);
 
-            if ($windFirst === null && $windSecond === null) {
+            if ($gustFirst === null && $gustSecond === null) {
                 return strcmp($first->title, $second->title);
             }
-            if ($windFirst === null) {
+            if ($gustFirst === null) {
                 return 1; // no current-month data → sort last
             }
-            if ($windSecond === null) {
+            if ($gustSecond === null) {
                 return -1;
             }
 
-            // Descending by wind; alphabetical title as the tie-breaker.
-            return ((float) $windSecond <=> (float) $windFirst) ?: strcmp($first->title, $second->title);
+            return ((float) $gustSecond <=> (float) $gustFirst) ?: strcmp($first->title, $second->title);
         })->values();
 
         $spotGuidesData = $spotGuides->map(fn ($guide) => [

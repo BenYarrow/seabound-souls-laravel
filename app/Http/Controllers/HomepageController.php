@@ -2,13 +2,13 @@
 
 // Homepage:
 //   GET / — home
-// Renders the "home" Page's content builder alongside featured spot guides and
-// recent blogs. Infographic blocks are enriched server-side with live counts.
+// Renders the "home" Page's content builder. Featured spot guides / recent
+// blogs are content-managed via list-content blocks on that page, not
+// hardcoded here. Infographic blocks are enriched server-side with live counts.
 
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
-use App\Models\Blog;
 use App\Models\MediaLibrary;
 use App\Models\Page;
 use App\Models\Recommendation;
@@ -22,9 +22,10 @@ class HomepageController extends Controller
 
     /**
      * Render the homepage. The "home" Page record is optional — the page still
-     * renders with sensible meta defaults if it's absent. Pulls the 6 latest
-     * published guides and 3 latest published blogs, and (only when the content
-     * builder contains one) enriches infographic blocks with live published
+     * renders with sensible meta defaults if it's absent. Featured spot guides
+     * and recent blogs are content-managed via list-content blocks in the
+     * page's content builder, not queried here. Only when the content builder
+     * contains an infographic block does this enrich it with live published
      * counts of continents/countries/spots/hotels/restaurants.
      */
     public function index(): Response
@@ -34,32 +35,6 @@ class HomepageController extends Controller
             ->where('is_published', true)
             ->with(['staticMastheadMedia', 'ogImageMedia'])
             ->first();
-
-        $featuredSpotGuides = SpotGuide::published()
-            ->with(['country', 'thumbnailMedia'])
-            ->latest('published_at')
-            ->limit(6)
-            ->get()
-            ->map(fn ($guide) => [
-                'id' => $guide->id,
-                'title' => $guide->title,
-                'slug' => $guide->slug,
-                'country' => $guide->country?->name,
-                // Focal-bearing object so FeaturedGrid cards can honour the focal point.
-                'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
-            ]);
-
-        $recentBlogs = Blog::published()
-            ->with(['thumbnailMedia'])
-            ->latest('published_at')
-            ->limit(3)
-            ->get()
-            ->map(fn ($blog) => [
-                'id' => $blog->id,
-                'title' => $blog->title,
-                'slug' => $blog->slug,
-                'thumbnail' => $blog->thumbnailMedia?->imagePayload(),
-            ]);
 
         $mastheadSlider = [];
         if ($page) {
@@ -113,8 +88,6 @@ class HomepageController extends Controller
                 // Display image as focal-bearing object for CoverImage in StaticMasthead.
                 'static_masthead' => $page->staticMastheadMedia?->imagePayload(),
             ] : null,
-            'featuredSpotGuides' => $featuredSpotGuides,
-            'recentBlogs' => $recentBlogs,
             'meta' => [
                 'title' => $page?->seo_title ?: 'Windsurfing Destination Guide',
                 'description' => $page?->seo_description ?: 'Discover the best windsurfing destinations around the world.',

@@ -5,6 +5,7 @@ import SplitImageText from './Content/SplitImageText'
 import SingleImage from './Content/SingleImage'
 import ImagePair from './Content/ImagePair'
 import Gallery from './Content/Gallery'
+import FeaturedGrid from './Common/FeaturedGrid'
 
 interface ContentBlock {
     type: string
@@ -78,6 +79,30 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                         )
                     case 'infographic':
                         return <AnimatedInfographic key={index} stats={block.data.stats} />
+                    case 'list_content_blogs':
+                        return (
+                            <FeaturedGrid
+                                key={index}
+                                title={block.data.blockTitle || 'From the blog'}
+                                entries={block.data.customBlogEntries_resolved ?? []}
+                                linkHref={block.data.viewAllUrl || '/blog'}
+                                linkLabel={block.data.viewAllLabel || 'View all'}
+                                backgroundColour={block.data.backgroundColour}
+                                buildHref={(entry) => `/blog/${entry.slug}`}
+                            />
+                        )
+                    case 'list_content_spot_guides':
+                        return (
+                            <FeaturedGrid
+                                key={index}
+                                title={block.data.blockTitle || 'Destinations'}
+                                entries={block.data.customSpotGuideEntries_resolved ?? []}
+                                linkHref={block.data.viewAllUrl || '/destinations'}
+                                linkLabel={block.data.viewAllLabel || 'View all'}
+                                backgroundColour={block.data.backgroundColour}
+                                buildHref={(entry) => `/destinations/${entry.slug}`}
+                            />
+                        )
                     default:
                         return null
                 }

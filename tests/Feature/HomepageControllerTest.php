@@ -1,12 +1,11 @@
 <?php
 
 // Feature tests for App\Http\Controllers\HomepageController — the / route.
-// Covers rendering without a home Page record, the featured-guides and
-// recent-blogs limits, and the server-side infographic stat enrichment.
+// Covers rendering without a home Page record and the server-side
+// infographic stat enrichment.
 
 namespace Tests\Feature;
 
-use App\Models\Blog;
 use App\Models\Page;
 use App\Models\Recommendation;
 use App\Models\SpotGuide;
@@ -25,30 +24,6 @@ class HomepageControllerTest extends TestCase
                 ->component('Homepage')
                 ->where('page', null)
                 ->where('meta.title', 'Windsurfing Destination Guide')
-        );
-    }
-
-    public function test_index_features_at_most_six_published_spot_guides(): void
-    {
-        SpotGuide::factory()->count(7)->create();
-        SpotGuide::factory()->unpublished()->count(2)->create();
-
-        $response = $this->get(route('home'));
-
-        $response->assertInertia(
-            fn (Assert $assert) => $assert->has('featuredSpotGuides', 6)
-        );
-    }
-
-    public function test_index_lists_at_most_three_recent_published_blogs(): void
-    {
-        Blog::factory()->count(4)->create();
-        Blog::factory()->unpublished()->count(2)->create();
-
-        $response = $this->get(route('home'));
-
-        $response->assertInertia(
-            fn (Assert $assert) => $assert->has('recentBlogs', 3)
         );
     }
 
