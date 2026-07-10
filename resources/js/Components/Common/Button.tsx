@@ -17,7 +17,9 @@ interface ButtonProps {
 const variantClasses: Record<ButtonVariant, string> = {
     primary: 'bg-primary text-white hover:bg-primary-darker border border-primary',
     secondary: 'bg-secondary text-white hover:opacity-80 border border-secondary',
-    outline: 'bg-transparent text-primary border border-primary hover:bg-primary hover:text-white',
+    // Used on dark surfaces (e.g. FeaturedGrid on bg-secondary): white outline +
+    // white text, filling white with primary text on hover for contrast.
+    outline: 'bg-transparent text-white border border-white hover:bg-white hover:text-primary',
     ghost: 'bg-transparent text-primary hover:underline',
 }
 
