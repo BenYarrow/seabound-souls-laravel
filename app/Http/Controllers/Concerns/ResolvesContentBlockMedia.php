@@ -1,9 +1,11 @@
 <?php
 
 // Trait used by controllers that pass content-block arrays to Inertia pages.
-// Resolves all media IDs referenced inside block data to focal-bearing imagePayload
-// objects in a single batched query, so every <CoverImage> in content blocks can
-// honour the focal point without N+1 queries.
+// Resolves referenced IDs inside block data — in batched queries, so no N+1:
+//   • media IDs → focal-bearing imagePayload objects (`{key}_image`/`_images`),
+//     so every <CoverImage> in content blocks can honour the focal point; and
+//   • list-block picks (list_content_blogs / list_content_spot_guides) → the
+//     published card entries (`{key}_resolved`), in authored order (drafts dropped).
 
 namespace App\Http\Controllers\Concerns;
 
