@@ -21,7 +21,9 @@ interface Props {
     blogs: {
         data: Blog[]
         links: any[]
-        meta: any
+        /** Laravel paginator serialises flat — current_page is top-level (there is no `meta`). */
+        current_page: number
+        meta?: any
     }
     /** The owner-flagged post, or null when nothing is flagged (no fallback). */
     featured: Blog | null
@@ -69,7 +71,7 @@ const Index = ({ blogs, featured, static_masthead, meta }: Props) => {
                 </div>
 
                 {/* Featured post — owner-flagged, shown on page 1 only */}
-                {featured && blogs.meta.current_page === 1 && (
+                {featured && blogs.current_page === 1 && (
                     <FeaturedHero
                         image={featured.thumbnail}
                         eyebrow="Featured"
