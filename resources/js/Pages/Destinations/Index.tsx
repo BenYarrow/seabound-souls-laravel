@@ -171,7 +171,7 @@ const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, me
             <section className="bg-white">
                 <div className="container mx-auto pt-14 lg:pt-18">
                     <p className="text-gray-500 text-sm italic leading-relaxed border-l-2 border-primary-lighter pl-3 max-w-2xl">
-                        Ordered by wind for {orderingPeriod} — each region's spots are ranked on
+                        Ordered by gusts for {orderingPeriod} — each region's spots are ranked on
                         this year's readings, so wherever's firing now rises to the top.
                     </p>
                 </div>

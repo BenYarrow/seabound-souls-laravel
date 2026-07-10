@@ -142,8 +142,8 @@ class DestinationControllerTest extends TestCase
         $calm = SpotGuide::factory()->create(['title' => 'Calm Bay', 'slug' => 'calm-bay']);
         $windy = SpotGuide::factory()->create(['title' => 'Windy Point', 'slug' => 'windy-point']);
         // Rank uses THIS year + current month; front end groups the ranked array.
-        WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 8]);
-        WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 20]);
+        WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 8]);
+        WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 20]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
@@ -158,7 +158,7 @@ class DestinationControllerTest extends TestCase
         // must sort AFTER a guide that does — proving no-data falls to the end.
         SpotGuide::factory()->create(['title' => 'Aaa Bay', 'slug' => 'aaa-bay']);
         $withData = SpotGuide::factory()->create(['title' => 'Zephyr Cove', 'slug' => 'zephyr-cove']);
-        WeatherRecord::factory()->for($withData)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 5]);
+        WeatherRecord::factory()->for($withData)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 5]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
@@ -173,8 +173,8 @@ class DestinationControllerTest extends TestCase
         // current year+month counts (else it's treated as no current data → last).
         $stale = SpotGuide::factory()->create(['title' => 'Stale Bay', 'slug' => 'stale-bay']);
         $fresh = SpotGuide::factory()->create(['title' => 'Fresh Point', 'slug' => 'fresh-point']);
-        WeatherRecord::factory()->for($stale)->create(['year' => now()->subYear()->year, 'month' => now()->month, 'kts_wind' => 40]);
-        WeatherRecord::factory()->for($fresh)->create(['year' => now()->year, 'month' => now()->month, 'kts_wind' => 3]);
+        WeatherRecord::factory()->for($stale)->create(['year' => now()->subYear()->year, 'month' => now()->month, 'kts_gust' => 40]);
+        WeatherRecord::factory()->for($fresh)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 3]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
