@@ -21,25 +21,41 @@ const SpotGuideNav = ({ sections }: Props) => {
     const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null)
     const barRef = useRef<HTMLDivElement | null>(null)
 
-    // Scroll-spy: the top-most intersecting section (just below the pinned bar)
-    // is the active one. rootMargin trims the sticky-bar band off the top and
-    // most of the lower viewport so the "current" section is the one at the top.
+    // Scroll-spy: the active section is the LAST one whose top has scrolled up
+    // under the pinned bar (i.e. the section currently occupying the top of the
+    // viewport). A passive scroll/resize listener recomputes from the live rects —
+    // cheap for a dozen sections, and reliable everywhere (an IntersectionObserver
+    // here would be more elegant but doesn't fire in non-painting/headless
+    // contexts, which would silently break the highlight).
     useEffect(() => {
         if (sections.length < 2) return
-        const observer = new IntersectionObserver(
-            (entries) => {
-                const topMost = entries
-                    .filter((entry) => entry.isIntersecting)
-                    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-                if (topMost) setActiveId(topMost.target.id)
-            },
-            { rootMargin: '-56px 0px -55% 0px', threshold: 0 }
-        )
-        sections.forEach((section) => {
-            const el = document.getElementById(section.id)
-            if (el) observer.observe(el)
-        })
-        return () => observer.disconnect()
+        const BAR_OFFSET = 72 // px below the viewport top — just under the sticky bar
+        const recompute = () => {
+            let current = sections[0].id
+            for (const section of sections) {
+                const el = document.getElementById(section.id)
+                if (el && el.getBoundingClientRect().top <= BAR_OFFSET) current = section.id
+            }
+            setActiveId(current)
+        }
+        // rAF-throttle so we do the rect reads at most once per frame, not per
+        // scroll event (avoids forced-layout jank on a long guide).
+        let ticking = false
+        const onScroll = () => {
+            if (ticking) return
+            ticking = true
+            requestAnimationFrame(() => {
+                recompute()
+                ticking = false
+            })
+        }
+        recompute()
+        window.addEventListener('scroll', onScroll, { passive: true })
+        window.addEventListener('resize', onScroll, { passive: true })
+        return () => {
+            window.removeEventListener('scroll', onScroll)
+            window.removeEventListener('resize', onScroll)
+        }
     }, [sections])
 
     // Keep the active chip visible in the horizontally-scrolling strip (mobile).
