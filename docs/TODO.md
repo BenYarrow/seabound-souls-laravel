@@ -9,13 +9,14 @@ Public controllers all covered. Remaining:
 - [ ] Filament resources — smoke tests (lowest priority)
 
 ## Tooling
-- [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — **against PostgreSQL** (the suite runs on SQLite locally for speed; a Postgres CI job closes the dev/prod engine-parity gap and would have caught the Vite-dependent-suite fragility immediately)
+- [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — **against PostgreSQL** (the suite runs on SQLite locally for speed; a Postgres CI job closes the dev/prod engine-parity gap and would have caught the Vite-dependent-suite fragility immediately). Also run the JS suite (`npm run test:js`, Vitest — added #24) and a Linux `npm run build`.
 - [ ] Add `.nvmrc` pinning Node 22 so the correct version is auto-selected
 - [ ] Set up husky + lint-staged + eslint-plugin-jsdoc pre-commit enforcement (JSDoc-on-every-function rule)
 - [ ] Case-sensitivity guard for `@/…` imports — macOS resolves mismatched-case paths (e.g. `@/helpers` → tracked `@/Helpers`) but the case-sensitive Linux/Cloud build fails with `vite:load-fallback ENOENT` (bit us on the first deploy, fixed in #18). Add `eslint-plugin-import` case-sensitive resolution, or a Linux CI `npm run build`, so it fails locally not on deploy.
 
 ## Frontend
-- [ ] Dark-mode token layer (CSS vars on `:root` / `html.dark`), no-flash theme switch, CI colour-guard test — sweep includes `SearchPanel` (currently raw `bg-white`/`gray-*`)
+- [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.
+- [ ] Dark-mode token layer (CSS vars on `:root` / `html.dark`), no-flash theme switch, CI colour-guard test — sweep includes `SearchPanel` (currently raw `bg-white`/`gray-*`). Would eventually subsume the hardcoded light utilities added for the destinations light theme (#24).
 - [ ] Full responsive audit across mobile / tablet / desktop breakpoints
 - [ ] `CoverImage`: add an `eager` prop and use it for above-the-fold mastheads (currently `loading="lazy"` on all covers — LCP cost on heroes)
 - [ ] Focal points: multi-select (gallery/slider) focal-set UI (single-select preview only today); focal `fetch()` failure feedback/rollback; prune/retype unused `Card.tsx`

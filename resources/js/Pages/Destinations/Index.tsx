@@ -195,19 +195,21 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
 
             {/* ─── Weather data ─── */}
             {titles.length > 0 && (
-                <section className="bg-secondary">
+                // Pale-teal "data" zone — a distinct light tone so it reads as
+                // its own section, separated from the white/cream listings above.
+                <section className="bg-primary-lightest">
                     {/* Section header */}
                     <div className="container mx-auto pt-16 lg:pt-20 pb-10 lg:pb-12">
                         <div className="flex items-start gap-4">
                             <div className="mt-2 w-1 h-12 bg-orange rounded-full shrink-0" />
                             <div>
                                 <h2
-                                    className="font-display text-white leading-none tracking-wide"
+                                    className="font-display text-secondary leading-none tracking-wide"
                                     style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}
                                 >
                                     Wind & Weather Data
                                 </h2>
-                                <p className="text-white/35 text-sm mt-2">
+                                <p className="text-secondary/50 text-sm mt-2">
                                     Historical monthly averages across all destinations
                                 </p>
                             </div>
