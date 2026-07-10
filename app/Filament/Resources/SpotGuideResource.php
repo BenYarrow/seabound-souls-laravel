@@ -22,6 +22,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Forms\Set;
@@ -72,6 +73,9 @@ class SpotGuideResource extends Resource
                                 ->helperText('Required — the weather fetch uses this.'),
                             Toggle::make('is_published')
                                 ->label('Published'),
+                            Toggle::make('is_featured')
+                                ->label('Featured')
+                                ->helperText('Only one spot guide can be featured — turning this on clears it from any other guide.'),
                         ])->columns(2),
 
                     Tabs\Tab::make('Masthead & Thumbnail')
@@ -263,6 +267,7 @@ class SpotGuideResource extends Resource
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('country.name')->label('Country')->sortable(),
                 IconColumn::make('is_published')->label('Published')->boolean(),
+                ToggleColumn::make('is_featured')->label('Featured'),
                 TextColumn::make('updated_at')->label('Updated')->dateTime()->sortable(),
             ])
             ->filters([
