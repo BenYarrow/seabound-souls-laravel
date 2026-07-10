@@ -59,8 +59,15 @@ Select::make('customBlogEntries')
 and the spot-guides equivalent against `SpotGuide`. **Picker lists all** records
 (drafts included) so an item can be lined up before it's live; the public render
 shows only the currently-published subset (see resolution). Selection order is
-the display order. Keep `blockTitle` + the background-colour select; add an
-optional `viewAllUrl` `TextInput` (the "View all" link target).
+the display order.
+
+Every text/label the block shows is editable:
+- `blockTitle` (existing) — the section **heading** (e.g. "Latest Blogs").
+- `viewAllUrl` — the "view all" link **target** (`TextInput`, optional).
+- `viewAllLabel` — the "view all" link **text** (`TextInput`, optional, default
+  `'View all'`).
+
+Keep the existing background-colour select.
 
 ### Server-side resolution (extend `ResolvesContentBlockMedia`)
 After the media pass, resolve picked IDs in one batched query per type,
@@ -85,7 +92,7 @@ case 'list_content_blogs':
     title={block.data.blockTitle || 'From the blog'}
     entries={block.data.customBlogEntries_resolved ?? []}
     linkHref={block.data.viewAllUrl || '/blog'}
-    linkLabel="View all"
+    linkLabel={block.data.viewAllLabel || 'View all'}
     backgroundColour={block.data.backgroundColour}
     buildHref={(entry) => `/blog/${entry.slug}`} />
 case 'list_content_spot_guides':
@@ -93,7 +100,7 @@ case 'list_content_spot_guides':
     title={block.data.blockTitle || 'Destinations'}
     entries={block.data.customSpotGuideEntries_resolved ?? []}
     linkHref={block.data.viewAllUrl || '/destinations'}
-    linkLabel="View all"
+    linkLabel={block.data.viewAllLabel || 'View all'}
     backgroundColour={block.data.backgroundColour}
     buildHref={(entry) => `/destinations/${entry.slug}`} />
 ```
