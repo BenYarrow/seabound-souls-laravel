@@ -13,6 +13,8 @@ import ContentWithBackgroundImage from '@/Components/Content/ContentWithBackgrou
 import Gallery from '@/Components/Content/Gallery'
 import SpotGuideStatistics from '@/Components/SpotGuide/SpotGuideStatistics'
 import SpotGuideMap, { type MapLocation } from '@/Components/SpotGuide/SpotGuideMap'
+import SpotGuideNav from '@/Components/SpotGuide/SpotGuideNav'
+import { buildSpotGuideSections } from '@/Helpers/spotGuideSections'
 import type { FocalImage } from '@/types/media'
 
 interface Recommendation {
@@ -159,6 +161,9 @@ const Show = ({ spotGuide, meta }: Props) => {
         return locs
     }, [spotGuide])
 
+    /* Present sections for the sticky quick-nav (see buildSpotGuideSections). */
+    const navSections = useMemo(() => buildSpotGuideSections(spotGuide), [spotGuide])
+
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
 
@@ -180,9 +185,12 @@ const Show = ({ spotGuide, meta }: Props) => {
                 )}
             </div>
 
+            {/* ── Sticky quick-nav ── */}
+            <SpotGuideNav sections={navSections} />
+
             {/* ── Introduction ── */}
             {spotGuide.introduction_text && (
-                <section className="bg-cream">
+                <section id="introduction" className="bg-cream scroll-mt-14">
                     <div className="container mx-auto py-14 lg:py-18">
                         <div
                             className="prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-wide prose-headings:text-secondary prose-a:text-primary"
@@ -194,27 +202,33 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Gallery ── */}
             {spotGuide.gallery.length > 0 && (
-                <Gallery images={spotGuide.gallery} />
+                <div id="gallery" className="scroll-mt-14">
+                    <Gallery images={spotGuide.gallery} />
+                </div>
             )}
 
             {/* ── Water Conditions ── */}
             {spotGuide.water_conditions?.content && (
-                <ContentWithBackgroundImage
-                    backgroundImageUrl={spotGuide.water_conditions_bg}
-                    content={spotGuide.water_conditions.content}
-                    textRight={spotGuide.water_conditions.text_right}
-                    title="Water Conditions"
-                />
+                <div id="water-conditions" className="scroll-mt-14">
+                    <ContentWithBackgroundImage
+                        backgroundImageUrl={spotGuide.water_conditions_bg}
+                        content={spotGuide.water_conditions.content}
+                        textRight={spotGuide.water_conditions.text_right}
+                        title="Water Conditions"
+                    />
+                </div>
             )}
 
             {/* ── Wind Conditions ── */}
             {spotGuide.wind_conditions?.content && (
-                <ContentWithBackgroundImage
-                    backgroundImageUrl={spotGuide.wind_conditions_bg}
-                    content={spotGuide.wind_conditions.content}
-                    textRight={spotGuide.wind_conditions.text_right}
-                    title="Wind Conditions"
-                />
+                <div id="wind-conditions" className="scroll-mt-14">
+                    <ContentWithBackgroundImage
+                        backgroundImageUrl={spotGuide.wind_conditions_bg}
+                        content={spotGuide.wind_conditions.content}
+                        textRight={spotGuide.wind_conditions.text_right}
+                        title="Wind Conditions"
+                    />
+                </div>
             )}
 
             {/* ── Content Builder blocks ── */}
@@ -222,7 +236,7 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── When To Go ── */}
             {spotGuide.when_to_go && (
-                <section className="bg-white">
+                <section id="when-to-go" className="bg-white scroll-mt-14">
                     <div className="container mx-auto py-14 lg:py-18">
                         <SectionHeading>When To Go</SectionHeading>
                         <div
@@ -235,12 +249,14 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Weather Statistics ── */}
             {Object.keys(spotGuide.weather_records).length > 0 && (
-                <SpotGuideStatistics weatherRecords={spotGuide.weather_records} />
+                <div id="weather" className="scroll-mt-14">
+                    <SpotGuideStatistics weatherRecords={spotGuide.weather_records} />
+                </div>
             )}
 
             {/* ── Where To Stay ── */}
             {(spotGuide.where_to_stay_intro || spotGuide.stay_recommendations.length > 0) && (
-                <section className="bg-cream">
+                <section id="where-to-stay" className="bg-cream scroll-mt-14">
                     <div className="container mx-auto pt-14 lg:pt-18 pb-0">
                         <SectionHeading>Where To Stay</SectionHeading>
                         {spotGuide.where_to_stay_intro && (
@@ -260,7 +276,7 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Where To Eat ── */}
             {(spotGuide.where_to_eat_intro || spotGuide.eat_recommendations.length > 0) && (
-                <section className="bg-white">
+                <section id="where-to-eat" className="bg-white scroll-mt-14">
                     <div className="container mx-auto pt-14 lg:pt-18 pb-0">
                         <SectionHeading>Where To Eat</SectionHeading>
                         {spotGuide.where_to_eat_intro && (
@@ -280,7 +296,7 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Windsurfing Spots ── */}
             {spotGuide.windsurfing_locations.length > 0 && (
-                <section className="bg-cream">
+                <section id="windsurfing-spots" className="bg-cream scroll-mt-14">
                     <div className="container mx-auto pt-14 lg:pt-18 pb-0">
                         <SectionHeading>Windsurfing Spots</SectionHeading>
                     </div>
@@ -292,7 +308,7 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Interactive Map ── */}
             {spotGuide.latitude && spotGuide.longitude && mapLocations.length > 0 && (
-                <section className="bg-secondary">
+                <section id="explore-the-area" className="bg-secondary scroll-mt-14">
                     <div className="container mx-auto pt-14 lg:pt-16 pb-10 lg:pb-12">
                         <div className="flex items-start gap-4">
                             <div className="mt-2 w-1 h-10 bg-orange rounded-full shrink-0" />
@@ -320,22 +336,26 @@ const Show = ({ spotGuide, meta }: Props) => {
 
             {/* ── Travelling To ── */}
             {spotGuide.travelling_to?.content && (
-                <ContentWithBackgroundImage
-                    backgroundImageUrl={spotGuide.travelling_to_bg}
-                    content={spotGuide.travelling_to.content}
-                    textRight={spotGuide.travelling_to.text_right}
-                    title="Getting There"
-                />
+                <div id="getting-there" className="scroll-mt-14">
+                    <ContentWithBackgroundImage
+                        backgroundImageUrl={spotGuide.travelling_to_bg}
+                        content={spotGuide.travelling_to.content}
+                        textRight={spotGuide.travelling_to.text_right}
+                        title="Getting There"
+                    />
+                </div>
             )}
 
             {/* ── Lessons & Hire ── */}
             {spotGuide.lessons_and_hire?.content && (
-                <ContentWithBackgroundImage
-                    backgroundImageUrl={spotGuide.lessons_and_hire_bg}
-                    content={spotGuide.lessons_and_hire.content}
-                    textRight={spotGuide.lessons_and_hire.text_right}
-                    title="Lessons & Hire"
-                />
+                <div id="lessons-and-hire" className="scroll-mt-14">
+                    <ContentWithBackgroundImage
+                        backgroundImageUrl={spotGuide.lessons_and_hire_bg}
+                        content={spotGuide.lessons_and_hire.content}
+                        textRight={spotGuide.lessons_and_hire.text_right}
+                        title="Lessons & Hire"
+                    />
+                </div>
             )}
 
         </Layout>

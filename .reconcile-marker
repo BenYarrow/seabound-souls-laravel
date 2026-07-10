@@ -1,2 +1,2 @@
 date: 2026-07-10
-note: List-content builder blocks fixed + rendered (FeaturedGrid); homepage content-managed (hardcoded grids removed); destinations ranked by gusts. Sub-project B. PR #26 (reconcile 11, folded).
+note: Spot-guide quick-nav (sub-project C) — sticky content-aware in-page nav (helper + SpotGuideNav + anchors), scroll-listener scroll-spy. Closes A/B/C brainstorm. PR #27 (reconcile 12, folded).

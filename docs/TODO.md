@@ -2,10 +2,10 @@
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
-## Content curation (from the featured/content brainstorm — A shipped #25, B shipped #26)
-- [ ] **Sub-project C — spot-guide quick-nav.** A sticky secondary nav on spot-guide pages listing only the sections that have content (e.g. "Travelling to") with smooth-scroll to each.
+## Content curation (from the featured/content brainstorm — A #25, B #26, C #27; all shipped)
 - [ ] Optional: a test locking the list-block empty/all-draft-picks contract (resolved `[]` → renders nothing) — the homepage's default state now relies on that guard (safe by construction today). From #26 review.
 - [ ] Optional: cache the list-block picker `->options()` query (`Blog`/`SpotGuide` title lists) if the content library grows large — currently re-queried per admin form render. From #26 review.
+- [ ] Optional: a light DOM test of the quick-nav active-on-scroll math (`SpotGuideNav`) — the section-derivation helper is unit-tested, but the scroll→active mapping is inspection-only (the headless preview dispatches no scroll/IO events). From #27 review. Deep-linking to `#section` on load is also a possible follow-up.
 
 ## Testing sweep
 Public controllers all covered. Remaining:
