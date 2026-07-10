@@ -195,7 +195,9 @@ const Index = ({ spotGuides, weatherData, static_masthead, meta }: Props) => {
 
             {/* ─── Weather data ─── */}
             {titles.length > 0 && (
-                <section className="bg-cream">
+                // Pale-teal "data" zone — a distinct light tone so it reads as
+                // its own section, separated from the white/cream listings above.
+                <section className="bg-primary-lightest">
                     {/* Section header */}
                     <div className="container mx-auto pt-16 lg:pt-20 pb-10 lg:pb-12">
                         <div className="flex items-start gap-4">

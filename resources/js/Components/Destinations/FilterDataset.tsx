@@ -88,7 +88,7 @@ const FilterDataset = ({
     }
 
     return (
-        <div className="bg-primary-lightest border-y border-secondary/10">
+        <div className="bg-white border-y border-secondary/10">
             <div className="container mx-auto py-4 lg:py-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
 
