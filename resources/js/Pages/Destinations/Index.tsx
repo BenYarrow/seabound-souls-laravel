@@ -143,11 +143,6 @@ const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, me
                                 {spotGuides.length} destinations across{' '}
                                 {Object.keys(groupedByContinent).length} continents
                             </p>
-                            <p className="text-gray-500 text-sm italic leading-relaxed border-l-2 border-primary-lighter pl-3">
-                                Ordered by wind for {orderingPeriod} — each region's spots are
-                                ranked on this year's readings, so wherever's firing now rises
-                                to the top.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -171,6 +166,16 @@ const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, me
 
             {/* ─── Map ─── */}
             <DestinationsMap spotGuides={spotGuides} />
+
+            {/* ─── Ordering note — explains how the continent listings below are sorted ─── */}
+            <section className="bg-white">
+                <div className="container mx-auto pt-14 lg:pt-18">
+                    <p className="text-gray-500 text-sm italic leading-relaxed border-l-2 border-primary-lighter pl-3 max-w-2xl">
+                        Ordered by wind for {orderingPeriod} — each region's spots are ranked on
+                        this year's readings, so wherever's firing now rises to the top.
+                    </p>
+                </div>
+            </section>
 
             {/* ─── Continent sections ─── */}
             {orderedContinents.map(([continent, guides], sectionIndex) => (
