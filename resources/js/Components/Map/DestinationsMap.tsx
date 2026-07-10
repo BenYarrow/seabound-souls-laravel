@@ -75,16 +75,18 @@ const DestinationsMap = ({ spotGuides }: Props) => {
                 mapboxAccessToken={mapboxToken}
                 initialViewState={INITIAL_VIEW}
                 style={{ height: 620 }}
-                mapStyle="mapbox://styles/mapbox/dark-v11"
+                mapStyle="mapbox://styles/mapbox/light-v11"
                 logoPosition="bottom-right"
                 attributionControl={false}
                 onLoad={(e) => {
+                    // Pale atmosphere so the globe reads light, matching the
+                    // page — not the dark space the dark-v11 style implied.
                     e.target.setFog({
-                        color: 'rgb(10, 20, 30)',
-                        'high-color': 'rgb(10, 20, 30)',
-                        'space-color': '#060c14',
-                        'horizon-blend': 0.02,
-                        'star-intensity': 0.15,
+                        color: 'rgb(224, 236, 242)',
+                        'high-color': 'rgb(205, 224, 236)',
+                        'space-color': 'rgb(235, 241, 246)',
+                        'horizon-blend': 0.06,
+                        'star-intensity': 0,
                     })
                 }}
             >
