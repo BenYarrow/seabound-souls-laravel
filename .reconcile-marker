@@ -1,2 +1,2 @@
-date: 2026-07-09
-note: Spot-guide admin polish (PR #22) — windsurfing-locations image picker, drag-only ordering (removed redundant sort_order inputs), OG image moved to the SEO tab. Standalone reconcile catching up #22 (its docs were deferred to avoid a concurrent SITREP/marker conflict with the SEO PR #21). Suite 101 on branch / 107+ on trunk.
+date: 2026-07-10
+note: Destinations light theme + generated golden-angle chart palette + Vitest (first JS test runner); PR #24 (reconcile 9, folded).
