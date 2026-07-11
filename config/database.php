@@ -110,6 +110,25 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        // Read-only source connection for `db:pull-from-production`. Points at
+        // the Laravel Cloud (Neon) production Postgres. Credentials live only in
+        // the local, gitignored .env (PROD_DB_*); .env.example carries empty
+        // placeholders. Nothing in the app writes through this connection — the
+        // pull command uses it for a read-only pg_dump and a version probe.
+        'pgsql_prod' => [
+            'driver' => 'pgsql',
+            'host' => env('PROD_DB_HOST'),
+            'port' => env('PROD_DB_PORT', '5432'),
+            'database' => env('PROD_DB_DATABASE'),
+            'username' => env('PROD_DB_USERNAME'),
+            'password' => env('PROD_DB_PASSWORD'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('PROD_DB_SSLMODE', 'require'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
