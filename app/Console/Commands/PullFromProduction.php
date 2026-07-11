@@ -161,6 +161,24 @@ class PullFromProduction extends Command
         // ended up without our core tables.
         @unlink($dumpFile);
 
+        // Production stores media on the R2 (s3) disk. Locally there is no
+        // bucket configured, so leaving the pulled `media` rows on 's3' makes
+        // every image URL throw (GetObject requires non-empty Bucket → 500).
+        // Repoint every media row at the local media-library disk. The files
+        // themselves are not synced (DB-only; see the --with-media follow-up),
+        // so images may 404 — but pages render.
+        $localMediaDisk = config('media-library.disk_name');
+        try {
+            $remapped = DB::connection('pgsql')->table('media')
+                ->update(['disk' => $localMediaDisk, 'conversions_disk' => $localMediaDisk]);
+            if ($remapped > 0) {
+                $this->info("Repointed {$remapped} media row(s) to the local '{$localMediaDisk}' disk (files not synced — images may not render locally).");
+            }
+        } catch (\Throwable $exception) {
+            // A schema without a `media` table is unexpected but non-fatal here.
+            $this->warn('Could not remap media disk (non-fatal): '.$exception->getMessage());
+        }
+
         $this->newLine();
         $this->info('Restored. Local row counts:');
         foreach (self::REPORT_TABLES as $table) {

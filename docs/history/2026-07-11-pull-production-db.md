@@ -49,11 +49,17 @@ guides vs 3, 75 media rows vs 14).
 
 ## Media (out of scope for v1)
 
-DB only. Local `MEDIA_DISK` stays `public` (local disk), so local test uploads
-keep working and stay isolated from prod. Pulled rows reference R2 object paths
-absent locally, so those images won't render — acceptable for content/data
-work. A `--with-media` flag (R2 → local disk sync, needs read-only R2 creds) is
-the documented follow-up for full visual fidelity.
+DB only. **Gotcha found during verification:** production stores media on the
+R2 (`s3`) disk, so the pulled Spatie `media` rows carry `disk = 's3'`. Locally
+there is no bucket configured, so the first image URL blew up with
+`InvalidArgumentException: The GetObject operation requires non-empty parameter:
+Bucket` — a hard **500**, not just a broken `<img>`. So the command now
+**repoints every `media` row at the local media-library disk**
+(`config('media-library.disk_name')`, i.e. `public`) after the restore. Pages
+then render; the files themselves aren't synced, so those images 404 until
+`--with-media`. Local `MEDIA_DISK` stays `public`, so local test uploads keep
+working and stay isolated from prod. A `--with-media` flag (R2 → local disk
+sync, needs read-only R2 creds) is the follow-up for full visual fidelity.
 
 ## Test plan
 

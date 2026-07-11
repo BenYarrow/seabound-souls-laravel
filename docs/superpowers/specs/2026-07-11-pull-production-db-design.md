@@ -65,12 +65,14 @@ placeholders so the shape is documented and committed.
 
 ### Media
 
-Out of scope for v1 (DB only). Local `MEDIA_DISK` stays `public` (local disk),
-so local test uploads keep working and stay isolated from prod. Pulled prod rows
-reference R2 object paths that don't exist locally, so those images won't render
-locally — acceptable for content/data work. A later `--with-media` flag can sync
-the R2 objects down to local disk for full visual fidelity (needs read-only R2
-credentials).
+Out of scope for v1 (DB only). Prod stores media on the R2 (`s3`) disk, so
+pulled `media` rows arrive with `disk = 's3'`; locally there's no bucket, which
+makes image-URL generation throw a 500. So after the restore the command
+**repoints every `media` row at the local media-library disk**
+(`config('media-library.disk_name')` = `public`). Local `MEDIA_DISK` stays
+`public`, so local test uploads keep working and stay isolated from prod. The
+files aren't synced, so pulled images 404 until a later `--with-media` flag
+syncs the R2 objects down to local disk (needs read-only R2 credentials).
 
 ## Testing
 
