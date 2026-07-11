@@ -1,2 +1,2 @@
-date: 2026-07-10
-note: Spot-guide weather section light theme — mirrored the destinations weather look onto SpotGuideStatistics. PR #28 (reconcile 13, folded).
+date: 2026-07-11
+note: Related spot guides slider — full-bleed 1-per-view Swiper of other guides in the same country (fallback: continent), featured-first then gustiest-ranked via shared SpotGuide::sortByGustiestThisMonth. PR #29 (reconcile 14, folded).

@@ -19,6 +19,9 @@ Public controllers all covered. Remaining:
 - [ ] Set up husky + lint-staged + eslint-plugin-jsdoc pre-commit enforcement (JSDoc-on-every-function rule)
 - [ ] Case-sensitivity guard for `@/…` imports — macOS resolves mismatched-case paths (e.g. `@/helpers` → tracked `@/Helpers`) but the case-sensitive Linux/Cloud build fails with `vite:load-fallback ENOENT` (bit us on the first deploy, fixed in #18). Add `eslint-plugin-import` case-sensitive resolution, or a Linux CI `npm run build`, so it fails locally not on deploy.
 
+## Dev tooling — pull production DB to local
+- [ ] A `php artisan` command to pull the **production** Postgres DB down and overwrite the local `seabound_souls_dev` DB, for realistic dev/debug (prod has far more content than local). Raised by Ben 2026-07-11 — its own branch + short design pass first. Must-haves: read-only on prod (dump only, never write back); confirm-before-wipe (destructive on local); prod credentials sourced safely (Laravel Cloud Postgres connection — where do they live? not committed); handle the media story (R2 object storage) or scope to DB-only v1. Sequence after the related-guides slider (#29) merges.
+
 ## Authoring UX
 - [ ] **Draft / live preview** — let the owner preview content that isn't live yet: unpublished (draft) Pages / Blogs / Spot Guides, brand-new unsaved records, and *edited-but-unsaved* changes, without publishing. Today the public controllers hard-filter `is_published`, so drafts 404 and there's no way to see edits before they go live. Needs scoping (signed preview URLs / a Filament "Preview" action that renders the Inertia page with the in-progress form state; how to feed unsaved edits through to the front end). Raised by Ben 2026-07-10 — discuss in more detail before designing.
 
