@@ -14,6 +14,7 @@ import Gallery from '@/Components/Content/Gallery'
 import SpotGuideStatistics from '@/Components/SpotGuide/SpotGuideStatistics'
 import SpotGuideMap, { type MapLocation } from '@/Components/SpotGuide/SpotGuideMap'
 import SpotGuideNav from '@/Components/SpotGuide/SpotGuideNav'
+import RelatedSpotGuides from '@/Components/SpotGuide/RelatedSpotGuides'
 import { buildSpotGuideSections } from '@/Helpers/spotGuideSections'
 import type { FocalImage } from '@/types/media'
 
@@ -65,6 +66,19 @@ interface Props {
         eat_recommendations: Recommendation[]
         windsurfing_locations: WindsurfLocation[]
         weather_records: Record<string, any[]>
+    }
+    related_spot_guides: {
+        relation: 'country' | 'continent' | null
+        label: string | null
+        guides: {
+            id: number
+            title: string
+            slug: string
+            country: { name: string } | null
+            thumbnail: FocalImage | null
+            intro_snippet: string
+            overview: { wind_conditions: string | null; best_direction: string | null }
+        }[]
     }
     meta: any
 }
@@ -145,7 +159,7 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
 
 /* ──────────────────── Page ──────────────────── */
 
-const Show = ({ spotGuide, meta }: Props) => {
+const Show = ({ spotGuide, related_spot_guides, meta }: Props) => {
     /* Aggregate all locations for the map */
     const mapLocations = useMemo<MapLocation[]>(() => {
         const locs: MapLocation[] = []
@@ -357,6 +371,13 @@ const Show = ({ spotGuide, meta }: Props) => {
                     />
                 </div>
             )}
+
+            {/* ── Related Spot Guides ── */}
+            <RelatedSpotGuides
+                relation={related_spot_guides.relation}
+                label={related_spot_guides.label}
+                guides={related_spot_guides.guides}
+            />
 
         </Layout>
     )
