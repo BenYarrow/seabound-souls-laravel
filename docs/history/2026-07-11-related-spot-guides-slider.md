@@ -3,8 +3,8 @@ title: Related spot guides slider
 tags: [spot-guides, frontend, swiper, weather-ranking, inertia]
 status: stable
 completed: 2026-07-11
-commits: [1bcd259, d9d0b4b, d385c27, bdf5d82, 3b74bc2]
-pr: 29
+commits: [1bcd259, d9d0b4b, d385c27, bdf5d82, 3b74bc2, 6aa78ff]
+pr: [29, 30]
 ---
 
 # Related spot guides slider
@@ -83,6 +83,14 @@ pagination dots use scoped styles in `app.css` (`#related-spot-guides
 - Suite: **133 passing, 853 assertions.** Frontend has no component-test harness
   (Vitest covers helpers/charts only), so the component was verified by
   inspection + in-browser DOM check.
+
+## Follow-up shipped — relation eyebrow (PR #30, `6aa78ff`)
+
+Post-merge, a small uppercase eyebrow was added above the heading — **`Same
+country`** or **`Same continent`**, driven by the already-tested `relation`
+prop. Prompted by the Langebaan (South Africa) → Dahab (Egypt) continent
+fallback in prod: "More Spots in Africa" alone implied proximity across a whole
+continent. The eyebrow keeps that grouping honest without changing the cascade.
 
 ## Follow-ups
 
