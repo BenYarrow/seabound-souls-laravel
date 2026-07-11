@@ -1,2 +1,2 @@
 date: 2026-07-11
-note: Related spot guides slider — full-bleed 1-per-view Swiper of other guides in the same country (fallback: continent), featured-first then gustiest-ranked via shared SpotGuide::sortByGustiestThisMonth. PR #29 (reconcile 14, folded).
+note: Related-guides relation eyebrow — small "Same country" / "Same continent" label above the heading so continent fallbacks (Langebaan → Dahab) don't imply proximity. PR #30 (reconcile 15, folded).
