@@ -50,6 +50,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 ### Database
 - **Local dev + production: PostgreSQL** (`pgsql`). Tests: in-memory SQLite. The pre-Postgres SQLite file was migrated once via `php artisan db:import-from-sqlite` (reads the `sqlite_legacy` connection). Don't reintroduce SQLite as the app's default connection.
 - Schema changes go through Laravel migrations (`php artisan make:migration`). **Never edit a migration that has already run** — add a new migration for the change.
+- **Refresh local data from production:** `php artisan db:pull-from-production` overwrites the local dev DB (`seabound_souls_dev`) with a fresh read-only copy of prod (Laravel Cloud / Neon, DB `main`, Postgres 17). Local-env-only, confirm-before-wipe (`--force` to skip). Needs `PROD_DB_*` in your (gitignored) `.env` and PG17 client tools (`brew install postgresql@17` — pg_dump must be ≥ the server). DB-only: media (R2) isn't pulled, so pulled images won't render locally (test uploads still work, on the local disk).
 
 ---
 
