@@ -1,2 +1,2 @@
 date: 2026-07-10
-note: Spot-guide quick-nav (sub-project C) — sticky content-aware in-page nav (helper + SpotGuideNav + anchors), scroll-listener scroll-spy. Closes A/B/C brainstorm. PR #27 (reconcile 12, folded).
+note: Spot-guide weather section light theme — mirrored the destinations weather look onto SpotGuideStatistics. PR #28 (reconcile 13, folded).
