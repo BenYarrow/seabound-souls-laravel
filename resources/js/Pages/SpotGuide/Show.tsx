@@ -74,7 +74,6 @@ interface Props {
             id: number
             title: string
             slug: string
-            country: { name: string } | null
             thumbnail: FocalImage | null
             intro_snippet: string
             overview: { wind_conditions: string | null; best_direction: string | null }

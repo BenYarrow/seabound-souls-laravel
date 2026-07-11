@@ -3,8 +3,10 @@
 // Public spot-guide (destination) detail page:
 //   GET /destinations/{slug} — spot-guides.show
 // Assembles the full destination payload for the Inertia page: conditions,
-// gallery, stay/eat recommendations, windsurfing locations, and weather history.
-// All images resolve from the centralised media library and null-coalesce.
+// gallery, stay/eat recommendations, windsurfing locations, weather history,
+// and the related-guides slider (other guides in the same country, or the same
+// continent as a fallback). All images resolve from the centralised media
+// library and null-coalesce.
 
 namespace App\Http\Controllers;
 
@@ -74,7 +76,7 @@ class SpotGuideController extends Controller
             $countrySiblings = SpotGuide::published()
                 ->where('country_id', $spotGuide->country_id)
                 ->where('id', '!=', $spotGuide->id)
-                ->with(['country', 'thumbnailMedia', 'weatherRecords'])
+                ->with(['thumbnailMedia', 'weatherRecords'])
                 ->get();
 
             if ($countrySiblings->isNotEmpty()) {
@@ -108,7 +110,6 @@ class SpotGuideController extends Controller
             'id' => $guide->id,
             'title' => $guide->title,
             'slug' => $guide->slug,
-            'country' => $guide->country ? ['name' => $guide->country->name] : null,
             'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
             'intro_snippet' => Str::limit(strip_tags($guide->introduction_text ?? ''), 140),
             'overview' => [

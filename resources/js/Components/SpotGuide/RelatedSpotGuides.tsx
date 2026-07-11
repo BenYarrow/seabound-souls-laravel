@@ -1,8 +1,8 @@
 // RelatedSpotGuides — closing "explore more" slider for the spot-guide page.
 // Shows other guides in the same country (or continent as a fallback) as a
 // full-bleed, one-slide-per-view Swiper carousel: a cinematic image with the
-// guide's title, country, intro snippet and spot-overview badges laid over a
-// dark gradient. Renders nothing when there are no guides.
+// guide's title, intro snippet and spot-overview badges laid over a dark
+// gradient. Renders nothing when there are no guides.
 // Data shape is produced by SpotGuideController::show (related_spot_guides prop).
 
 import { Link } from '@inertiajs/react'
@@ -24,7 +24,6 @@ interface RelatedGuide {
     id: number
     title: string
     slug: string
-    country: { name: string } | null
     thumbnail: FocalImage | null
     intro_snippet: string
     overview: {
@@ -82,7 +81,7 @@ const RelatedSpotGuides = ({ label, guides }: RelatedSpotGuidesProps) => {
 
                 <AnimateInView tag="div">
                     <Swiper
-                        modules={[Navigation, Pagination]}
+                        modules={guides.length > 1 ? [Navigation, Pagination] : []}
                         slidesPerView={1}
                         spaceBetween={0}
                         navigation={{
