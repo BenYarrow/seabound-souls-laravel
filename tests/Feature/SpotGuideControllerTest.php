@@ -6,6 +6,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Country;
 use App\Models\MediaLibrary;
 use App\Models\Recommendation;
 use App\Models\SpotGuide;
@@ -101,6 +102,99 @@ class SpotGuideControllerTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('spotGuide.thumbnail.focal_x', 20)
                 ->where('spotGuide.thumbnail.focal_y', 80)
+            );
+    }
+
+    public function test_show_includes_other_published_guides_from_the_same_country(): void
+    {
+        $country = Country::factory()->create(['name' => 'Greece']);
+        $guide = SpotGuide::factory()->for($country)->create();
+        $sibling = SpotGuide::factory()->for($country)->create();
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.relation', 'country')
+                ->where('related_spot_guides.label', 'Greece')
+                ->has('related_spot_guides.guides', 1)
+                ->where('related_spot_guides.guides.0.slug', $sibling->slug)
+            );
+    }
+
+    public function test_show_excludes_the_current_guide_and_drafts_from_related(): void
+    {
+        $country = Country::factory()->create();
+        $guide = SpotGuide::factory()->for($country)->create();
+        SpotGuide::factory()->for($country)->unpublished()->create(); // draft sibling
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.relation', null)
+                ->has('related_spot_guides.guides', 0)
+            );
+    }
+
+    public function test_show_falls_back_to_continent_when_country_has_no_siblings(): void
+    {
+        $europeA = Country::factory()->create(['continent' => 'europe', 'name' => 'Greece']);
+        $europeB = Country::factory()->create(['continent' => 'europe', 'name' => 'Spain']);
+        $guide = SpotGuide::factory()->for($europeA)->create();
+        $continentSibling = SpotGuide::factory()->for($europeB)->create();
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.relation', 'continent')
+                ->where('related_spot_guides.label', 'Europe')
+                ->has('related_spot_guides.guides', 1)
+                ->where('related_spot_guides.guides.0.slug', $continentSibling->slug)
+            );
+    }
+
+    public function test_show_returns_no_related_when_neither_country_nor_continent_has_others(): void
+    {
+        $country = Country::factory()->create(['continent' => 'oceania']);
+        $guide = SpotGuide::factory()->for($country)->create();
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.relation', null)
+                ->where('related_spot_guides.label', null)
+                ->has('related_spot_guides.guides', 0)
+            );
+    }
+
+    public function test_show_orders_related_featured_first_then_gustiest(): void
+    {
+        $country = Country::factory()->create();
+        $guide = SpotGuide::factory()->for($country)->create();
+        $featured = SpotGuide::factory()->for($country)->create(['title' => 'Featured Cove', 'is_featured' => true]);
+        $windy = SpotGuide::factory()->for($country)->create(['title' => 'Windy Point']);
+        $calm = SpotGuide::factory()->for($country)->create(['title' => 'Calm Bay']);
+        WeatherRecord::factory()->for($featured)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 5]);
+        WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 30]);
+        WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 10]);
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.guides.0.title', 'Featured Cove') // featured leads despite low gust
+                ->where('related_spot_guides.guides.1.title', 'Windy Point')   // then gustiest
+                ->where('related_spot_guides.guides.2.title', 'Calm Bay')
+            );
+    }
+
+    public function test_show_related_card_carries_snippet_and_overview(): void
+    {
+        $country = Country::factory()->create();
+        $guide = SpotGuide::factory()->for($country)->create();
+        SpotGuide::factory()->for($country)->create([
+            'introduction_text' => '<p>A <strong>windy</strong> paradise.</p>',
+            'spot_overview' => ['wind_conditions' => 'Thermal', 'best_direction' => 'NW'],
+        ]);
+
+        $this->get(route('spot-guides.show', $guide->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('related_spot_guides.guides.0.intro_snippet', 'A windy paradise.')
+                ->where('related_spot_guides.guides.0.overview.wind_conditions', 'Thermal')
+                ->where('related_spot_guides.guides.0.overview.best_direction', 'NW')
             );
     }
 }
