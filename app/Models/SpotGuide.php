@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Laravel\Scout\Searchable;
 
 class SpotGuide extends Model
@@ -133,6 +134,43 @@ class SpotGuide extends Model
     public function weatherRecords(): HasMany
     {
         return $this->hasMany(WeatherRecord::class);
+    }
+
+    /**
+     * Sort a collection of spot guides "gustiest first" for the current month,
+     * using this year's reading. Gusts are what light up a session, so they drive
+     * the ranking. Guides with no reading for the current year+month sort last;
+     * ties break alphabetically by title. Read per request (via now()) so the
+     * order re-ranks as the month turns. Callers must eager-load weatherRecords.
+     *
+     * @param  Collection<int, SpotGuide>  $guides
+     * @return Collection<int, SpotGuide>
+     */
+    public static function sortByGustiestThisMonth(Collection $guides): Collection
+    {
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+
+        $gustThisMonth = fn (SpotGuide $guide) => optional($guide->weatherRecords->first(
+            fn ($record) => (int) $record->year === $currentYear && (int) $record->month === $currentMonth
+        ))->kts_gust;
+
+        return $guides->sort(function (SpotGuide $first, SpotGuide $second) use ($gustThisMonth) {
+            $gustFirst = $gustThisMonth($first);
+            $gustSecond = $gustThisMonth($second);
+
+            if ($gustFirst === null && $gustSecond === null) {
+                return strcmp($first->title, $second->title);
+            }
+            if ($gustFirst === null) {
+                return 1; // no current-month data → sort last
+            }
+            if ($gustSecond === null) {
+                return -1;
+            }
+
+            return ((float) $gustSecond <=> (float) $gustFirst) ?: strcmp($first->title, $second->title);
+        })->values();
     }
 
     /**

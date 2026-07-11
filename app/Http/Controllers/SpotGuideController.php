@@ -3,14 +3,17 @@
 // Public spot-guide (destination) detail page:
 //   GET /destinations/{slug} — spot-guides.show
 // Assembles the full destination payload for the Inertia page: conditions,
-// gallery, stay/eat recommendations, windsurfing locations, and weather history.
-// All images resolve from the centralised media library and null-coalesce.
+// gallery, stay/eat recommendations, windsurfing locations, weather history,
+// and the related-guides slider (other guides in the same country, or the same
+// continent as a fallback). All images resolve from the centralised media
+// library and null-coalesce.
 
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
 use App\Models\MediaLibrary;
 use App\Models\SpotGuide;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -61,6 +64,59 @@ class SpotGuideController extends Controller
             ->map(fn ($m) => $m->imagePayload())
             ->values()
             ->toArray();
+
+        // Related guides: other published guides in the SAME COUNTRY, falling
+        // back to the same CONTINENT, then hidden. Featured leads (single-featured
+        // invariant → at most one), remainder ranked gustiest-this-month.
+        $relation = null;
+        $label = null;
+        $related = collect();
+
+        if ($spotGuide->country_id !== null) {
+            $countrySiblings = SpotGuide::published()
+                ->where('country_id', $spotGuide->country_id)
+                ->where('id', '!=', $spotGuide->id)
+                ->with(['thumbnailMedia', 'weatherRecords'])
+                ->get();
+
+            if ($countrySiblings->isNotEmpty()) {
+                $related = $countrySiblings;
+                $relation = 'country';
+                $label = $spotGuide->country?->name;
+            } elseif ($spotGuide->country?->continent) {
+                $continent = $spotGuide->country->continent;
+                $continentGuides = SpotGuide::published()
+                    ->where('id', '!=', $spotGuide->id)
+                    ->whereHas('country', fn ($query) => $query->where('continent', $continent))
+                    ->with(['country', 'thumbnailMedia', 'weatherRecords'])
+                    ->get();
+
+                if ($continentGuides->isNotEmpty()) {
+                    $related = $continentGuides;
+                    $relation = 'continent';
+                    // Humanise the enum slug for display: north-america → North America.
+                    $label = ucwords(str_replace('-', ' ', $continent));
+                }
+            }
+        }
+
+        // Featured first (stable sort preserves gust order among the rest), then
+        // gustiest this month.
+        $related = SpotGuide::sortByGustiestThisMonth($related)
+            ->sortByDesc('is_featured')
+            ->values();
+
+        $relatedGuides = $related->map(fn (SpotGuide $guide) => [
+            'id' => $guide->id,
+            'title' => $guide->title,
+            'slug' => $guide->slug,
+            'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
+            'intro_snippet' => Str::limit(strip_tags($guide->introduction_text ?? ''), 140),
+            'overview' => [
+                'wind_conditions' => $guide->spot_overview['wind_conditions'] ?? null,
+                'best_direction' => $guide->spot_overview['best_direction'] ?? null,
+            ],
+        ])->values()->toArray();
 
         return Inertia::render('SpotGuide/Show', [
             'spotGuide' => [
@@ -138,6 +194,11 @@ class SpotGuideController extends Controller
                 'description' => $spotGuide->seo_description ?? '',
                 'keywords' => $spotGuide->seo_keywords ?? [],
                 'og_image' => $spotGuide->ogImageMedia?->getUrl() ?: ($spotGuide->thumbnailMedia?->getUrl() ?? ''),
+            ],
+            'related_spot_guides' => [
+                'relation' => $relation,
+                'label' => $label,
+                'guides' => $relatedGuides,
             ],
         ]);
     }

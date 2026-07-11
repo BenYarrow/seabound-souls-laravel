@@ -8,6 +8,7 @@ namespace Tests\Unit;
 use App\Models\Country;
 use App\Models\Recommendation;
 use App\Models\SpotGuide;
+use App\Models\WeatherRecord;
 use App\Models\WindsurfingLocation;
 use Tests\TestCase;
 
@@ -53,5 +54,47 @@ class SpotGuideTest extends TestCase
             ['Lagoon', 'Bay'],
             $guide->windsurfingLocations->pluck('name')->all()
         );
+    }
+
+    public function test_sort_by_gustiest_this_month_orders_by_current_gust_descending(): void
+    {
+        $calm = SpotGuide::factory()->create(['title' => 'Calm Bay']);
+        $windy = SpotGuide::factory()->create(['title' => 'Windy Point']);
+        WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 8]);
+        WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 20]);
+
+        $sorted = SpotGuide::sortByGustiestThisMonth(
+            SpotGuide::with('weatherRecords')->get()
+        );
+
+        $this->assertSame(['Windy Point', 'Calm Bay'], $sorted->pluck('title')->all());
+    }
+
+    public function test_sort_by_gustiest_this_month_puts_guides_without_current_data_last(): void
+    {
+        // "Aaa Bay" is alphabetically first but has no current-month reading.
+        SpotGuide::factory()->create(['title' => 'Aaa Bay']);
+        $withData = SpotGuide::factory()->create(['title' => 'Zephyr Cove']);
+        WeatherRecord::factory()->for($withData)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 5]);
+
+        $sorted = SpotGuide::sortByGustiestThisMonth(
+            SpotGuide::with('weatherRecords')->get()
+        );
+
+        $this->assertSame(['Zephyr Cove', 'Aaa Bay'], $sorted->pluck('title')->all());
+    }
+
+    public function test_sort_by_gustiest_this_month_breaks_ties_alphabetically(): void
+    {
+        $bravo = SpotGuide::factory()->create(['title' => 'Bravo Bay']);
+        $alpha = SpotGuide::factory()->create(['title' => 'Alpha Bay']);
+        WeatherRecord::factory()->for($bravo)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 12]);
+        WeatherRecord::factory()->for($alpha)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 12]);
+
+        $sorted = SpotGuide::sortByGustiestThisMonth(
+            SpotGuide::with('weatherRecords')->get()
+        );
+
+        $this->assertSame(['Alpha Bay', 'Bravo Bay'], $sorted->pluck('title')->all());
     }
 }
