@@ -38,39 +38,45 @@ const unitOptions: SelectOption<string>[] = [
     { label: 'Kph', value: 'kph' },
 ]
 
-const AXIS_TICK = { fill: 'rgba(255,255,255,0.4)', fontSize: 11 }
-const AXIS_LINE = { stroke: 'rgba(255,255,255,0.08)' }
+// Bar colours — reused for the tooltip rows so each figure matches its bar.
+const GUST_COLOUR = 'hsl(192, 89%, 15%)'
+const WIND_COLOUR = 'hsl(192, 89%, 35%)'
+const TEMP_COLOUR = 'hsl(11, 61%, 58%)'
+
+// Dark-on-light chart chrome — mirrors the destinations weather charts.
+const AXIS_TICK = { fill: 'rgba(0,0,0,0.6)', fontSize: 11 }
+const AXIS_LINE = { stroke: 'rgba(0,0,0,0.15)' }
 
 const selectStyles = {
     control: (base: any, state: any) => ({
         ...base,
-        backgroundColor: 'rgba(255,255,255,0.07)',
-        borderColor: state.isFocused ? 'hsl(185 36% 70%)' : 'rgba(255,255,255,0.15)',
+        backgroundColor: 'white',
+        borderColor: state.isFocused ? 'hsl(192 89% 25%)' : 'rgba(0,0,0,0.15)',
         borderRadius: 0,
         boxShadow: 'none',
-        color: 'white',
+        color: 'hsl(0 1% 15%)',
         minHeight: '2.5rem',
-        '&:hover': { borderColor: 'rgba(255,255,255,0.35)' },
+        '&:hover': { borderColor: 'rgba(0,0,0,0.35)' },
     }),
-    singleValue: (base: any) => ({ ...base, color: 'white', fontSize: '0.875rem' }),
-    placeholder: (base: any) => ({ ...base, color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }),
+    singleValue: (base: any) => ({ ...base, color: 'hsl(0 1% 15%)', fontSize: '0.875rem' }),
+    placeholder: (base: any) => ({ ...base, color: 'rgba(0,0,0,0.4)', fontSize: '0.875rem' }),
     menu: (base: any) => ({
         ...base,
-        backgroundColor: 'hsl(192 89% 14%)',
+        backgroundColor: 'white',
         borderRadius: 0,
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        border: '1px solid rgba(0,0,0,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
     }),
     option: (base: any, state: any) => ({
         ...base,
-        backgroundColor: state.isSelected ? 'hsl(192 89% 25%)' : state.isFocused ? 'rgba(255,255,255,0.08)' : 'transparent',
-        color: state.isSelected ? 'white' : 'rgba(255,255,255,0.8)',
+        backgroundColor: state.isSelected ? 'hsl(192 89% 25%)' : state.isFocused ? 'hsl(169 28% 89%)' : 'transparent',
+        color: state.isSelected ? 'white' : 'hsl(0 1% 15%)',
         fontSize: '0.875rem',
         cursor: 'pointer',
     }),
-    input: (base: any) => ({ ...base, color: 'white' }),
-    dropdownIndicator: (base: any) => ({ ...base, color: 'rgba(255,255,255,0.4)', padding: '0 8px' }),
-    indicatorSeparator: (base: any) => ({ ...base, backgroundColor: 'rgba(255,255,255,0.15)' }),
+    input: (base: any) => ({ ...base, color: 'hsl(0 1% 15%)' }),
+    dropdownIndicator: (base: any) => ({ ...base, color: 'rgba(0,0,0,0.4)', padding: '0 8px' }),
+    indicatorSeparator: (base: any) => ({ ...base, backgroundColor: 'rgba(0,0,0,0.15)' }),
 }
 
 const SpotGuideStatistics = ({ weatherRecords }: Props) => {
@@ -109,15 +115,15 @@ const SpotGuideStatistics = ({ weatherRecords }: Props) => {
         if (!payload?.length) return null
         const d = payload[0].payload
         return (
-            <div className="bg-secondary/95 border border-white/10 p-3 shadow-xl backdrop-blur-sm min-w-[9rem]">
-                <p className="text-primary-lighter text-xs uppercase tracking-wide border-b border-white/10 pb-2 mb-2">
+            <div className="bg-white border border-black/10 p-3 shadow-xl min-w-[9rem]">
+                <p className="text-secondary text-xs uppercase tracking-wide border-b border-black/10 pb-2 mb-2">
                     {d.month}
                 </p>
                 <ul className="space-y-1.5 text-xs">
-                    <li className="flex justify-between gap-4 text-primary-lighter">
+                    <li className="flex justify-between gap-4" style={{ color: GUST_COLOUR }}>
                         Gusts <span className="font-medium tabular-nums">{d[`${activeWindUnit}Gust`]} {activeWindUnit}</span>
                     </li>
-                    <li className="flex justify-between gap-4 text-primary">
+                    <li className="flex justify-between gap-4" style={{ color: WIND_COLOUR }}>
                         Wind <span className="font-medium tabular-nums">{d[`${activeWindUnit}Wind`]} {activeWindUnit}</span>
                     </li>
                 </ul>
@@ -129,11 +135,11 @@ const SpotGuideStatistics = ({ weatherRecords }: Props) => {
         if (!payload?.length) return null
         const d = payload[0].payload
         return (
-            <div className="bg-secondary/95 border border-white/10 p-3 shadow-xl backdrop-blur-sm min-w-[9rem]">
-                <p className="text-primary-lighter text-xs uppercase tracking-wide border-b border-white/10 pb-2 mb-2">
+            <div className="bg-white border border-black/10 p-3 shadow-xl min-w-[9rem]">
+                <p className="text-secondary text-xs uppercase tracking-wide border-b border-black/10 pb-2 mb-2">
                     {d.month}
                 </p>
-                <p className="flex justify-between gap-4 text-xs text-orange">
+                <p className="flex justify-between gap-4 text-xs" style={{ color: TEMP_COLOUR }}>
                     Avg Temp <span className="font-medium tabular-nums">{d.avgTemp}°C</span>
                 </p>
             </div>
@@ -141,32 +147,32 @@ const SpotGuideStatistics = ({ weatherRecords }: Props) => {
     }
 
     return (
-        <section className="bg-secondary">
+        <section className="bg-primary-lightest">
             {/* Section header */}
             <div className="container mx-auto pt-16 lg:pt-20 pb-10 lg:pb-12">
                 <div className="flex items-start gap-4">
                     <div className="mt-2 w-1 h-12 bg-orange rounded-full shrink-0" />
                     <div>
                         <h2
-                            className="font-display text-white leading-none tracking-wide"
+                            className="font-display text-secondary leading-none tracking-wide"
                             style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}
                         >
                             Weather Statistics
                         </h2>
-                        <p className="text-white/35 text-sm mt-2">Historical monthly averages</p>
+                        <p className="text-secondary/50 text-sm mt-2">Historical monthly averages</p>
                     </div>
                 </div>
             </div>
 
             {/* Filter bar */}
-            <div className="bg-primary border-y border-white/10">
+            <div className="bg-white border-y border-secondary/10">
                 <div className="container mx-auto py-4 lg:py-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
                         <div className="flex items-center gap-2.5 shrink-0">
-                            <Icon icon={faSlidersH} customClasses="text-primary-lighter" size="size-4" />
-                            <span className="text-primary-lighter text-xs uppercase tracking-[0.2em] font-medium">Filter</span>
+                            <Icon icon={faSlidersH} customClasses="text-primary" size="size-4" />
+                            <span className="text-primary text-xs uppercase tracking-[0.2em] font-medium">Filter</span>
                         </div>
-                        <div className="hidden lg:block w-px h-6 bg-white/15 shrink-0" />
+                        <div className="hidden lg:block w-px h-6 bg-secondary/15 shrink-0" />
                         <div className="lg:w-44 shrink-0">
                             <Select
                                 options={yearOptions}
@@ -186,7 +192,7 @@ const SpotGuideStatistics = ({ weatherRecords }: Props) => {
                             />
                         </div>
                         <button
-                            className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 border border-white/20 text-white/70 hover:text-white hover:border-white/50 text-xs uppercase tracking-wide transition-all duration-200"
+                            className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 border border-secondary/25 text-secondary/70 hover:text-secondary hover:border-secondary/50 text-xs uppercase tracking-wide transition-all duration-200"
                             onClick={handleReset}
                         >
                             <Icon icon={faRotateLeft} size="size-3.5" />
@@ -199,53 +205,53 @@ const SpotGuideStatistics = ({ weatherRecords }: Props) => {
             {/* Charts */}
             <div className="container mx-auto py-10 lg:py-14 space-y-8">
                 {/* Wind chart */}
-                <div className="bg-secondary/60 border border-white/[0.07] p-6 lg:p-8 space-y-6">
+                <div className="bg-white border border-black/10 p-6 lg:p-8 space-y-6">
                     <div>
-                        <h3 className="font-display text-white tracking-wide" style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>
+                        <h3 className="font-display text-secondary tracking-wide" style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>
                             Average Wind Statistics
                         </h3>
-                        <p className="text-white/40 text-xs mt-1">Monthly wind & gust averages · {activeYear}</p>
+                        <p className="text-secondary/50 text-xs mt-1">Monthly wind & gust averages · {activeYear}</p>
                     </div>
                     <div className="h-[22rem]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 50 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                                 <XAxis dataKey="month" interval={0} angle={-45} textAnchor="end" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={AXIS_LINE} />
                                 <YAxis tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={AXIS_LINE}
-                                    label={{ value: activeWindUnit.charAt(0).toUpperCase() + activeWindUnit.slice(1), angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                                    label={{ value: activeWindUnit.charAt(0).toUpperCase() + activeWindUnit.slice(1), angle: -90, position: 'insideLeft', fill: 'rgba(0,0,0,0.5)', fontSize: 11 }}
                                 />
-                                <Tooltip content={<WindTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                                <Bar dataKey={`${activeWindUnit}Gust`} name="Gusts" fill="hsl(192, 89%, 15%)" radius={[2, 2, 0, 0]} />
-                                <Bar dataKey={`${activeWindUnit}Wind`} name="Wind" fill="hsl(192, 89%, 35%)" radius={[2, 2, 0, 0]} />
+                                <Tooltip content={<WindTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+                                <Bar dataKey={`${activeWindUnit}Gust`} name="Gusts" fill={GUST_COLOUR} radius={[2, 2, 0, 0]} />
+                                <Bar dataKey={`${activeWindUnit}Wind`} name="Wind" fill={WIND_COLOUR} radius={[2, 2, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    <p className="text-white/25 text-xs leading-relaxed border-t border-white/[0.06] pt-4">
-                        <strong className="text-white/40">Note:</strong> Wind data from nearby weather stations via the{' '}
-                        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-white/50 transition-colors">
+                    <p className="text-secondary/50 text-xs leading-relaxed border-t border-black/10 pt-4">
+                        <strong className="text-secondary">Note:</strong> Wind data from nearby weather stations via the{' '}
+                        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-primary transition-colors">
                             Open-Meteo API
                         </a>. Long-term averages — actual conditions may vary.
                     </p>
                 </div>
 
                 {/* Temperature chart */}
-                <div className="bg-secondary/60 border border-white/[0.07] p-6 lg:p-8 space-y-6">
+                <div className="bg-white border border-black/10 p-6 lg:p-8 space-y-6">
                     <div>
-                        <h3 className="font-display text-white tracking-wide" style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>
+                        <h3 className="font-display text-secondary tracking-wide" style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)' }}>
                             Average Temperature
                         </h3>
-                        <p className="text-white/40 text-xs mt-1">Monthly temperature averages · {activeYear}</p>
+                        <p className="text-secondary/50 text-xs mt-1">Monthly temperature averages · {activeYear}</p>
                     </div>
                     <div className="h-[22rem]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 50 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                                 <XAxis dataKey="month" interval={0} angle={-45} textAnchor="end" tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={AXIS_LINE} />
                                 <YAxis tick={AXIS_TICK} axisLine={AXIS_LINE} tickLine={AXIS_LINE}
-                                    label={{ value: '°C', angle: -90, position: 'insideLeft', fill: 'rgba(255,255,255,0.3)', fontSize: 11 }}
+                                    label={{ value: '°C', angle: -90, position: 'insideLeft', fill: 'rgba(0,0,0,0.5)', fontSize: 11 }}
                                 />
-                                <Tooltip content={<TempTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                                <Bar dataKey="avgTemp" fill="hsl(11, 61%, 58%)" radius={[2, 2, 0, 0]} />
+                                <Tooltip content={<TempTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+                                <Bar dataKey="avgTemp" fill={TEMP_COLOUR} radius={[2, 2, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
