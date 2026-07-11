@@ -62,8 +62,13 @@ const OverviewBadge = ({ icon, children }: { icon: typeof faWind; children: stri
  *
  * @param props - See {@link RelatedSpotGuidesProps}.
  */
-const RelatedSpotGuides = ({ label, guides }: RelatedSpotGuidesProps) => {
+const RelatedSpotGuides = ({ relation, label, guides }: RelatedSpotGuidesProps) => {
     if (!guides || guides.length === 0) return null
+
+    // Clarify the basis of the grouping: a country match is genuinely nearby,
+    // whereas a continent fallback can span the whole continent (e.g. South
+    // Africa ↔ Egypt), so the eyebrow keeps "More Spots in Africa" honest.
+    const relationLabel = relation === 'country' ? 'Same country' : relation === 'continent' ? 'Same continent' : null
 
     return (
         <section id="related-spot-guides" className="bg-cream">
@@ -71,12 +76,19 @@ const RelatedSpotGuides = ({ label, guides }: RelatedSpotGuidesProps) => {
                 {/* Heading — matches the page's SectionHeading treatment. */}
                 <div className="flex items-start gap-4 mb-8 lg:mb-10">
                     <div className="mt-2 w-1 h-10 bg-orange rounded-full shrink-0" />
-                    <h2
-                        className="font-display leading-none tracking-wide text-secondary"
-                        style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)' }}
-                    >
-                        {label ? `More Spots in ${label}` : 'More Spots'}
-                    </h2>
+                    <div>
+                        {relationLabel && (
+                            <span className="block text-orange text-[11px] uppercase tracking-[0.35em] font-semibold mb-2">
+                                {relationLabel}
+                            </span>
+                        )}
+                        <h2
+                            className="font-display leading-none tracking-wide text-secondary"
+                            style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)' }}
+                        >
+                            {label ? `More Spots in ${label}` : 'More Spots'}
+                        </h2>
+                    </div>
                 </div>
 
                 <AnimateInView tag="div">
