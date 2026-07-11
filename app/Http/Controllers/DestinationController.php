@@ -36,33 +36,8 @@ class DestinationController extends Controller
             ->orderBy('title')
             ->get();
 
-        $currentYear = now()->year;
-        $currentMonth = now()->month;
-
-        // Rank "gustiest first" for the CURRENT month using THIS year's reading —
-        // gusts are what light up a session. weather_records is unique per
-        // year+month, so it's a single value. No current record → sorts last;
-        // ties break by title. Read per request so it re-ranks as the month turns.
-        $gustThisMonth = fn (SpotGuide $guide) => optional($guide->weatherRecords->first(
-            fn ($record) => (int) $record->year === $currentYear && (int) $record->month === $currentMonth
-        ))->kts_gust;
-
-        $spotGuides = $spotGuides->sort(function (SpotGuide $first, SpotGuide $second) use ($gustThisMonth) {
-            $gustFirst = $gustThisMonth($first);
-            $gustSecond = $gustThisMonth($second);
-
-            if ($gustFirst === null && $gustSecond === null) {
-                return strcmp($first->title, $second->title);
-            }
-            if ($gustFirst === null) {
-                return 1; // no current-month data → sort last
-            }
-            if ($gustSecond === null) {
-                return -1;
-            }
-
-            return ((float) $gustSecond <=> (float) $gustFirst) ?: strcmp($first->title, $second->title);
-        })->values();
+        // Rank "gustiest first" for the current month (see SpotGuide::sortByGustiestThisMonth).
+        $spotGuides = SpotGuide::sortByGustiestThisMonth($spotGuides);
 
         $spotGuidesData = $spotGuides->map(fn ($guide) => [
             'id' => $guide->id,
