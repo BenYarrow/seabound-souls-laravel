@@ -138,16 +138,20 @@ Props: `{ relation, label, guides }` (the payload above).
 - Returns `null` when `guides` is empty (defensive; the section wrapper in
   `Show.tsx` also guards).
 - Renders the `SectionHeading` "More Spots in {label}".
-- Swiper slider (import from `swiper/react`, reuse the pattern in
-  `MastheadSlider.tsx`), configured for a responsive peek:
-  - mobile ≈ 1.1 slides, tablet ≈ 2, desktop ≈ 3
-  - drag enabled + arrow navigation (Navigation module)
-- Each slide is the "richer" card:
-  - focal-aware `CoverImage` thumbnail
-  - title + country name
-  - intro snippet (line-clamped)
-  - up to two `spot_overview` badges
-  - entire card links to `/destinations/{slug}` via Inertia `<Link>`
+- Swiper slider (import from `swiper/react`), **always one slide per view**
+  (`slidesPerView: 1`), with `Navigation` + `Pagination` modules — prev/next
+  arrows and clickable pagination dots below the slide.
+- Each slide is a **full-bleed image card** (chosen layout, "Option B"):
+  - focal-aware `CoverImage` filling the card (`h-[440px] md:h-[520px]`,
+    `rounded-2xl`) over a dark bottom gradient for legibility
+  - overlaid bottom-left: country eyebrow, Knewave (`font-title`) title,
+    intro snippet (line-clamped), up to two translucent `spot_overview`
+    badges, and an "Explore →" affordance
+  - entire card links to `/destinations/{slug}` via Inertia `<Link>`; the
+    arrows/dots sit outside the link so they never navigate
+- Pagination dots use scoped styles in `resources/css/app.css`
+  (`#related-spot-guides .related-bullet` / `.related-bullet-active`),
+  mirroring the gallery bullet pattern.
 
 ### Show.tsx
 

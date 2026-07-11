@@ -77,3 +77,21 @@
     border-radius: 0px !important;
     margin: 0px !important;
 }
+
+/* Related-spot-guides slider — round pagination dots (teal brand). */
+#related-spot-guides .related-bullet {
+    width: 8px !important;
+    height: 8px !important;
+    display: inline-block;
+    border-radius: 9999px !important;
+    background-color: transparent !important;
+    border: 1.5px solid hsl(192, 89%, 25%) !important;
+    opacity: 0.4 !important;
+    cursor: pointer !important;
+    transition: opacity 0.3s ease, width 0.3s ease !important;
+}
+
+#related-spot-guides .related-bullet-active {
+    background-color: hsl(192, 89%, 25%) !important;
+    opacity: 1 !important;
+}
