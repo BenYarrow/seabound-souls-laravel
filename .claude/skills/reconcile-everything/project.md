@@ -27,7 +27,7 @@ Update this file when project conventions change. Don't put procedure logic here
 | `source_ext` | `*.php`, `*.{ts,tsx}` |
 | `test_runner` | `php artisan test` (PHPUnit 11) |
 | `frontend_build_cmd` | `npm run build` _(requires Node 22+; shell default v14 fails — see CLAUDE.md)_ |
-| `db_engine` | PostgreSQL (local `seabound_souls_dev` on Homebrew `postgresql@16`; prod `seabound_souls`). Tests run on in-memory SQLite (`phpunit.xml`). |
+| `db_engine` | PostgreSQL. Local `seabound_souls_dev` on Homebrew `postgresql@16` (server); prod DB is **`main`** on Laravel Cloud / Neon (Postgres **17**). Client tools `postgresql@17` also installed locally for `db:pull-from-production`. Tests run on in-memory SQLite (`phpunit.xml`). |
 | `deploy_platform` | Laravel Cloud (targeted — serverless Postgres; not yet deployed) |
 
 ## Code directories — for stable-doc deep-audit (10a)
