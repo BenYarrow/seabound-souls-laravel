@@ -49,9 +49,11 @@ class RiderResource extends Resource
     public static function form(Form $form): Form
     {
         // Only the display fields are editable here; the password is set by the
-        // rider via their signed invite link, never by the owner.
+        // rider via their signed invite link, never by the owner. `name` is
+        // derived from first/last by the User saving hook.
         return $form->schema([
-            TextInput::make('name')->required(),
+            TextInput::make('first_name')->label('First name')->required(),
+            TextInput::make('last_name')->label('Last name')->required(),
             TextInput::make('email')->email()->required()->unique('users', 'email', ignoreRecord: true),
         ]);
     }
@@ -61,7 +63,8 @@ class RiderResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('first_name')->label('First name')->searchable()->sortable(),
+                TextColumn::make('last_name')->label('Last name')->searchable()->sortable(),
                 TextColumn::make('email')->searchable()->copyable(),
                 TextColumn::make('authored_spot_guides_count')
                     ->label('Guides')

@@ -27,12 +27,15 @@ class ListRiders extends ListRecords
                 ->icon('heroicon-o-user-plus')
                 ->color('primary')
                 ->form([
-                    TextInput::make('name')->required(),
+                    TextInput::make('first_name')->label('First name')->required(),
+                    TextInput::make('last_name')->label('Last name')->required(),
                     TextInput::make('email')->email()->required()->unique('users', 'email'),
                 ])
                 ->action(function (array $data) {
+                    // `name` is derived from first/last by the User saving hook.
                     $rider = User::create([
-                        'name' => $data['name'],
+                        'first_name' => $data['first_name'],
+                        'last_name' => $data['last_name'],
                         'email' => $data['email'],
                         'password' => Str::random(40), // placeholder; replaced via the link
                         'role' => User::ROLE_RIDER,

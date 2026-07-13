@@ -60,20 +60,25 @@ class RiderResourceTest extends TestCase
         $this->assertSame([User::ROLE_RIDER], $roles);
     }
 
-    public function test_invite_rider_action_creates_a_rider_account(): void
+    public function test_invite_rider_action_creates_a_rider_with_split_name(): void
     {
         $this->actingAsOwner();
 
         Livewire::test(ListRiders::class)
             ->callAction('inviteRider', data: [
-                'name' => 'Ada Windsurfer',
+                'first_name' => 'Ada',
+                'last_name' => 'Windsurfer',
                 'email' => 'ada@example.com',
             ])
             ->assertHasNoActionErrors();
 
+        // first/last stored, and `name` synced from them by the User saving hook.
         $this->assertDatabaseHas('users', [
             'email' => 'ada@example.com',
             'role' => User::ROLE_RIDER,
+            'first_name' => 'Ada',
+            'last_name' => 'Windsurfer',
+            'name' => 'Ada Windsurfer',
         ]);
     }
 

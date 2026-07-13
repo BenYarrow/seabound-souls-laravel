@@ -22,6 +22,8 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'role',
@@ -31,6 +33,21 @@ class User extends Authenticatable implements FilamentUser
     public const ROLE_OWNER = 'owner';
 
     public const ROLE_RIDER = 'rider';
+
+    /**
+     * Keep `name` (the canonical display column used by auth/account UIs) in sync
+     * with the structured rider first/last names. Only runs when first/last are
+     * set, so the owner's brand name ("Seabound Souls", first/last null) is left
+     * untouched.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->isDirty(['first_name', 'last_name']) && ($user->first_name || $user->last_name)) {
+                $user->name = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+            }
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.
