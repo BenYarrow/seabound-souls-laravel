@@ -28,6 +28,12 @@ class RiderResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
+    // The resource is built on the User model, so Filament would otherwise derive
+    // "User"/"Users" for page titles and breadcrumbs — override to "Rider"/"Riders".
+    protected static ?string $modelLabel = 'rider';
+
+    protected static ?string $pluralModelLabel = 'riders';
+
     /** Rider accounts are created via the Invite Rider action, not a create form. */
     public static function canCreate(): bool
     {

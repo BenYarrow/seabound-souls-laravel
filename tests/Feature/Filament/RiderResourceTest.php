@@ -34,6 +34,13 @@ class RiderResourceTest extends TestCase
         ]));
     }
 
+    public function test_resource_labels_read_as_riders_not_users(): void
+    {
+        // Titles/breadcrumbs must say Rider(s), not User(s) (the underlying model).
+        $this->assertSame('rider', RiderResource::getModelLabel());
+        $this->assertSame('riders', RiderResource::getPluralModelLabel());
+    }
+
     public function test_owner_can_view_the_riders_resource_but_a_rider_cannot(): void
     {
         $owner = User::factory()->create(['role' => User::ROLE_OWNER]);
