@@ -76,4 +76,14 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->role === self::ROLE_RIDER;
     }
+
+    /**
+     * Spot guides authored by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SpotGuide>
+     */
+    public function authoredSpotGuides(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SpotGuide::class);
+    }
 }

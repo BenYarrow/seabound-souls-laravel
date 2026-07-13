@@ -47,10 +47,19 @@ class SpotGuide extends Model
                 FetchSpotWeatherJob::dispatch($guide->id);
             }
         });
+
+        // Stamp the author on create so ownership/scoping and later attribution
+        // work without every caller remembering to set it. An explicitly-provided
+        // user_id (e.g. owner creating on someone's behalf) is respected.
+        static::creating(function (SpotGuide $guide) {
+            if ($guide->user_id === null && auth()->check()) {
+                $guide->user_id = auth()->id();
+            }
+        });
     }
 
     protected $fillable = [
-        'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
+        'user_id', 'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
         'introduction_text', 'spot_overview', 'water_conditions', 'wind_conditions',
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
@@ -81,6 +90,15 @@ class SpotGuide extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
+    }
+
+    /**
+     * The user who authored this guide. Nullable — a guide can outlive its
+     * author (nullOnDelete).
+     */
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function thumbnailMedia(): BelongsTo
