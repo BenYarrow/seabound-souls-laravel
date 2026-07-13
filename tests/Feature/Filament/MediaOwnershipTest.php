@@ -6,6 +6,7 @@
 namespace Tests\Feature\Filament;
 
 use App\Filament\Resources\MediaLibraryResource;
+use App\Filament\Resources\MediaLibraryResource\Pages\CreateMediaLibrary;
 use App\Livewire\MediaPickerBrowser;
 use App\Models\MediaLibrary;
 use App\Models\User;
@@ -14,6 +15,62 @@ use Tests\TestCase;
 
 class MediaOwnershipTest extends TestCase
 {
+    public function test_media_created_by_a_rider_via_the_resource_is_owned_by_them(): void
+    {
+        $rider = $this->actingAsRider();
+
+        Livewire::test(CreateMediaLibrary::class)
+            ->fillForm(['name' => 'My upload'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'My upload',
+            'user_id' => $rider->id,
+        ]);
+    }
+
+    public function test_media_created_by_the_owner_via_the_resource_is_house_media(): void
+    {
+        $this->actingAsOwner();
+
+        Livewire::test(CreateMediaLibrary::class)
+            ->fillForm(['name' => 'House upload'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'House upload',
+            'user_id' => null,
+        ]);
+    }
+
+    public function test_folder_options_exclude_house_folders_for_riders(): void
+    {
+        $rider = $this->actingAsRider();
+        MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'o', 'folder' => 'OtherRider', 'user_id' => User::factory()->create()->id]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'MyFolder', 'user_id' => $rider->id]);
+
+        $options = MediaLibraryResource::folderOptions();
+
+        $this->assertArrayHasKey('MyFolder', $options);
+        $this->assertArrayNotHasKey('HouseFolder', $options);
+        $this->assertArrayNotHasKey('OtherRider', $options);
+    }
+
+    public function test_folder_options_show_all_folders_for_the_owner(): void
+    {
+        $this->actingAsOwner();
+        MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'RiderFolder', 'user_id' => User::factory()->create()->id]);
+
+        $options = MediaLibraryResource::folderOptions();
+
+        $this->assertArrayHasKey('HouseFolder', $options);
+        $this->assertArrayHasKey('RiderFolder', $options);
+    }
+
     public function test_rider_only_sees_their_own_media_in_the_resource_query(): void
     {
         $rider = $this->actingAsRider();
