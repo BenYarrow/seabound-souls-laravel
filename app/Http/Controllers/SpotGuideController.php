@@ -22,7 +22,9 @@ class SpotGuideController extends Controller
     use ResolvesContentBlockMedia;
 
     /**
-     * Render a single published spot guide by slug (404 on draft/unknown).
+     * Render a single spot guide by slug (404 on unknown slug). Published guides
+     * are public; unpublished guides are visible only to the owner or the
+     * guide's own author, so the Filament "Preview" action works pre-publish.
      * Eager-loads every relation the page needs in one pass, then reshapes:
      * recommendations are split by type (stay/eat), gallery images are ordered
      * to match the stored id list, and weather records are grouped by year and
@@ -33,7 +35,6 @@ class SpotGuideController extends Controller
     public function show(string $slug): Response
     {
         $spotGuide = SpotGuide::where('slug', $slug)
-            ->where('is_published', true)
             ->with([
                 'country',
                 'recommendations.thumbnailMedia',
@@ -48,6 +49,16 @@ class SpotGuideController extends Controller
                 'lessonsAndHireBgMedia',
             ])
             ->firstOrFail();
+
+        // Unpublished guides are visible only to the owner (any guide) or the
+        // guide's author (their own) — everyone else gets the usual 404.
+        if (! $spotGuide->is_published) {
+            $viewer = auth()->user();
+            abort_unless(
+                $viewer && ($viewer->isOwner() || $spotGuide->user_id === $viewer->id),
+                404,
+            );
+        }
 
         // Fetch gallery images in one whereIn query, keyed by id, then map back
         // over the stored id list so the gallery keeps its authored order.
@@ -200,6 +211,7 @@ class SpotGuideController extends Controller
                 'label' => $label,
                 'guides' => $relatedGuides,
             ],
+            'is_preview' => ! $spotGuide->is_published,
         ]);
     }
 

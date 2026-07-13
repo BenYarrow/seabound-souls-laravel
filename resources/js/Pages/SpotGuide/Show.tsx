@@ -80,6 +80,8 @@ interface Props {
         }[]
     }
     meta: any
+    /** True when rendering an unpublished guide for the owner/author preview. */
+    is_preview?: boolean
 }
 
 /* ── Section heading ── */
@@ -158,7 +160,10 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
 
 /* ──────────────────── Page ──────────────────── */
 
-const Show = ({ spotGuide, related_spot_guides, meta }: Props) => {
+/**
+ * @param is_preview - true when rendering an unpublished guide for the owner/author
+ */
+const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false }: Props) => {
     /* Aggregate all locations for the map */
     const mapLocations = useMemo<MapLocation[]>(() => {
         const locs: MapLocation[] = []
@@ -179,6 +184,15 @@ const Show = ({ spotGuide, related_spot_guides, meta }: Props) => {
 
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
+
+            {is_preview && (
+                <div
+                    role="status"
+                    className="sticky top-0 z-50 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-black dark:bg-amber-400"
+                >
+                    Unpublished preview — this guide is not yet live.
+                </div>
+            )}
 
             {/* ── Masthead ── */}
             <div className="relative">
