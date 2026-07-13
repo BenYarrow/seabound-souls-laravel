@@ -32,6 +32,53 @@ class SpotGuideWorkflowActionsTest extends TestCase
         ]));
     }
 
+    public function test_rider_editing_an_approved_guide_returns_it_to_review_and_notifies_owner(): void
+    {
+        Notification::fake();
+        $owner = User::factory()->create(['role' => User::ROLE_OWNER, 'email' => config('admin.email')]);
+        $rider = $this->actingAsRider();
+        $guide = $this->guideFor($rider);
+        $guide->publish(); // approved + live
+
+        Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+            ->fillForm(['introduction_text' => 'Updated by the rider'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $fresh = $guide->fresh();
+        $this->assertSame(SpotGuide::STATUS_IN_REVIEW, $fresh->review_status);
+        $this->assertTrue($fresh->is_published); // stays live
+        Notification::assertSentTo($owner, GuideSubmittedForReview::class);
+    }
+
+    public function test_owner_editing_an_approved_guide_does_not_flip_status(): void
+    {
+        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $this->actingAsOwner();
+        $guide = $this->guideFor($rider);
+        $guide->publish();
+
+        Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+            ->fillForm(['introduction_text' => 'Owner tweak'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(SpotGuide::STATUS_APPROVED, $guide->fresh()->review_status);
+    }
+
+    public function test_rider_editing_a_draft_guide_does_not_flip_to_in_review(): void
+    {
+        $rider = $this->actingAsRider();
+        $guide = $this->guideFor($rider); // draft
+
+        Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+            ->fillForm(['introduction_text' => 'Still drafting'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(SpotGuide::STATUS_DRAFT, $guide->fresh()->review_status);
+    }
+
     public function test_a_rider_cannot_feature_a_guide_via_any_write_path(): void
     {
         // Featuring is an owner-only editorial decision. The form field and the

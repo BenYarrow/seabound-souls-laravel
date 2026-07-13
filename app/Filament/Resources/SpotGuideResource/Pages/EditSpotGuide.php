@@ -18,6 +18,34 @@ class EditSpotGuide extends EditRecord
 {
     protected static string $resource = SpotGuideResource::class;
 
+    /** Review status captured before this save, to detect edits to a live guide. */
+    private ?string $reviewStatusBeforeSave = null;
+
+    /**
+     * Capture the pre-save review status (review_status isn't a form field, so at
+     * this point the record still holds its stored value).
+     */
+    protected function beforeSave(): void
+    {
+        $this->reviewStatusBeforeSave = $this->record->review_status;
+    }
+
+    /**
+     * If a rider edits a guide that was already APPROVED, keep it live but flag it
+     * back to review and notify the owners — so live content never changes silently
+     * without you knowing. Owner edits, and edits to draft/changes-requested guides,
+     * are left alone.
+     */
+    protected function afterSave(): void
+    {
+        $user = auth()->user();
+
+        if ($user?->isRider() && $this->reviewStatusBeforeSave === SpotGuide::STATUS_APPROVED) {
+            $this->record->submitForReview();
+            Notifier::send(User::where('role', User::ROLE_OWNER)->get(), new GuideSubmittedForReview($this->record));
+        }
+    }
+
     /**
      * Header actions differ by role:
      *  - Rider: Submit for review + Preview.
