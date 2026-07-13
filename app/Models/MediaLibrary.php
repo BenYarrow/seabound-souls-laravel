@@ -12,7 +12,7 @@ class MediaLibrary extends Model implements HasMedia
 
     protected $table = 'media_library';
 
-    protected $fillable = ['name', 'folder', 'focal_x', 'focal_y'];
+    protected $fillable = ['name', 'folder', 'focal_x', 'focal_y', 'user_id'];
 
     protected $casts = [
         'focal_x' => 'integer',
@@ -32,6 +32,16 @@ class MediaLibrary extends Model implements HasMedia
     public function getThumbnailUrl(): string
     {
         return $this->getFirstMediaUrl('file', 'thumb');
+    }
+
+    /**
+     * Owning user. Null means house media (owner-owned, hidden from riders).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, MediaLibrary>
+     */
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

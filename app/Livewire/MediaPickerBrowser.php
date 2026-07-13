@@ -36,7 +36,10 @@ class MediaPickerBrowser extends Component
 
     public function getFolderOptions(): array
     {
+        $user = auth()->user();
+
         return MediaLibrary::whereNotNull('folder')
+            ->when($user && $user->isRider(), fn ($q) => $q->where('user_id', $user->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder')
@@ -69,6 +72,7 @@ class MediaPickerBrowser extends Component
             $ml = MediaLibrary::create([
                 'name' => $this->newName ?: $this->newFile->getClientOriginalName(),
                 'folder' => $this->newFolder ?: null,
+                'user_id' => auth()->user()?->isRider() ? auth()->id() : null,
             ]);
 
             $ml->addMedia($this->newFile->getRealPath())
@@ -97,7 +101,10 @@ class MediaPickerBrowser extends Component
 
     public function render()
     {
+        $user = auth()->user();
+
         $mediaItems = MediaLibrary::query()
+            ->when($user && $user->isRider(), fn ($q) => $q->where('user_id', $user->id))
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->when($this->folder, fn ($q) => $q->where('folder', $this->folder))
             ->latest()

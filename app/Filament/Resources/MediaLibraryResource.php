@@ -100,6 +100,21 @@ class MediaLibraryResource extends Resource
             ]);
     }
 
+    /**
+     * Riders only ever see their own uploads; owners see everything.
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && $user->isRider()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
+    }
+
     public static function getRelations(): array
     {
         return [];
