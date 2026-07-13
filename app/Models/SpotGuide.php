@@ -21,6 +21,24 @@ class SpotGuide extends Model
 {
     use HasFactory, SoftDeletes, Searchable, HasSingleFeatured;
 
+    /** Review lifecycle states. is_published is a separate, owner-only switch. */
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_IN_REVIEW = 'in_review';
+
+    public const STATUS_CHANGES_REQUESTED = 'changes_requested';
+
+    public const STATUS_APPROVED = 'approved';
+
+    /**
+     * In-memory default so a freshly-created (unsaved-refresh) instance reads as
+     * draft immediately, mirroring the DB column default. review_status isn't
+     * fillable, so this can't be spoofed via mass assignment.
+     */
+    protected $attributes = [
+        'review_status' => self::STATUS_DRAFT,
+    ];
+
     /**
      * Register model lifecycle hooks.
      *
@@ -83,6 +101,8 @@ class SpotGuide extends Model
         'is_published' => 'boolean',
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'reviewed_at' => 'datetime',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
     ];
@@ -152,6 +172,42 @@ class SpotGuide extends Model
     public function weatherRecords(): HasMany
     {
         return $this->hasMany(WeatherRecord::class);
+    }
+
+    /**
+     * Rider submits the guide for the owner's review. Editable-during-review by
+     * design (no lock), so this only advances the status + stamps the time.
+     */
+    public function submitForReview(): void
+    {
+        $this->review_status = self::STATUS_IN_REVIEW;
+        $this->submitted_at = now();
+        $this->save();
+    }
+
+    /**
+     * Owner approves and takes the guide live. published_at is set once (first
+     * publish) and preserved on re-publish.
+     */
+    public function publish(): void
+    {
+        $this->is_published = true;
+        $this->review_status = self::STATUS_APPROVED;
+        $this->published_at ??= now();
+        $this->reviewed_at = now();
+        $this->save();
+    }
+
+    /**
+     * Owner sends the guide back with feedback. Does NOT unpublish a live guide —
+     * the owner unpublishes separately if that's wanted (house-owns-what's-live).
+     */
+    public function requestChanges(string $note): void
+    {
+        $this->review_status = self::STATUS_CHANGES_REQUESTED;
+        $this->review_note = $note;
+        $this->reviewed_at = now();
+        $this->save();
     }
 
     /**
