@@ -32,6 +32,32 @@ class SpotGuideWorkflowActionsTest extends TestCase
         ]));
     }
 
+    public function test_a_rider_cannot_feature_a_guide_via_any_write_path(): void
+    {
+        // Featuring is an owner-only editorial decision. The form field and the
+        // inline list toggle are hidden from riders, but the model must also
+        // refuse a direct/crafted save (the toggle is a non-form write path).
+        $rider = $this->actingAsRider();
+        $guide = $this->guideFor($rider);
+
+        $guide->is_featured = true;
+        $guide->save();
+
+        $this->assertFalse($guide->fresh()->is_featured);
+    }
+
+    public function test_an_owner_can_feature_a_guide(): void
+    {
+        $this->actingAsOwner();
+        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $guide = $this->guideFor($rider);
+
+        $guide->is_featured = true;
+        $guide->save();
+
+        $this->assertTrue($guide->fresh()->is_featured);
+    }
+
     public function test_rider_submit_action_advances_status_and_notifies_owner(): void
     {
         Notification::fake();

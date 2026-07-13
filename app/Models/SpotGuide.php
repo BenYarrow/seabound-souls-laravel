@@ -56,6 +56,18 @@ class SpotGuide extends Model
             }
         });
 
+        // Featuring a guide is an owner-only editorial decision. The form field
+        // and the inline list toggle are hidden from riders, but guard every
+        // write path (incl. a crafted request) here: a non-owner can never change
+        // is_featured — revert to the stored value on update, force false on create.
+        static::saving(function (SpotGuide $guide) {
+            if ($guide->isDirty('is_featured') && auth()->check() && ! auth()->user()->isOwner()) {
+                // Cast guards against a not-yet-hydrated original (null) violating
+                // the NOT NULL boolean column.
+                $guide->is_featured = $guide->exists ? (bool) $guide->getOriginal('is_featured') : false;
+            }
+        });
+
         // Auto-fetch weather for a newly created spot as soon as it has
         // coordinates, so admins don't wait for the weekly command. Create-only
         // by design — editing coordinates later is handled by the dashboard

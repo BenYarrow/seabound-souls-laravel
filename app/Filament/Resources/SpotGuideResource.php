@@ -306,7 +306,11 @@ class SpotGuideResource extends Resource
                         default => 'gray',
                     }),
                 IconColumn::make('is_published')->label('Published')->boolean(),
-                ToggleColumn::make('is_featured')->label('Featured'),
+                // Featuring is owner-only — riders don't get the inline toggle
+                // (the model also guards this write path, see SpotGuide::booted).
+                ToggleColumn::make('is_featured')
+                    ->label('Featured')
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                 TextColumn::make('updated_at')->label('Updated')->dateTime()->sortable(),
             ])
             ->filters([
