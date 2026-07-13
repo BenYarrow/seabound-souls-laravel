@@ -58,7 +58,21 @@ class SpotGuideResource extends Resource
                                 ->label('Country')
                                 ->options(Country::pluck('name', 'id'))
                                 ->searchable()
-                                ->required(),
+                                ->required()
+                                ->createOptionForm([
+                                    TextInput::make('name')->required(),
+                                    Select::make('continent')
+                                        ->options([
+                                            'europe' => 'Europe', 'africa' => 'Africa', 'asia' => 'Asia',
+                                            'north-america' => 'North America', 'south-america' => 'South America',
+                                            'oceania' => 'Oceania',
+                                        ])->required(),
+                                ])
+                                ->createOptionUsing(fn (array $data): int => Country::create([
+                                    'name' => $data['name'],
+                                    'slug' => Str::slug($data['name']),
+                                    'continent' => $data['continent'],
+                                ])->id),
                             TextInput::make('latitude')
                                 ->numeric()
                                 ->required()
@@ -301,7 +315,14 @@ class SpotGuideResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class]);
+
+        $user = auth()->user();
+        if ($user && $user->isRider()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
     }
 }
