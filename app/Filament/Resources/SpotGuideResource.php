@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\MapCoordinatePicker;
 use App\Filament\Forms\Components\MediaPicker;
 use App\Filament\Forms\ContentBuilderBlocks;
 use App\Filament\Resources\SpotGuideResource\Pages;
@@ -85,6 +86,9 @@ class SpotGuideResource extends Resource
                                 ->minValue(-180)
                                 ->maxValue(180)
                                 ->helperText('Required — the weather fetch uses this.'),
+                            MapCoordinatePicker::make('spot_coords')
+                                ->label('Set coordinates from map')
+                                ->columnSpanFull(),
                             Toggle::make('is_published')
                                 ->label('Published')
                                 ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
@@ -166,6 +170,9 @@ class SpotGuideResource extends Resource
                                     Textarea::make('description'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('location_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
@@ -193,6 +200,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('rec_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
@@ -221,6 +231,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('rec_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
