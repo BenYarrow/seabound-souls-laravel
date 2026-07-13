@@ -55,31 +55,42 @@
                 /** Ensure mapbox-gl (JS + CSS) is loaded, once, before first use. */
                 async ensureMapbox() {
                     if (window.mapboxgl) return;
-                    await new Promise((resolve, reject) => {
-                        const css = document.createElement('link');
-                        css.rel = 'stylesheet';
-                        css.href = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css';
-                        document.head.appendChild(css);
-                        const js = document.createElement('script');
-                        js.src = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js';
-                        js.onload = resolve;
-                        js.onerror = reject;
-                        document.head.appendChild(js);
-                    });
+                    // Cache the in-flight load promise so concurrent/re-entrant calls (e.g. close+reopen
+                    // before the first load resolves) await the same load instead of injecting duplicate tags.
+                    if (!window.__mapboxGlLoading) {
+                        window.__mapboxGlLoading = new Promise((resolve, reject) => {
+                            const css = document.createElement('link');
+                            css.rel = 'stylesheet';
+                            css.href = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css';
+                            document.head.appendChild(css);
+                            const js = document.createElement('script');
+                            js.src = 'https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js';
+                            js.onload = resolve;
+                            js.onerror = reject;
+                            document.head.appendChild(js);
+                        });
+                    }
+                    await window.__mapboxGlLoading;
                 },
                 /** Open the modal and (re)initialise the map centred on current coords. */
                 async open() {
                     this.showModal = true;
                     await this.ensureMapbox();
                     window.mapboxgl.accessToken = config.token;
-                    const lat = parseFloat(this.$wire.get(config.latPath)) || 20;
-                    const lng = parseFloat(this.$wire.get(config.lngPath)) || 0;
+                    const parsedLat = parseFloat(this.$wire.get(config.latPath));
+                    const parsedLng = parseFloat(this.$wire.get(config.lngPath));
+                    // Checked against the raw parse, before the display fallbacks below are
+                    // applied, so 20/0 (just map defaults, not real data) aren't mistaken for
+                    // an existing coordinate.
+                    const hasExistingCoords = Number.isFinite(parsedLat) && Number.isFinite(parsedLng);
+                    const lat = parsedLat || 20;
+                    const lng = parsedLng || 0;
                     this.$nextTick(() => {
                         this.map = new window.mapboxgl.Map({
                             container: this.$refs.map,
                             style: 'mapbox://styles/mapbox/outdoors-v12',
                             center: [lng, lat],
-                            zoom: (this.$wire.get(config.latPath)) ? 10 : 1.5,
+                            zoom: hasExistingCoords ? 10 : 1.5,
                         });
                         this.map.on('click', (event) => {
                             this.picked = event.lngLat;

@@ -10,7 +10,6 @@ namespace Tests\Feature\Filament;
 use App\Filament\Forms\Components\MapCoordinatePicker;
 use App\Filament\Resources\SpotGuideResource\Pages\CreateSpotGuide;
 use App\Models\Country;
-use App\Models\SpotGuide;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
