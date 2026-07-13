@@ -32,6 +32,9 @@ class SetPasswordController extends Controller
         $user->update(['password' => Hash::make($request->string('password'))]);
         Auth::login($user);
 
+        // Rotate the session id on login to prevent session fixation (CWE-384).
+        $request->session()->regenerate();
+
         return redirect('/admin');
     }
 }
