@@ -6,8 +6,10 @@
 namespace Tests\Feature\Filament;
 
 use App\Filament\Resources\MediaLibraryResource;
+use App\Livewire\MediaPickerBrowser;
 use App\Models\MediaLibrary;
 use App\Models\User;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class MediaOwnershipTest extends TestCase
@@ -43,5 +45,48 @@ class MediaOwnershipTest extends TestCase
 
         $this->assertFalse($rider->can('view', $house));
         $this->assertTrue($rider->can('view', $mine));
+    }
+
+    /**
+     * Livewire public methods are directly network-callable regardless of what
+     * the client rendered — a rider could call toggleSelect() with an id the
+     * scoped browse query never surfaced (house media, another rider's media).
+     * The component must re-authorize the id itself, not just its render query.
+     */
+    public function test_rider_cannot_select_house_or_foreign_media_via_toggle_select(): void
+    {
+        $rider = $this->actingAsRider();
+        $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        $other = MediaLibrary::create(['name' => 'Theirs', 'user_id' => User::factory()->create()->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true]);
+
+        $component->call('toggleSelect', $house->id);
+        $this->assertNotContains($house->id, $component->get('selectedIds'));
+
+        $component->call('toggleSelect', $other->id);
+        $this->assertNotContains($other->id, $component->get('selectedIds'));
+
+        $component->call('toggleSelect', $mine->id);
+        $this->assertContains($mine->id, $component->get('selectedIds'));
+    }
+
+    /**
+     * Even if selectedIds is somehow pre-seeded/hydrated with out-of-scope ids
+     * (e.g. tampered wire:snapshot), confirm() must not dispatch them onward.
+     */
+    public function test_confirm_only_dispatches_ids_within_the_current_users_scope(): void
+    {
+        $rider = $this->actingAsRider();
+        $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true, 'fieldKey' => 'thumbnail_media_id']);
+        $component->set('selectedIds', [$house->id, $mine->id]);
+
+        $component->call('confirm');
+
+        $component->assertDispatched('media-library-selected', fieldKey: 'thumbnail_media_id', ids: [$mine->id]);
     }
 }
