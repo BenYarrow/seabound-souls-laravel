@@ -37,12 +37,7 @@ class MediaLibraryResource extends Resource
 
             Select::make('folder')
                 ->label('Folder')
-                ->options(fn () => MediaLibrary::whereNotNull('folder')
-                    ->where('folder', '!=', '')
-                    ->distinct()
-                    ->orderBy('folder')
-                    ->pluck('folder', 'folder')
-                    ->toArray())
+                ->options(fn (): array => static::folderOptions())
                 ->searchable()
                 ->createOptionForm([
                     TextInput::make('folder')
@@ -55,6 +50,7 @@ class MediaLibraryResource extends Resource
             SpatieMediaLibraryFileUpload::make('file')
                 ->collection('file')
                 ->image()
+                ->required()
                 ->label('Image File')
                 ->columnSpanFull(),
         ]);
@@ -86,7 +82,7 @@ class MediaLibraryResource extends Resource
             ->filters([
                 SelectFilter::make('folder')
                     ->label('Folder')
-                    ->options(fn () => MediaLibrary::whereNotNull('folder')->distinct()->pluck('folder', 'folder')->toArray()),
+                    ->options(fn (): array => static::folderOptions()),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
@@ -98,6 +94,41 @@ class MediaLibraryResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Distinct folder names for the form Select and the table filter, scoped so a
+     * rider only ever sees (and can file into) their own folders — never the house
+     * folders. Owners see every folder.
+     *
+     * @return array<string, string>
+     */
+    public static function folderOptions(): array
+    {
+        $user = auth()->user();
+
+        return MediaLibrary::whereNotNull('folder')
+            ->where('folder', '!=', '')
+            ->when($user && $user->isRider(), fn ($query) => $query->where('user_id', $user->id))
+            ->distinct()
+            ->orderBy('folder')
+            ->pluck('folder', 'folder')
+            ->toArray();
+    }
+
+    /**
+     * Riders only ever see their own uploads; owners see everything.
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && $user->isRider()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

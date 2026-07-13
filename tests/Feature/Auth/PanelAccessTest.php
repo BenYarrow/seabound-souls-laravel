@@ -7,25 +7,33 @@ use Filament\Facades\Filament;
 use Tests\TestCase;
 
 /**
- * The Filament panel is gated to the single owner account (config('admin.email')).
- * Any other authenticated user must be refused, even though only the owner
- * exists today — the gate is defence-in-depth for the contact-enquiry PII.
+ * Panel access is role-based: owners and riders may enter the panel; a user with
+ * any unrecognised role is refused. Per-resource policies (not the panel gate) do
+ * the fine-grained gating of PII and house content.
  */
 class PanelAccessTest extends TestCase
 {
-    public function test_owner_email_can_access_the_admin_panel(): void
+    public function test_owner_can_access_the_admin_panel(): void
     {
-        config(['admin.email' => 'owner@example.com']);
-        $owner = User::factory()->create(['email' => 'owner@example.com']);
-
+        $owner = User::factory()->create(['role' => User::ROLE_OWNER]);
         $this->assertTrue($owner->canAccessPanel(Filament::getPanel('admin')));
     }
 
-    public function test_non_owner_email_cannot_access_the_admin_panel(): void
+    public function test_rider_can_access_the_admin_panel(): void
     {
-        config(['admin.email' => 'owner@example.com']);
-        $other = User::factory()->create(['email' => 'intruder@example.com']);
+        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $this->assertTrue($rider->canAccessPanel(Filament::getPanel('admin')));
+    }
 
-        $this->assertFalse($other->canAccessPanel(Filament::getPanel('admin')));
+    public function test_user_with_unknown_role_cannot_access_the_admin_panel(): void
+    {
+        $stranger = User::factory()->create(['role' => 'guest']);
+        $this->assertFalse($stranger->canAccessPanel(Filament::getPanel('admin')));
+    }
+
+    public function test_role_helpers_report_correctly(): void
+    {
+        $this->assertTrue(User::factory()->create(['role' => User::ROLE_OWNER])->isOwner());
+        $this->assertTrue(User::factory()->create(['role' => User::ROLE_RIDER])->isRider());
     }
 }

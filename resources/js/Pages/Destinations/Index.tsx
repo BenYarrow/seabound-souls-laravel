@@ -15,6 +15,12 @@ import { getSpotGuideColours } from '@/Helpers/colours'
 import type { WeatherDataset } from '@/Helpers/weatherDataHelpers'
 import type { FocalImage } from '@/types/media'
 
+/** Author attribution: 'house' (us) shows the brand; 'rider' shows the name. */
+interface Author {
+    kind: 'house' | 'rider'
+    name: string | null
+}
+
 interface SpotGuide {
     id: number
     title: string
@@ -24,11 +30,14 @@ interface SpotGuide {
     country: { name: string; slug: string; continent: string } | null
     /** Focal-bearing image object (or null when no thumbnail). */
     thumbnail: FocalImage | null
+    author: Author
 }
 
 interface Props {
     spotGuides: SpotGuide[]
     weatherData: WeatherDataset
+    /** True once a published rider guide exists — turns on the provenance bylines. */
+    showProvenance: boolean
     /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
     static_masthead: FocalImage | null
     featuredSpotGuide: {
@@ -56,7 +65,16 @@ const CONTINENT_LABELS: Record<string, string> = {
  */
 const CONTINENT_ORDER = ['europe', 'africa', 'asia', 'north-america', 'south-america', 'oceania']
 
-const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, meta }: Props) => {
+/**
+ * Byline text for a guide's author: the rider's name, or the house brand.
+ *
+ * @param author - the guide's author attribution payload
+ * @returns the label to display in the byline
+ */
+const bylineFor = (author: Author): string =>
+    author.kind === 'rider' && author.name ? `By ${author.name}` : 'Seabound Souls'
+
+const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featuredSpotGuide, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
     const colours = useMemo(() => getSpotGuideColours(titles), [titles])
 
@@ -233,6 +251,12 @@ const Index = ({ spotGuides, weatherData, static_masthead, featuredSpotGuide, me
                                         {guide.country && (
                                             <p className="text-white/55 text-[10px] mt-1.5 uppercase tracking-[0.2em]">
                                                 {guide.country.name}
+                                            </p>
+                                        )}
+                                        {/* Provenance byline — only once a rider guide exists on the site */}
+                                        {showProvenance && (
+                                            <p className="text-white/75 text-[11px] mt-2 italic">
+                                                {bylineFor(guide.author)}
                                             </p>
                                         )}
                                         <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-10 transition-all duration-500 ease-out" />

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\MapCoordinatePicker;
 use App\Filament\Forms\Components\MediaPicker;
 use App\Filament\Forms\ContentBuilderBlocks;
 use App\Filament\Resources\SpotGuideResource\Pages;
@@ -53,12 +54,28 @@ class SpotGuideResource extends Resource
                                 ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
                             TextInput::make('slug')
                                 ->required()
-                                ->unique(ignoreRecord: true),
+                                // Only clash with LIVE guides — a soft-deleted guide's
+                                // slug is free to reuse (matches the partial DB index).
+                                ->unique(ignoreRecord: true, modifyRuleUsing: fn (\Illuminate\Validation\Rules\Unique $rule) => $rule->whereNull('deleted_at')),
                             Select::make('country_id')
                                 ->label('Country')
                                 ->options(Country::pluck('name', 'id'))
                                 ->searchable()
-                                ->required(),
+                                ->required()
+                                ->createOptionForm([
+                                    TextInput::make('name')->required(),
+                                    Select::make('continent')
+                                        ->options([
+                                            'europe' => 'Europe', 'africa' => 'Africa', 'asia' => 'Asia',
+                                            'north-america' => 'North America', 'south-america' => 'South America',
+                                            'oceania' => 'Oceania',
+                                        ])->required(),
+                                ])
+                                ->createOptionUsing(fn (array $data): int => Country::create([
+                                    'name' => $data['name'],
+                                    'slug' => Str::slug($data['name']),
+                                    'continent' => $data['continent'],
+                                ])->id),
                             TextInput::make('latitude')
                                 ->numeric()
                                 ->required()
@@ -71,11 +88,16 @@ class SpotGuideResource extends Resource
                                 ->minValue(-180)
                                 ->maxValue(180)
                                 ->helperText('Required — the weather fetch uses this.'),
+                            MapCoordinatePicker::make('spot_coords')
+                                ->label('Set coordinates from map')
+                                ->columnSpanFull(),
                             Toggle::make('is_published')
-                                ->label('Published'),
+                                ->label('Published')
+                                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                             Toggle::make('is_featured')
                                 ->label('Featured')
-                                ->helperText('Only one spot guide can be featured — turning this on clears it from any other guide.'),
+                                ->helperText('Only one spot guide can be featured — turning this on clears it from any other guide.')
+                                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                         ])->columns(2),
 
                     Tabs\Tab::make('Masthead & Thumbnail')
@@ -150,6 +172,9 @@ class SpotGuideResource extends Resource
                                     Textarea::make('description'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('location_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
@@ -177,6 +202,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('rec_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
@@ -205,6 +233,9 @@ class SpotGuideResource extends Resource
                                     TextInput::make('url')->label('Google Maps / Website URL'),
                                     TextInput::make('latitude')->numeric(),
                                     TextInput::make('longitude')->numeric(),
+                                    MapCoordinatePicker::make('rec_coords')
+                                        ->label('Set from map')
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 // Drag rows to reorder — Filament persists the order into sort_order.
@@ -266,8 +297,22 @@ class SpotGuideResource extends Resource
             ->columns([
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('country.name')->label('Country')->sortable(),
+                TextColumn::make('review_status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => ucwords(str_replace('_', ' ', $state ?? 'draft')))
+                    ->color(fn (?string $state): string => match ($state) {
+                        SpotGuide::STATUS_IN_REVIEW => 'warning',
+                        SpotGuide::STATUS_CHANGES_REQUESTED => 'danger',
+                        SpotGuide::STATUS_APPROVED => 'success',
+                        default => 'gray',
+                    }),
                 IconColumn::make('is_published')->label('Published')->boolean(),
-                ToggleColumn::make('is_featured')->label('Featured'),
+                // Featuring is owner-only — riders don't get the inline toggle
+                // (the model also guards this write path, see SpotGuide::booted).
+                ToggleColumn::make('is_featured')
+                    ->label('Featured')
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                 TextColumn::make('updated_at')->label('Updated')->dateTime()->sortable(),
             ])
             ->filters([
@@ -301,7 +346,14 @@ class SpotGuideResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class]);
+
+        $user = auth()->user();
+        if ($user && $user->isRider()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
     }
 }

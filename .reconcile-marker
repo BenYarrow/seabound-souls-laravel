@@ -1,2 +1,2 @@
-date: 2026-07-11
-note: db:pull-from-production — overwrite local dev DB with a read-only copy of prod (Laravel Cloud/Neon, DB main, PG17). Guarded + confirm-before-wipe; DB-only v1. Corrected prod DB name (main, not seabound_souls). PR #31 (reconcile 16, folded).
+date: 2026-07-13
+note: Rider contributor workflow (sub-project 1) + public attribution — invited rider role, submit/review/publish lifecycle, own-work + own-media isolation, map-click coordinate picker, unpublished-guide preview, Riders admin section (first/last names), house-vs-rider bylines, edit-after-approve auto-flag. 205 tests. Folded reconcile 17, PR #32.

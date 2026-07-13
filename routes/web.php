@@ -6,6 +6,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Rider\SetPasswordController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SpotGuideController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,13 @@ Route::post('/contact', [ContactController::class, 'store'])
 Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])
     ->middleware(['web', 'auth'])
     ->name('admin.media.focal');
+
+// Invited-rider password setup. Both routes are signed (temporary), so the link
+// the owner sends is the only way in; no auth session is required to use them.
+Route::get('/rider/set-password/{user}', [SetPasswordController::class, 'show'])
+    ->middleware('signed')->name('rider.password.setup');
+Route::post('/rider/set-password/{user}', [SetPasswordController::class, 'store'])
+    ->middleware('signed')->name('rider.password.store');
 
 // Catch-all for generic pages (must be last, exclude admin paths)
 Route::get('/{slug}', [PageController::class, 'show'])->where('slug', '^(?!admin).*$')->name('pages.show');

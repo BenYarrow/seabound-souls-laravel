@@ -25,7 +25,14 @@ Public controllers all covered. Remaining:
 - [ ] Optional: upgrade the local Postgres *server* from 16 → 17 to match prod, which silences the benign `SET transaction_timeout` notice pg_restore emits when a PG17 dump lands on a PG16 server (data restores fine regardless).
 
 ## Authoring UX
-- [ ] **Draft / live preview** — let the owner preview content that isn't live yet: unpublished (draft) Pages / Blogs / Spot Guides, brand-new unsaved records, and *edited-but-unsaved* changes, without publishing. Today the public controllers hard-filter `is_published`, so drafts 404 and there's no way to see edits before they go live. Needs scoping (signed preview URLs / a Filament "Preview" action that renders the Inertia page with the in-progress form state; how to feed unsaved edits through to the front end). Raised by Ben 2026-07-10 — discuss in more detail before designing.
+- [ ] **Draft / live preview (Pages & Blogs + unsaved edits)** — logged-in preview of unpublished **Spot Guides** shipped for the owner/author (2026-07-13, rider workflow — a Filament "Preview" action + owner/author-gated `@show` + banner). Still to do: the same for **Pages / Blogs**, and previewing *edited-but-unsaved* form state (the harder part — feeding in-progress form data to the front end). Their public controllers still hard-filter `is_published`.
+
+## Rider contributor workflow (follow-ups)
+Sub-project 1 shipped 2026-07-13 (see history + SITREP). Remaining:
+- [ ] **Email delivery** — wire the `mail` channel so rider **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see Project B).
+- [ ] **Rider public profile pages (sub-project 2)** — a public rider page (bio, photo, social links, their guides) that the attribution byline links to; turn the About page into about-us + a crew/team roll-up. Attribution labels shipped; clickable pages deferred.
+- [ ] On Cloud/staging: set **`MAPBOX_TOKEN`** (map picker won't render without it) and confirm **`APP_URL`** matches the domain (signed set-password invite links are built from it).
+- [ ] Optional: a dedicated notification for "rider edited a live guide" (today an approved-guide edit reuses `GuideSubmittedForReview` when it auto-flags back to review).
 
 ## Frontend
 - [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.
@@ -39,7 +46,7 @@ Public controllers all covered. Remaining:
 - [ ] Dispatch `FetchSpotWeatherJob` from the `SpotGuide::created` hook with `->afterCommit()` so the auto-fetch stays correct even if the Filament panel later enables `->databaseTransactions()`. Correct today (panel has no DB transactions, so the row is committed before dispatch), but the guarantee is currently implicit. Note: a naive `->afterCommit()` breaks the dispatch test under `RefreshDatabase`'s wrapping transaction — needs test-config care.
 - [ ] Remove the one-off SQLite→Postgres migration tooling once the migration is proven and no longer needed: the `sqlite_legacy` connection in `config/database.php`, the `db:import-from-sqlite` command, and the stale `database/database.sqlite` file.
 - [ ] Dependency advisories: 4 low-severity, **dev-only** advisories remain (`symfony/dom-crawler` XXE, `symfony/yaml` ReDoS / Billion-Laughs) — no fix published in the 7.4.x constraint window; revisit on a future `composer update`.
-- [ ] Soft-delete/slug reuse: deleting a spot guide / blog / page soft-deletes it, so its unique slug stays reserved and recreating with the same slug fails with a confusing "already been taken". Improve the message (point to Restore / permanent-delete) — applies to SpotGuide, Blog, Page.
+- [ ] Soft-delete/slug reuse for **Blog & Page** — a soft-deleted record's unique slug stays reserved, so recreating with the same slug fails. Fixed for **SpotGuide** (2026-07-13, partial unique index `WHERE deleted_at IS NULL` + validation scoped to non-trashed); apply the same to Blog & Page (background task queued).
 
 ## Single-admin security (PRE-LAUNCH — required)
 The single owner login has been hardened with a strong env-driven password (set at deploy-time via `AdminUserSeeder`) and panel access restricted to the owner email only. What remains is optional 2FA and production environment configuration:

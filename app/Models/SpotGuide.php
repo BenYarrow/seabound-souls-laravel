@@ -21,6 +21,24 @@ class SpotGuide extends Model
 {
     use HasFactory, SoftDeletes, Searchable, HasSingleFeatured;
 
+    /** Review lifecycle states. is_published is a separate, owner-only switch. */
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_IN_REVIEW = 'in_review';
+
+    public const STATUS_CHANGES_REQUESTED = 'changes_requested';
+
+    public const STATUS_APPROVED = 'approved';
+
+    /**
+     * In-memory default so a freshly-created (unsaved-refresh) instance reads as
+     * draft immediately, mirroring the DB column default. review_status isn't
+     * fillable, so this can't be spoofed via mass assignment.
+     */
+    protected $attributes = [
+        'review_status' => self::STATUS_DRAFT,
+    ];
+
     /**
      * Register model lifecycle hooks.
      *
@@ -38,6 +56,18 @@ class SpotGuide extends Model
             }
         });
 
+        // Featuring a guide is an owner-only editorial decision. The form field
+        // and the inline list toggle are hidden from riders, but guard every
+        // write path (incl. a crafted request) here: a non-owner can never change
+        // is_featured — revert to the stored value on update, force false on create.
+        static::saving(function (SpotGuide $guide) {
+            if ($guide->isDirty('is_featured') && auth()->check() && ! auth()->user()->isOwner()) {
+                // Cast guards against a not-yet-hydrated original (null) violating
+                // the NOT NULL boolean column.
+                $guide->is_featured = $guide->exists ? (bool) $guide->getOriginal('is_featured') : false;
+            }
+        });
+
         // Auto-fetch weather for a newly created spot as soon as it has
         // coordinates, so admins don't wait for the weekly command. Create-only
         // by design — editing coordinates later is handled by the dashboard
@@ -47,10 +77,19 @@ class SpotGuide extends Model
                 FetchSpotWeatherJob::dispatch($guide->id);
             }
         });
+
+        // Stamp the author on create so ownership/scoping and later attribution
+        // work without every caller remembering to set it. An explicitly-provided
+        // user_id (e.g. owner creating on someone's behalf) is respected.
+        static::creating(function (SpotGuide $guide) {
+            if ($guide->user_id === null && auth()->check()) {
+                $guide->user_id = auth()->id();
+            }
+        });
     }
 
     protected $fillable = [
-        'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
+        'user_id', 'title', 'slug', 'country_id', 'country_name', 'latitude', 'longitude',
         'introduction_text', 'spot_overview', 'water_conditions', 'wind_conditions',
         'when_to_go', 'where_to_stay_intro', 'where_to_eat_intro',
         'travelling_to', 'lessons_and_hire', 'content_blocks',
@@ -74,6 +113,8 @@ class SpotGuide extends Model
         'is_published' => 'boolean',
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'reviewed_at' => 'datetime',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
     ];
@@ -81,6 +122,43 @@ class SpotGuide extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
+    }
+
+    /**
+     * The user who authored this guide. Nullable — a guide can outlive its
+     * author (nullOnDelete).
+     */
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Public attribution shape for this guide: a rider (named) or the house.
+     * House = owner-authored or no author; riders carry their display name.
+     *
+     * @return array{kind: 'house'|'rider', name: string|null}
+     */
+    public function authorPayload(): array
+    {
+        $isRider = $this->author && $this->author->isRider();
+
+        return [
+            'kind' => $isRider ? 'rider' : 'house',
+            'name' => $isRider ? $this->author->name : null,
+        ];
+    }
+
+    /**
+     * Whether public provenance bylines should show at all: true once ANY
+     * published, rider-authored guide exists on the site. Before then there is
+     * nothing to distinguish, so no bylines appear anywhere.
+     */
+    public static function riderGuidesExist(): bool
+    {
+        return static::published()
+            ->whereHas('author', fn ($query) => $query->where('role', User::ROLE_RIDER))
+            ->exists();
     }
 
     public function thumbnailMedia(): BelongsTo
@@ -134,6 +212,42 @@ class SpotGuide extends Model
     public function weatherRecords(): HasMany
     {
         return $this->hasMany(WeatherRecord::class);
+    }
+
+    /**
+     * Rider submits the guide for the owner's review. Editable-during-review by
+     * design (no lock), so this only advances the status + stamps the time.
+     */
+    public function submitForReview(): void
+    {
+        $this->review_status = self::STATUS_IN_REVIEW;
+        $this->submitted_at = now();
+        $this->save();
+    }
+
+    /**
+     * Owner approves and takes the guide live. published_at is set once (first
+     * publish) and preserved on re-publish.
+     */
+    public function publish(): void
+    {
+        $this->is_published = true;
+        $this->review_status = self::STATUS_APPROVED;
+        $this->published_at ??= now();
+        $this->reviewed_at = now();
+        $this->save();
+    }
+
+    /**
+     * Owner sends the guide back with feedback. Does NOT unpublish a live guide —
+     * the owner unpublishes separately if that's wanted (house-owns-what's-live).
+     */
+    public function requestChanges(string $note): void
+    {
+        $this->review_status = self::STATUS_CHANGES_REQUESTED;
+        $this->review_note = $note;
+        $this->reviewed_at = now();
+        $this->save();
     }
 
     /**
