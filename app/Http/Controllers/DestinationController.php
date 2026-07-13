@@ -32,7 +32,7 @@ class DestinationController extends Controller
             ->first();
 
         $spotGuides = SpotGuide::published()
-            ->with(['country', 'thumbnailMedia', 'weatherRecords'])
+            ->with(['country', 'thumbnailMedia', 'weatherRecords', 'author'])
             ->orderBy('title')
             ->get();
 
@@ -52,6 +52,8 @@ class DestinationController extends Controller
             ] : null,
             // Focal-bearing object so the card's CoverImage can honour the focal point.
             'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
+            // Who wrote it — house vs a named rider (shown only when showProvenance).
+            'author' => $guide->authorPayload(),
         ]);
 
         // The featured guide is an explicit, owner-set choice (no fallback). Null
@@ -90,6 +92,8 @@ class DestinationController extends Controller
                 'thumbnail' => $featured->thumbnailMedia?->imagePayload(),
             ] : null,
             'weatherData' => $weatherData,
+            // Show provenance bylines only once a published rider guide exists.
+            'showProvenance' => SpotGuide::riderGuidesExist(),
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
                 'title' => $page?->seo_title ?: 'Destinations',

@@ -133,6 +133,34 @@ class SpotGuide extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Public attribution shape for this guide: a rider (named) or the house.
+     * House = owner-authored or no author; riders carry their display name.
+     *
+     * @return array{kind: 'house'|'rider', name: string|null}
+     */
+    public function authorPayload(): array
+    {
+        $isRider = $this->author && $this->author->isRider();
+
+        return [
+            'kind' => $isRider ? 'rider' : 'house',
+            'name' => $isRider ? $this->author->name : null,
+        ];
+    }
+
+    /**
+     * Whether public provenance bylines should show at all: true once ANY
+     * published, rider-authored guide exists on the site. Before then there is
+     * nothing to distinguish, so no bylines appear anywhere.
+     */
+    public static function riderGuidesExist(): bool
+    {
+        return static::published()
+            ->whereHas('author', fn ($query) => $query->where('role', User::ROLE_RIDER))
+            ->exists();
+    }
+
     public function thumbnailMedia(): BelongsTo
     {
         return $this->belongsTo(MediaLibrary::class, 'thumbnail_media_id');

@@ -37,6 +37,7 @@ class SpotGuideController extends Controller
         $spotGuide = SpotGuide::where('slug', $slug)
             ->with([
                 'country',
+                'author',
                 'recommendations.thumbnailMedia',
                 'windsurfingLocations.thumbnailMedia',
                 'weatherRecords',
@@ -134,6 +135,8 @@ class SpotGuideController extends Controller
                 'id' => $spotGuide->id,
                 'title' => $spotGuide->title,
                 'slug' => $spotGuide->slug,
+                // Who wrote it — house vs a named rider (shown only when showProvenance).
+                'author' => $spotGuide->authorPayload(),
                 'country' => $spotGuide->country ? [
                     'name' => $spotGuide->country->name,
                     'slug' => $spotGuide->country->slug,
@@ -212,6 +215,8 @@ class SpotGuideController extends Controller
                 'guides' => $relatedGuides,
             ],
             'is_preview' => ! $spotGuide->is_published,
+            // Show provenance byline only once a published rider guide exists.
+            'showProvenance' => SpotGuide::riderGuidesExist(),
         ]);
     }
 
