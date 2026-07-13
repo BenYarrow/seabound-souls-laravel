@@ -10,17 +10,32 @@ use App\Filament\Resources\MediaLibraryResource\Pages\CreateMediaLibrary;
 use App\Livewire\MediaPickerBrowser;
 use App\Models\MediaLibrary;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class MediaOwnershipTest extends TestCase
 {
+    public function test_image_file_is_required_when_creating_media(): void
+    {
+        $this->actingAsOwner();
+
+        Livewire::test(CreateMediaLibrary::class)
+            ->fillForm(['name' => 'No image'])
+            ->call('create')
+            ->assertHasFormErrors(['file' => 'required']);
+
+        $this->assertDatabaseMissing('media_library', ['name' => 'No image']);
+    }
+
     public function test_media_created_by_a_rider_via_the_resource_is_owned_by_them(): void
     {
+        Storage::fake(config('media-library.disk_name'));
         $rider = $this->actingAsRider();
 
         Livewire::test(CreateMediaLibrary::class)
-            ->fillForm(['name' => 'My upload'])
+            ->fillForm(['name' => 'My upload', 'file' => [UploadedFile::fake()->image('mine.jpg')]])
             ->call('create')
             ->assertHasNoFormErrors();
 
@@ -32,10 +47,11 @@ class MediaOwnershipTest extends TestCase
 
     public function test_media_created_by_the_owner_via_the_resource_is_house_media(): void
     {
+        Storage::fake(config('media-library.disk_name'));
         $this->actingAsOwner();
 
         Livewire::test(CreateMediaLibrary::class)
-            ->fillForm(['name' => 'House upload'])
+            ->fillForm(['name' => 'House upload', 'file' => [UploadedFile::fake()->image('house.jpg')]])
             ->call('create')
             ->assertHasNoFormErrors();
 

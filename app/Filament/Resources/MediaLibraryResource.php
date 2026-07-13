@@ -50,6 +50,7 @@ class MediaLibraryResource extends Resource
             SpatieMediaLibraryFileUpload::make('file')
                 ->collection('file')
                 ->image()
+                ->required()
                 ->label('Image File')
                 ->columnSpanFull(),
         ]);
