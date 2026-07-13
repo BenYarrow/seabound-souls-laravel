@@ -26,14 +26,31 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Create the owner user (email matching config('admin.email')) and act as
-     * them, so panel tests satisfy User::canAccessPanel's owner-only gate.
+     * Create an owner account (role owner, email matching config('admin.email'))
+     * and act as them, satisfying both the panel gate and owner-only policies.
      */
     protected function actingAsOwner(): User
     {
-        $owner = User::factory()->create(['email' => config('admin.email')]);
+        $owner = User::factory()->create([
+            'email' => config('admin.email'),
+            'role' => User::ROLE_OWNER,
+        ]);
         $this->actingAs($owner);
 
         return $owner;
+    }
+
+    /**
+     * Create a rider account and act as them. Optionally override attributes
+     * (e.g. a specific email) for the caller's assertions.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function actingAsRider(array $attributes = []): User
+    {
+        $rider = User::factory()->create(array_merge(['role' => User::ROLE_RIDER], $attributes));
+        $this->actingAs($rider);
+
+        return $rider;
     }
 }

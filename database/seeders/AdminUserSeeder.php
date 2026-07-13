@@ -24,6 +24,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Seabound Souls',
                 'password' => Hash::make(config('admin.password')),
+                'role' => User::ROLE_OWNER,
             ],
         );
     }
