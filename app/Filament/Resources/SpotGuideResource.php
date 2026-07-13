@@ -54,7 +54,9 @@ class SpotGuideResource extends Resource
                                 ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
                             TextInput::make('slug')
                                 ->required()
-                                ->unique(ignoreRecord: true),
+                                // Only clash with LIVE guides — a soft-deleted guide's
+                                // slug is free to reuse (matches the partial DB index).
+                                ->unique(ignoreRecord: true, modifyRuleUsing: fn (\Illuminate\Validation\Rules\Unique $rule) => $rule->whereNull('deleted_at')),
                             Select::make('country_id')
                                 ->label('Country')
                                 ->options(Country::pluck('name', 'id'))
