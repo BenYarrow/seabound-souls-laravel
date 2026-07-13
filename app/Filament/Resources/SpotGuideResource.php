@@ -86,10 +86,12 @@ class SpotGuideResource extends Resource
                                 ->maxValue(180)
                                 ->helperText('Required — the weather fetch uses this.'),
                             Toggle::make('is_published')
-                                ->label('Published'),
+                                ->label('Published')
+                                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                             Toggle::make('is_featured')
                                 ->label('Featured')
-                                ->helperText('Only one spot guide can be featured — turning this on clears it from any other guide.'),
+                                ->helperText('Only one spot guide can be featured — turning this on clears it from any other guide.')
+                                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                         ])->columns(2),
 
                     Tabs\Tab::make('Masthead & Thumbnail')
@@ -280,6 +282,16 @@ class SpotGuideResource extends Resource
             ->columns([
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('country.name')->label('Country')->sortable(),
+                TextColumn::make('review_status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => ucwords(str_replace('_', ' ', $state ?? 'draft')))
+                    ->color(fn (?string $state): string => match ($state) {
+                        SpotGuide::STATUS_IN_REVIEW => 'warning',
+                        SpotGuide::STATUS_CHANGES_REQUESTED => 'danger',
+                        SpotGuide::STATUS_APPROVED => 'success',
+                        default => 'gray',
+                    }),
                 IconColumn::make('is_published')->label('Published')->boolean(),
                 ToggleColumn::make('is_featured')->label('Featured'),
                 TextColumn::make('updated_at')->label('Updated')->dateTime()->sortable(),
