@@ -50,7 +50,9 @@ class EditSpotGuide extends EditRecord
                 ->requiresConfirmation()
                 ->action(function (SpotGuide $record) {
                     $record->publish();
-                    if ($record->author) {
+                    // Skip the notification when the owner is publishing their own guide
+                    // (e.g. a house-authored spot guide) — no point notifying yourself.
+                    if ($record->author && ! $record->author->is(auth()->user())) {
                         $record->author->notify(new GuidePublished($record));
                     }
                     Notification::make()->title('Published')->success()->send();

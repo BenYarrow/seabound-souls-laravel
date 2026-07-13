@@ -1,5 +1,9 @@
 <?php
 
+// Covers SpotGuide's author-assignment behaviour: user_id defaults to the
+// authenticated user on create, but an explicitly-passed user_id (e.g. an
+// owner creating a guide on a rider's behalf) is never overwritten.
+
 namespace Tests\Unit;
 
 use App\Models\Country;

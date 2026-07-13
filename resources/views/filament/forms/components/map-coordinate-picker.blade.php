@@ -68,6 +68,14 @@
                             js.onload = resolve;
                             js.onerror = reject;
                             document.head.appendChild(js);
+                        }).catch((error) => {
+                            // A failed CDN load (offline, blocked, etc.) would otherwise leave a
+                            // permanently-rejected promise cached, so every later open() would
+                            // reject immediately without ever retrying the load. Clear the cache
+                            // so the next open() attempts a fresh load, while still propagating
+                            // this attempt's failure to its caller.
+                            window.__mapboxGlLoading = null;
+                            throw error;
                         });
                     }
                     await window.__mapboxGlLoading;

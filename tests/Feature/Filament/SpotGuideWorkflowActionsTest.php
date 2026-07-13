@@ -17,6 +17,7 @@ use App\Notifications\GuideSubmittedForReview;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
+use PHPUnit\Framework\ExpectationFailedException;
 use Tests\TestCase;
 
 class SpotGuideWorkflowActionsTest extends TestCase
@@ -84,5 +85,54 @@ class SpotGuideWorkflowActionsTest extends TestCase
         $this->assertSame(SpotGuide::STATUS_CHANGES_REQUESTED, $guide->fresh()->review_status);
         $this->assertSame('Add wind stats', $guide->fresh()->review_note);
         Notification::assertSentTo($rider, GuideChangesRequested::class);
+    }
+
+    /**
+     * Security regression lock: the `publish` action is only guarded by
+     * ->visible(owner) — there is no ->authorize() tied to the update policy.
+     * Filament's Livewire test helper independently asserts the action is
+     * visible before invoking it, so calling it as a rider on their own guide
+     * throws an ExpectationFailedException rather than silently publishing.
+     * Whichever way it fails, the record must never end up published.
+     */
+    public function test_rider_cannot_publish_their_own_guide_via_the_publish_action(): void
+    {
+        Notification::fake();
+        $rider = $this->actingAsRider();
+        $guide = $this->guideFor($rider);
+
+        try {
+            Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+                ->callAction('publish');
+        } catch (ExpectationFailedException $exception) {
+            // Expected: Filament's test helper refuses to invoke a hidden action.
+        }
+
+        $this->assertFalse($guide->fresh()->is_published);
+        Notification::assertNothingSent();
+    }
+
+    /**
+     * Security regression lock: `is_published` is only present in the form
+     * schema when the acting user is the owner (Toggle::visible(owner) in
+     * SpotGuideResource::form()). A rider's form simply never carries the
+     * field, so attempting to set it via fillForm() has no effect — the
+     * saved record must stay unpublished either way.
+     */
+    public function test_rider_cannot_set_is_published_via_the_edit_form(): void
+    {
+        $rider = $this->actingAsRider();
+        $guide = $this->guideFor($rider);
+
+        Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+            ->fillForm([
+                'title' => 'Bay Updated',
+                'slug' => 'bay',
+                'is_published' => true,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertFalse($guide->fresh()->is_published);
     }
 }
