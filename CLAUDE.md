@@ -206,6 +206,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | GET | `/search` | SearchController@index | `search` |
 | GET | `/contact` | ContactController@index | `contact` |
 | POST | `/contact` | ContactController@store | `contact.store` |
+| GET | `/rider/set-password/{user}` | Rider/SetPasswordController@show | `rider.password.setup` (signed) |
+| POST | `/rider/set-password/{user}` | Rider/SetPasswordController@store | `rider.password.store` (signed) |
 | GET | `/{slug}` | PageController@show | `pages.show` (catch-all, excludes /admin*) |
 
 ### API (`routes/api.php`)
@@ -269,7 +271,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 **URL:** `/admin` | **Color:** Amber
 
-**Auth (single owner):** the only login is the Filament admin — no registration, no password reset. Panel access is gated to the owner email via `User::canAccessPanel()` against `config('admin.email')`. The owner credentials come from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (env) through `config/admin.php`, seeded by `AdminUserSeeder` (`updateOrCreate` — re-seed to rotate). Locally these are unset, so the dev default `seabound.souls@outlook.com` / `password` applies. Never read the `ADMIN_*` env vars outside `config/admin.php`.
+**Auth (owner + invited riders):** two roles on `users.role` — `owner` and `rider` (default `rider`). `User::canAccessPanel()` admits any recognised role; the **real gating is per-resource Policies**, not the panel gate. No public registration and no self-service password reset. The **owner** is the house account: credentials from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (env) via `config/admin.php`, seeded by `AdminUserSeeder` (`updateOrCreate` with `role = owner` — re-seed to rotate); locally unset, so the dev default `seabound.souls@outlook.com` / `password` applies. Never read the `ADMIN_*` env vars outside `config/admin.php`. **Riders** are created only by the owner-only **Invite Rider** action (Riders admin section), which mints a signed 7-day set-password link (`rider.password.setup`); the rider sets their password (`Rider\SetPasswordController`, `session()->regenerate()` on login). Riders are policy-scoped to their **own** spot guides and their **own** media (house media, `media_library.user_id = null`, is invisible to them); `is_published` and `is_featured` are owner-only across every write path. See the rider contributor workflow: `docs/history/2026-07-13-rider-contributor-workflow.md`.
 
 ### Resources
 | Resource | Key Tabs |
@@ -278,6 +280,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | **BlogResource** | General, Content (blocks builder), Gallery, SEO |
 | **PageResource** | General, Content (blocks builder), Gallery & Images, SEO |
 | **CountryResource** | name, slug, continent |
+| **RiderResource** (owner-only) | Riders roster (first/last name, email, guide count, joined) + per-rider guides panel; **Invite Rider** action. Built on the `User` model, scoped to `role = rider`. |
 
 ---
 
