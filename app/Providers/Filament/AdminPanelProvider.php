@@ -29,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->databaseNotifications()
             // "View site" link in the admin top bar — opens the public homepage in
             // a new tab so the admin can jump from the panel to the live site.
             ->renderHook(
