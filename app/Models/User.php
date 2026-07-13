@@ -29,6 +29,7 @@ class User extends Authenticatable implements FilamentUser
 
     /** Role values. Owner = the house account(s); Rider = invited contributor. */
     public const ROLE_OWNER = 'owner';
+
     public const ROLE_RIDER = 'rider';
 
     /**
