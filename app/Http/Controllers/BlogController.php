@@ -12,6 +12,7 @@ use App\Http\Controllers\Concerns\ResolvesContentBlockMedia;
 use App\Models\Blog;
 use App\Models\MediaLibrary;
 use App\Models\Page;
+use App\Models\Tag;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -55,6 +56,13 @@ class BlogController extends Controller
                 'seo_description' => $blog->seo_description,
             ]);
 
+        // Only tags that have at least one published post appear in the bar, so
+        // every chip links to a live tag page (never a 404). Ordered by sort_order.
+        $tags = Tag::withPublishedPosts()
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug]);
+
         return Inertia::render('Blog/Index', [
             'blogs' => $blogs,
             'featured' => $featured ? [
@@ -67,6 +75,7 @@ class BlogController extends Controller
             ] : null,
             // Display images as objects; the static_masthead feeds StaticMasthead which uses CoverImage.
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
+            'tags' => $tags,
             'meta' => [
                 'title' => $page?->seo_title ?: 'Blog',
                 'description' => $page?->seo_description ?: 'Windsurfing tips, guides and destination insights.',
@@ -87,7 +96,7 @@ class BlogController extends Controller
     {
         $blog = Blog::where('slug', $slug)
             ->where('is_published', true)
-            ->with(['thumbnailMedia', 'staticMastheadMedia', 'ogImageMedia'])
+            ->with(['thumbnailMedia', 'staticMastheadMedia', 'ogImageMedia', 'tags'])
             ->firstOrFail();
 
         // Fetch all slider images in a single whereIn query, keyed by id, then
@@ -110,6 +119,7 @@ class BlogController extends Controller
                 'id' => $blog->id,
                 'title' => $blog->title,
                 'slug' => $blog->slug,
+                'tags' => $blog->tags->map(fn ($tag) => ['name' => $tag->name, 'slug' => $tag->slug])->values(),
                 'content_blocks' => $this->resolveContentBlockMedia($blog->content_blocks ?? []),
                 'published_at' => $blog->published_at?->toDateString(),
                 // Display images as focal-bearing objects; og_image stays a plain URL string.
