@@ -1,45 +1,45 @@
+/**
+ * Blog/Tag — public, crawlable topic-hub page for a single blog tag.
+ *
+ * Rendered by `TagController@show` at `/blog/tags/{slug}`. Mirrors the blog
+ * index's card grid + pagination so tag pages feel like a native section of
+ * the blog rather than a bolt-on filter view. See docs/history/ (Blog Tags
+ * feature) for the wider design — this file covers only the frontend view.
+ */
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import AnimateInView from '@/Components/Common/AnimateInView'
-import FeaturedHero from '@/Components/Common/FeaturedHero'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
 
-interface Blog {
+/** A post card as projected by TagController@show (same shape as the blog index). */
+interface Post {
     id: number
     title: string
     slug: string
     published_at: string | null
-    /** Focal-bearing image object (or null when no thumbnail). */
     thumbnail: FocalImage | null
     seo_description: string | null
 }
 
-interface TagChip {
-    id: number
-    name: string
-    slug: string
-}
-
 interface Props {
-    blogs: {
-        data: Blog[]
+    tag: { name: string; description: string | null }
+    posts: {
+        data: Post[]
         links: any[]
-        /** Laravel paginator serialises flat — current_page / last_page are top-level (there is no `meta`). */
         current_page: number
         last_page: number
     }
-    /** The owner-flagged post, or null when nothing is flagged (no fallback). */
-    featured: Blog | null
-    /** Focal-bearing image for the masthead, or null when no page record exists. */
-    static_masthead: FocalImage | null
-    /** Every tag that carries at least one published post, for the tag bar. */
-    tags: TagChip[]
     meta: { title: string; description: string; keywords?: string[]; og_image?: string }
 }
 
+/**
+ * Format an ISO date string as a UK long date, or '' when null.
+ *
+ * @param dateStr ISO date string or null
+ */
 const formatDate = (dateStr: string | null): string => {
     if (!dateStr) return ''
     return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -51,81 +51,48 @@ const ArrowIcon = ({ className }: { className?: string }) => (
     </svg>
 )
 
-const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
+/**
+ * Public tag page — a crawlable topic hub listing every published post carrying
+ * one tag, with optional intro copy above the grid.
+ */
+const Tag = ({ tag, posts, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            {static_masthead ? (
-                <StaticMasthead
-                    imageUrl={static_masthead}
-                    title="Blog"
-                    subtitle="Windsurfing tips, guides and destination insights"
-                />
-            ) : (
-                <div className="bg-primary py-16">
-                    <div className="container mx-auto">
-                        <h1 className="text-white text-4xl md:text-5xl font-bold">Blog</h1>
-                        <p className="text-white opacity-80 text-lg mt-3">Windsurfing tips and destination insights</p>
-                    </div>
+            <div className="bg-primary py-16">
+                <div className="container mx-auto">
+                    <p className="text-white/70 text-[10px] uppercase tracking-[0.45em] mb-3">Tagged</p>
+                    <h1 className="text-white text-4xl md:text-5xl font-bold">{tag.name}</h1>
+                    {tag.description && (
+                        <p className="text-white/80 text-lg mt-4 max-w-3xl leading-relaxed">{tag.description}</p>
+                    )}
                 </div>
-            )}
+            </div>
 
             <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
-
-                {/* Section divider */}
-                <div className="flex items-center gap-5 mb-12">
-                    <div className="h-px flex-1 bg-primary/20" />
-                    <span className="text-[10px] uppercase tracking-[0.45em] text-primary font-light shrink-0">Latest Articles</span>
-                    <div className="h-px flex-1 bg-primary/20" />
+                <div className="mb-10">
+                    <Link href="/blog" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:gap-3 transition-all duration-300">
+                        <span className="rotate-180"><ArrowIcon className="w-3 h-3" /></span> All articles
+                    </Link>
                 </div>
 
-                {/* Tag bar — links to each crawlable tag page */}
-                {tags.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2.5 mb-12">
-                        {tags.map((tag) => (
-                            <Link
-                                key={tag.id}
-                                href={`/blog/tags/${tag.slug}`}
-                                className="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors duration-200"
-                            >
-                                {tag.name}
-                            </Link>
-                        ))}
-                    </div>
-                )}
-
-                {/* Featured post — owner-flagged, shown on page 1 only */}
-                {featured && blogs.current_page === 1 && (
-                    <FeaturedHero
-                        image={featured.thumbnail}
-                        eyebrow="Featured"
-                        title={featured.title}
-                        description={featured.seo_description}
-                        metaLabel={featured.published_at ? formatDate(featured.published_at) : null}
-                        href={`/blog/${featured.slug}`}
-                        ctaLabel="Read article"
-                    />
-                )}
-
-                {/* Article grid */}
-                {blogs.data.length > 0 && (
+                {posts.data.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {blogs.data.map((blog, i) => (
+                        {posts.data.map((post, i) => (
                             <AnimateInView
-                                key={blog.id}
+                                key={post.id}
                                 outViewClasses="translate-y-8 opacity-0"
                                 delayClasses={i % 3 === 0 ? 'delay-0' : i % 3 === 1 ? 'delay-[100ms]' : 'delay-200'}
                                 durationClasses="duration-500"
                             >
                                 <Link
-                                    href={`/blog/${blog.slug}`}
+                                    href={`/blog/${post.slug}`}
                                     className="group flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-white h-full"
                                 >
-                                    {/* Image */}
                                     <div className="relative aspect-[16/10] overflow-hidden shrink-0">
-                                        {blog.thumbnail ? (
+                                        {post.thumbnail ? (
                                             <CoverImage
-                                                image={blog.thumbnail}
-                                                alt={blog.title}
+                                                image={post.thumbnail}
+                                                alt={post.title}
                                                 className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
@@ -133,23 +100,21 @@ const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                     </div>
-
-                                    {/* Content */}
                                     <div className="flex flex-col flex-1 p-5 md:p-6">
-                                        {blog.published_at && (
+                                        {post.published_at && (
                                             <p className="text-[10px] uppercase tracking-[0.35em] text-primary/60 mb-2">
-                                                {formatDate(blog.published_at)}
+                                                {formatDate(post.published_at)}
                                             </p>
                                         )}
                                         <h3
                                             className="font-title text-secondary uppercase leading-[1.05] group-hover:text-primary transition-colors duration-300"
                                             style={{ fontSize: 'clamp(1.1rem, 1.8vw, 1.35rem)' }}
                                         >
-                                            {blog.title}
+                                            {post.title}
                                         </h3>
-                                        {blog.seo_description && (
+                                        {post.seo_description && (
                                             <p className="text-gray-500 text-sm mt-2.5 line-clamp-2 leading-relaxed flex-1">
-                                                {blog.seo_description}
+                                                {post.seo_description}
                                             </p>
                                         )}
                                         <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-primary group-hover:gap-3 transition-all duration-300">
@@ -160,20 +125,15 @@ const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
                             </AnimateInView>
                         ))}
                     </div>
-                )}
-
-                {/* Empty state */}
-                {blogs.data.length === 0 && (
+                ) : (
                     <div className="text-center py-20 text-gray-400">
                         <p className="font-title text-2xl uppercase">No articles yet</p>
-                        <p className="text-sm mt-2">Check back soon.</p>
                     </div>
                 )}
 
-                {/* Pagination */}
-                {blogs.last_page > 1 && (
+                {posts.last_page > 1 && (
                     <div className="mt-14 flex justify-center items-center gap-2">
-                        {blogs.links.map((link: any, i: number) =>
+                        {posts.links.map((link: any, i: number) =>
                             link.url ? (
                                 <Link
                                     key={i}
@@ -195,10 +155,9 @@ const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
                         )}
                     </div>
                 )}
-
             </BlockWrapper>
         </Layout>
     )
 }
 
-export default Index
+export default Tag
