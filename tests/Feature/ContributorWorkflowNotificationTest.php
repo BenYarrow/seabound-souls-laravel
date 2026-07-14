@@ -1,6 +1,6 @@
 <?php
 
-// Covers the rider-contributor workflow notifications: each class's toDatabase()
+// Covers the contributor-contributor workflow notifications: each class's toDatabase()
 // payload shape, and that Laravel's notification pipeline actually delivers to
 // the intended recipient (owner) via Notification::fake().
 
@@ -16,27 +16,27 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class RiderWorkflowNotificationTest extends TestCase
+class ContributorWorkflowNotificationTest extends TestCase
 {
     public function test_notifications_render_a_database_payload(): void
     {
         Queue::fake();
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER, 'name' => 'Ada']);
-        $this->actingAs($rider);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR, 'name' => 'Ada']);
+        $this->actingAs($contributor);
         $guide = SpotGuide::create([
             'title' => 'Pozo', 'slug' => 'pozo',
             'country_id' => Country::factory()->create()->id,
             'latitude' => 1, 'longitude' => 1,
         ]);
 
-        $submitted = (new GuideSubmittedForReview($guide))->toDatabase($rider);
+        $submitted = (new GuideSubmittedForReview($guide))->toDatabase($contributor);
         $this->assertArrayHasKey('title', $submitted);
         $this->assertStringContainsString('Pozo', $submitted['body']);
 
-        $changes = (new GuideChangesRequested($guide, 'Add wind stats'))->toDatabase($rider);
+        $changes = (new GuideChangesRequested($guide, 'Add wind stats'))->toDatabase($contributor);
         $this->assertStringContainsString('Add wind stats', $changes['body']);
 
-        $published = (new GuidePublished($guide))->toDatabase($rider);
+        $published = (new GuidePublished($guide))->toDatabase($contributor);
         $this->assertArrayHasKey('title', $published);
     }
 
@@ -44,11 +44,11 @@ class RiderWorkflowNotificationTest extends TestCase
     {
         Notification::fake();
         $owner = User::factory()->create(['role' => User::ROLE_OWNER]);
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
-        $this->actingAs($rider);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
+        $this->actingAs($contributor);
         $guide = SpotGuide::withoutEvents(fn () => SpotGuide::create([
             'title' => 'X', 'slug' => 'x', 'country_id' => Country::factory()->create()->id,
-            'latitude' => 1, 'longitude' => 1, 'user_id' => $rider->id,
+            'latitude' => 1, 'longitude' => 1, 'user_id' => $contributor->id,
         ]));
 
         $owner->notify(new GuideSubmittedForReview($guide));

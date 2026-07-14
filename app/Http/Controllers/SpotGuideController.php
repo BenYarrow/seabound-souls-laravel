@@ -64,7 +64,7 @@ class SpotGuideController extends Controller
         // Fetch gallery images in one whereIn query, keyed by id, then map back
         // over the stored id list so the gallery keeps its authored order.
         $galleryIds = $spotGuide->gallery_media_ids ?? [];
-        $galleryItems = !empty($galleryIds)
+        $galleryItems = ! empty($galleryIds)
             ? MediaLibrary::whereIn('id', $galleryIds)->get()->keyBy('id')
             : collect();
 
@@ -135,7 +135,7 @@ class SpotGuideController extends Controller
                 'id' => $spotGuide->id,
                 'title' => $spotGuide->title,
                 'slug' => $spotGuide->slug,
-                // Who wrote it — house vs a named rider (shown only when showProvenance).
+                // Who wrote it — house vs a named contributor (shown only when showProvenance).
                 'author' => $spotGuide->authorPayload(),
                 'country' => $spotGuide->country ? [
                     'name' => $spotGuide->country->name,
@@ -215,9 +215,8 @@ class SpotGuideController extends Controller
                 'guides' => $relatedGuides,
             ],
             'is_preview' => ! $spotGuide->is_published,
-            // Show provenance byline only once a published rider guide exists.
-            'showProvenance' => SpotGuide::riderGuidesExist(),
+            // Show provenance byline only once a published contributor guide exists.
+            'showProvenance' => SpotGuide::contributorGuidesExist(),
         ]);
     }
-
 }

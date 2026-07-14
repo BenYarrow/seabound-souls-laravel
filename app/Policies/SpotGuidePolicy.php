@@ -1,6 +1,6 @@
 <?php
 
-// Authorises spot-guide access. Owners have full control. Riders are limited to
+// Authorises spot-guide access. Owners have full control. Contributors are limited to
 // their own guides and may only delete them while still unpublished — once live,
 // the house owns it (only owners may unpublish/delete).
 
@@ -37,7 +37,7 @@ class SpotGuidePolicy
             return true;
         }
 
-        // Rider: own guide, and only while it is not yet live.
+        // Contributor: own guide, and only while it is not yet live.
         return $guide->user_id === $user->id && ! $guide->is_published;
     }
 

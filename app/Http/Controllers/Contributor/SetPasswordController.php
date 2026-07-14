@@ -1,10 +1,10 @@
 <?php
 
-// Handles an invited rider setting their initial password from a signed link.
+// Handles an invited contributor setting their initial password from a signed link.
 // The 'signed' middleware on both routes guarantees the link is authentic and
 // unexpired, so no prior auth is needed.
 
-namespace App\Http\Controllers\Rider;
+namespace App\Http\Controllers\Contributor;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -16,13 +16,13 @@ use Illuminate\View\View;
 
 class SetPasswordController extends Controller
 {
-    /** Show the set-password form for the invited rider. */
+    /** Show the set-password form for the invited contributor. */
     public function show(User $user): View
     {
-        return view('rider.set-password', ['user' => $user]);
+        return view('contributor.set-password', ['user' => $user]);
     }
 
-    /** Validate + save the password, log the rider in, send them to the panel. */
+    /** Validate + save the password, log the contributor in, send them to the panel. */
     public function store(Request $request, User $user): RedirectResponse
     {
         $request->validate([

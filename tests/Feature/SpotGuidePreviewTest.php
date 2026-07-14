@@ -1,7 +1,7 @@
 <?php
 
 // Public preview gate for unpublished spot guides: /destinations/{slug} 404s for
-// guests and non-author riders, but returns 200 (with an is_preview prop) for the
+// guests and non-author contributors, but returns 200 (with an is_preview prop) for the
 // owner or the guide's own author, mirroring the Filament "Preview" action's link.
 
 namespace Tests\Feature;
@@ -17,6 +17,7 @@ class SpotGuidePreviewTest extends TestCase
     private function draftGuide(User $author): SpotGuide
     {
         Queue::fake();
+
         return SpotGuide::withoutEvents(fn () => SpotGuide::create([
             'title' => 'Secret Bay', 'slug' => 'secret-bay',
             'country_id' => Country::factory()->create()->id,
@@ -31,17 +32,17 @@ class SpotGuidePreviewTest extends TestCase
         $this->get('/destinations/secret-bay')->assertNotFound();
     }
 
-    public function test_non_author_rider_gets_404(): void
+    public function test_non_author_contributor_gets_404(): void
     {
-        $author = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $author = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
         $this->draftGuide($author);
-        $this->actingAsRider(); // a different rider
+        $this->actingAsContributor(); // a different contributor
         $this->get('/destinations/secret-bay')->assertNotFound();
     }
 
     public function test_author_can_preview_their_own_unpublished_guide(): void
     {
-        $author = $this->actingAsRider();
+        $author = $this->actingAsContributor();
         $this->draftGuide($author);
         $this->get('/destinations/secret-bay')->assertOk();
     }

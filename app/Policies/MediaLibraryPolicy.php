@@ -1,6 +1,6 @@
 <?php
 
-// Authorises media access. Owners see/manage everything; riders are confined to
+// Authorises media access. Owners see/manage everything; contributors are confined to
 // their own uploads and never see house media (user_id null).
 
 namespace App\Policies;

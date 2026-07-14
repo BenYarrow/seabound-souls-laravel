@@ -1,14 +1,14 @@
 <?php
 
-// Owner-only "Riders" admin section: a roster of invited rider contributors and,
-// per rider, the spot guides they have authored. Accounts are created via the
-// Invite Rider action (see ListRiders), never a blank create form — so the
+// Owner-only "Contributors" admin section: a roster of invited contributors and,
+// per contributor, the spot guides they have authored. Accounts are created via the
+// Invite Contributor action (see ListContributors), never a blank create form — so the
 // standard create page is disabled. Access is gated to owners by UserPolicy.
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\RiderResource\Pages;
-use App\Filament\Resources\RiderResource\RelationManagers\SpotGuidesRelationManager;
+use App\Filament\Resources\ContributorResource\Pages;
+use App\Filament\Resources\ContributorResource\RelationManagers\SpotGuidesRelationManager;
 use App\Models\User;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -18,38 +18,38 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class RiderResource extends Resource
+class ContributorResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationLabel = 'Riders';
+    protected static ?string $navigationLabel = 'Contributors';
 
     protected static ?int $navigationSort = 6;
 
     // The resource is built on the User model, so Filament would otherwise derive
-    // "User"/"Users" for page titles and breadcrumbs — override to "Rider"/"Riders".
-    protected static ?string $modelLabel = 'rider';
+    // "User"/"Users" for page titles and breadcrumbs — override to "Contributor"/"Contributors".
+    protected static ?string $modelLabel = 'contributor';
 
-    protected static ?string $pluralModelLabel = 'riders';
+    protected static ?string $pluralModelLabel = 'contributors';
 
-    /** Rider accounts are created via the Invite Rider action, not a create form. */
+    /** Contributor accounts are created via the Invite Contributor action, not a create form. */
     public static function canCreate(): bool
     {
         return false;
     }
 
-    /** The roster is only ever rider accounts — owners never appear here. */
+    /** The roster is only ever contributor accounts — owners never appear here. */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('role', User::ROLE_RIDER);
+        return parent::getEloquentQuery()->where('role', User::ROLE_CONTRIBUTOR);
     }
 
     public static function form(Form $form): Form
     {
         // Only the display fields are editable here; the password is set by the
-        // rider via their signed invite link, never by the owner. `name` is
+        // contributor via their signed invite link, never by the owner. `name` is
         // derived from first/last by the User saving hook.
         return $form->schema([
             TextInput::make('first_name')->label('First name')->required(),
@@ -88,8 +88,8 @@ class RiderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRiders::route('/'),
-            'edit' => Pages\EditRider::route('/{record}/edit'),
+            'index' => Pages\ListContributors::route('/'),
+            'edit' => Pages\EditContributor::route('/{record}/edit'),
         ];
     }
 }

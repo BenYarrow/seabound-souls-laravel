@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -35,11 +36,11 @@ class MediaLibrary extends Model implements HasMedia
     }
 
     /**
-     * Owning user. Null means house media (owner-owned, hidden from riders).
+     * Owning user. Null means house media (owner-owned, hidden from contributors).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, MediaLibrary>
+     * @return BelongsTo<User, MediaLibrary>
      */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

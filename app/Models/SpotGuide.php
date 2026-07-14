@@ -19,7 +19,7 @@ use Laravel\Scout\Searchable;
 
 class SpotGuide extends Model
 {
-    use HasFactory, SoftDeletes, Searchable, HasSingleFeatured;
+    use HasFactory, HasSingleFeatured, Searchable, SoftDeletes;
 
     /** Review lifecycle states. is_published is a separate, owner-only switch. */
     public const STATUS_DRAFT = 'draft';
@@ -57,7 +57,7 @@ class SpotGuide extends Model
         });
 
         // Featuring a guide is an owner-only editorial decision. The form field
-        // and the inline list toggle are hidden from riders, but guard every
+        // and the inline list toggle are hidden from contributors, but guard every
         // write path (incl. a crafted request) here: a non-owner can never change
         // is_featured — revert to the stored value on update, force false on create.
         static::saving(function (SpotGuide $guide) {
@@ -134,30 +134,30 @@ class SpotGuide extends Model
     }
 
     /**
-     * Public attribution shape for this guide: a rider (named) or the house.
-     * House = owner-authored or no author; riders carry their display name.
+     * Public attribution shape for this guide: a contributor (named) or the house.
+     * House = owner-authored or no author; contributors carry their display name.
      *
-     * @return array{kind: 'house'|'rider', name: string|null}
+     * @return array{kind: 'house'|'contributor', name: string|null}
      */
     public function authorPayload(): array
     {
-        $isRider = $this->author && $this->author->isRider();
+        $isContributor = $this->author && $this->author->isContributor();
 
         return [
-            'kind' => $isRider ? 'rider' : 'house',
-            'name' => $isRider ? $this->author->name : null,
+            'kind' => $isContributor ? 'contributor' : 'house',
+            'name' => $isContributor ? $this->author->name : null,
         ];
     }
 
     /**
      * Whether public provenance bylines should show at all: true once ANY
-     * published, rider-authored guide exists on the site. Before then there is
+     * published, contributor-authored guide exists on the site. Before then there is
      * nothing to distinguish, so no bylines appear anywhere.
      */
-    public static function riderGuidesExist(): bool
+    public static function contributorGuidesExist(): bool
     {
         return static::published()
-            ->whereHas('author', fn ($query) => $query->where('role', User::ROLE_RIDER))
+            ->whereHas('author', fn ($query) => $query->where('role', User::ROLE_CONTRIBUTOR))
             ->exists();
     }
 
@@ -215,7 +215,7 @@ class SpotGuide extends Model
     }
 
     /**
-     * Rider submits the guide for the owner's review. Editable-during-review by
+     * Contributor submits the guide for the owner's review. Editable-during-review by
      * design (no lock), so this only advances the status + stamps the time.
      */
     public function submitForReview(): void

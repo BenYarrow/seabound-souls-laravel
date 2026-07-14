@@ -1,4 +1,4 @@
-{{-- Minimal standalone set-password page for invited riders (outside the SPA). --}}
+{{-- Minimal standalone set-password page for invited contributors (outside the SPA). --}}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -10,7 +10,7 @@
 <body class="min-h-full bg-cream flex items-center justify-center p-6">
     <div class="w-full max-w-md rounded-xl bg-white shadow p-8">
         <h1 class="text-2xl font-title text-primary mb-2">Set your password</h1>
-        <p class="text-sm text-secondary/70 mb-6">Welcome aboard, {{ $user->name }}. Choose a password to activate your Rider account.</p>
+        <p class="text-sm text-secondary/70 mb-6">Welcome aboard, {{ $user->name }}. Choose a password to activate your Contributor account.</p>
 
         @if ($errors->any())
             <div class="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">
@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ url()->signedRoute('rider.password.store', ['user' => $user->id], now()->addDays(7)) }}">
+        <form method="POST" action="{{ url()->signedRoute('contributor.password.store', ['user' => $user->id], now()->addDays(7)) }}">
             @csrf
             <label class="block text-sm font-medium mb-1" for="password">Password</label>
             <input id="password" name="password" type="password" required

@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -29,14 +30,14 @@ class User extends Authenticatable implements FilamentUser
         'role',
     ];
 
-    /** Role values. Owner = the house account(s); Rider = invited contributor. */
+    /** Role values. Owner = the house account(s); Contributor = invited contributor. */
     public const ROLE_OWNER = 'owner';
 
-    public const ROLE_RIDER = 'rider';
+    public const ROLE_CONTRIBUTOR = 'contributor';
 
     /**
      * Keep `name` (the canonical display column used by auth/account UIs) in sync
-     * with the structured rider first/last names. Only runs when first/last are
+     * with the structured contributor first/last names. Only runs when first/last are
      * set, so the owner's brand name ("Seabound Souls", first/last null) is left
      * untouched.
      */
@@ -79,7 +80,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return in_array($this->role, [self::ROLE_OWNER, self::ROLE_RIDER], true);
+        return in_array($this->role, [self::ROLE_OWNER, self::ROLE_CONTRIBUTOR], true);
     }
 
     /** True when this account is a house owner. */
@@ -88,18 +89,18 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === self::ROLE_OWNER;
     }
 
-    /** True when this account is an invited rider contributor. */
-    public function isRider(): bool
+    /** True when this account is an invited contributor. */
+    public function isContributor(): bool
     {
-        return $this->role === self::ROLE_RIDER;
+        return $this->role === self::ROLE_CONTRIBUTOR;
     }
 
     /**
      * Spot guides authored by this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SpotGuide>
+     * @return HasMany<SpotGuide>
      */
-    public function authoredSpotGuides(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function authoredSpotGuides(): HasMany
     {
         return $this->hasMany(SpotGuide::class);
     }

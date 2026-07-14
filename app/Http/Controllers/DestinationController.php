@@ -52,7 +52,7 @@ class DestinationController extends Controller
             ] : null,
             // Focal-bearing object so the card's CoverImage can honour the focal point.
             'thumbnail' => $guide->thumbnailMedia?->imagePayload(),
-            // Who wrote it — house vs a named rider (shown only when showProvenance).
+            // Who wrote it — house vs a named contributor (shown only when showProvenance).
             'author' => $guide->authorPayload(),
         ]);
 
@@ -92,8 +92,8 @@ class DestinationController extends Controller
                 'thumbnail' => $featured->thumbnailMedia?->imagePayload(),
             ] : null,
             'weatherData' => $weatherData,
-            // Show provenance bylines only once a published rider guide exists.
-            'showProvenance' => SpotGuide::riderGuidesExist(),
+            // Show provenance bylines only once a published contributor guide exists.
+            'showProvenance' => SpotGuide::contributorGuidesExist(),
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),
             'meta' => [
                 'title' => $page?->seo_title ?: 'Destinations',

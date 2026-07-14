@@ -15,7 +15,7 @@ class SpotGuideReviewLifecycleTest extends TestCase
     private function makeGuide(): SpotGuide
     {
         Queue::fake();
-        $this->actingAsRider();
+        $this->actingAsContributor();
 
         return SpotGuide::create([
             'title' => 'Test Bay', 'slug' => 'test-bay',

@@ -25,14 +25,14 @@ Public controllers all covered. Remaining:
 - [ ] Optional: upgrade the local Postgres *server* from 16 → 17 to match prod, which silences the benign `SET transaction_timeout` notice pg_restore emits when a PG17 dump lands on a PG16 server (data restores fine regardless).
 
 ## Authoring UX
-- [ ] **Draft / live preview (Pages & Blogs + unsaved edits)** — logged-in preview of unpublished **Spot Guides** shipped for the owner/author (2026-07-13, rider workflow — a Filament "Preview" action + owner/author-gated `@show` + banner). Still to do: the same for **Pages / Blogs**, and previewing *edited-but-unsaved* form state (the harder part — feeding in-progress form data to the front end). Their public controllers still hard-filter `is_published`.
+- [ ] **Draft / live preview (Pages & Blogs + unsaved edits)** — logged-in preview of unpublished **Spot Guides** shipped for the owner/author (2026-07-13, contributor workflow — a Filament "Preview" action + owner/author-gated `@show` + banner). Still to do: the same for **Pages / Blogs**, and previewing *edited-but-unsaved* form state (the harder part — feeding in-progress form data to the front end). Their public controllers still hard-filter `is_published`.
 
-## Rider contributor workflow (follow-ups)
+## Contributor workflow (follow-ups)
 Sub-project 1 shipped 2026-07-13 (see history + SITREP). Remaining:
-- [ ] **Email delivery** — wire the `mail` channel so rider **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see Project B).
-- [ ] **Rider public profile pages (sub-project 2)** — a public rider page (bio, photo, social links, their guides) that the attribution byline links to; turn the About page into about-us + a crew/team roll-up. Attribution labels shipped; clickable pages deferred.
+- [ ] **Email delivery** — wire the `mail` channel so contributor **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see Project B).
+- [ ] **Contributor public profile pages (sub-project 2)** — a public contributor page (bio, photo, social links, their guides) that the attribution byline links to; turn the About page into about-us + a crew/team roll-up. Attribution labels shipped; clickable pages deferred.
 - [ ] On Cloud/staging: set **`MAPBOX_TOKEN`** (map picker won't render without it) and confirm **`APP_URL`** matches the domain (signed set-password invite links are built from it).
-- [ ] Optional: a dedicated notification for "rider edited a live guide" (today an approved-guide edit reuses `GuideSubmittedForReview` when it auto-flags back to review).
+- [ ] Optional: a dedicated notification for "contributor edited a live guide" (today an approved-guide edit reuses `GuideSubmittedForReview` when it auto-flags back to review).
 
 ## Frontend
 - [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.

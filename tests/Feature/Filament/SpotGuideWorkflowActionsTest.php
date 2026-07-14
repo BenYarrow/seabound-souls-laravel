@@ -1,7 +1,7 @@
 <?php
 
 // Covers the review-workflow header actions on the Edit Spot Guide Filament page:
-// rider "submit for review" (notifies owners), owner "publish" and "request changes"
+// contributor "submit for review" (notifies owners), owner "publish" and "request changes"
 // (both notify the author), and role-gated visibility of the publish/request-changes
 // actions.
 
@@ -32,16 +32,16 @@ class SpotGuideWorkflowActionsTest extends TestCase
         ]));
     }
 
-    public function test_rider_editing_an_approved_guide_returns_it_to_review_and_notifies_owner(): void
+    public function test_contributor_editing_an_approved_guide_returns_it_to_review_and_notifies_owner(): void
     {
         Notification::fake();
         $owner = User::factory()->create(['role' => User::ROLE_OWNER, 'email' => config('admin.email')]);
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
         $guide->publish(); // approved + live
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
-            ->fillForm(['introduction_text' => 'Updated by the rider'])
+            ->fillForm(['introduction_text' => 'Updated by the contributor'])
             ->call('save')
             ->assertHasNoFormErrors();
 
@@ -53,9 +53,9 @@ class SpotGuideWorkflowActionsTest extends TestCase
 
     public function test_owner_editing_an_approved_guide_does_not_flip_status(): void
     {
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
         $this->actingAsOwner();
-        $guide = $this->guideFor($rider);
+        $guide = $this->guideFor($contributor);
         $guide->publish();
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
@@ -66,10 +66,10 @@ class SpotGuideWorkflowActionsTest extends TestCase
         $this->assertSame(SpotGuide::STATUS_APPROVED, $guide->fresh()->review_status);
     }
 
-    public function test_rider_editing_a_draft_guide_does_not_flip_to_in_review(): void
+    public function test_contributor_editing_a_draft_guide_does_not_flip_to_in_review(): void
     {
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider); // draft
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor); // draft
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->fillForm(['introduction_text' => 'Still drafting'])
@@ -79,13 +79,13 @@ class SpotGuideWorkflowActionsTest extends TestCase
         $this->assertSame(SpotGuide::STATUS_DRAFT, $guide->fresh()->review_status);
     }
 
-    public function test_a_rider_cannot_feature_a_guide_via_any_write_path(): void
+    public function test_a_contributor_cannot_feature_a_guide_via_any_write_path(): void
     {
         // Featuring is an owner-only editorial decision. The form field and the
-        // inline list toggle are hidden from riders, but the model must also
+        // inline list toggle are hidden from contributors, but the model must also
         // refuse a direct/crafted save (the toggle is a non-form write path).
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
 
         $guide->is_featured = true;
         $guide->save();
@@ -96,8 +96,8 @@ class SpotGuideWorkflowActionsTest extends TestCase
     public function test_an_owner_can_feature_a_guide(): void
     {
         $this->actingAsOwner();
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
-        $guide = $this->guideFor($rider);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
+        $guide = $this->guideFor($contributor);
 
         $guide->is_featured = true;
         $guide->save();
@@ -105,12 +105,12 @@ class SpotGuideWorkflowActionsTest extends TestCase
         $this->assertTrue($guide->fresh()->is_featured);
     }
 
-    public function test_rider_submit_action_advances_status_and_notifies_owner(): void
+    public function test_contributor_submit_action_advances_status_and_notifies_owner(): void
     {
         Notification::fake();
         $owner = User::factory()->create(['role' => User::ROLE_OWNER, 'email' => config('admin.email')]);
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->callAction('submit')
@@ -120,10 +120,10 @@ class SpotGuideWorkflowActionsTest extends TestCase
         Notification::assertSentTo($owner, GuideSubmittedForReview::class);
     }
 
-    public function test_rider_does_not_see_publish_action(): void
+    public function test_contributor_does_not_see_publish_action(): void
     {
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->assertActionHidden('publish');
@@ -132,24 +132,24 @@ class SpotGuideWorkflowActionsTest extends TestCase
     public function test_owner_publish_action_publishes_and_notifies_author(): void
     {
         Notification::fake();
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
         $owner = $this->actingAsOwner();
-        $guide = $this->guideFor($rider);
+        $guide = $this->guideFor($contributor);
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->callAction('publish')
             ->assertHasNoActionErrors();
 
         $this->assertTrue($guide->fresh()->is_published);
-        Notification::assertSentTo($rider, GuidePublished::class);
+        Notification::assertSentTo($contributor, GuidePublished::class);
     }
 
     public function test_owner_request_changes_stores_note_and_notifies_author(): void
     {
         Notification::fake();
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
         $this->actingAsOwner();
-        $guide = $this->guideFor($rider);
+        $guide = $this->guideFor($contributor);
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->callAction('requestChanges', data: ['note' => 'Add wind stats'])
@@ -157,22 +157,22 @@ class SpotGuideWorkflowActionsTest extends TestCase
 
         $this->assertSame(SpotGuide::STATUS_CHANGES_REQUESTED, $guide->fresh()->review_status);
         $this->assertSame('Add wind stats', $guide->fresh()->review_note);
-        Notification::assertSentTo($rider, GuideChangesRequested::class);
+        Notification::assertSentTo($contributor, GuideChangesRequested::class);
     }
 
     /**
      * Security regression lock: the `publish` action is only guarded by
      * ->visible(owner) — there is no ->authorize() tied to the update policy.
      * Filament's Livewire test helper independently asserts the action is
-     * visible before invoking it, so calling it as a rider on their own guide
+     * visible before invoking it, so calling it as a contributor on their own guide
      * throws an ExpectationFailedException rather than silently publishing.
      * Whichever way it fails, the record must never end up published.
      */
-    public function test_rider_cannot_publish_their_own_guide_via_the_publish_action(): void
+    public function test_contributor_cannot_publish_their_own_guide_via_the_publish_action(): void
     {
         Notification::fake();
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
 
         try {
             Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
@@ -188,14 +188,14 @@ class SpotGuideWorkflowActionsTest extends TestCase
     /**
      * Security regression lock: `is_published` is only present in the form
      * schema when the acting user is the owner (Toggle::visible(owner) in
-     * SpotGuideResource::form()). A rider's form simply never carries the
+     * SpotGuideResource::form()). A contributor's form simply never carries the
      * field, so attempting to set it via fillForm() has no effect — the
      * saved record must stay unpublished either way.
      */
-    public function test_rider_cannot_set_is_published_via_the_edit_form(): void
+    public function test_contributor_cannot_set_is_published_via_the_edit_form(): void
     {
-        $rider = $this->actingAsRider();
-        $guide = $this->guideFor($rider);
+        $contributor = $this->actingAsContributor();
+        $guide = $this->guideFor($contributor);
 
         Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
             ->fillForm([

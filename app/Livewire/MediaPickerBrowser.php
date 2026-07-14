@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\MediaLibrary;
-use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -13,15 +12,23 @@ class MediaPickerBrowser extends Component
     use WithFileUploads, WithPagination;
 
     public string $fieldKey = '';
+
     public bool $multiple = false;
+
     public array $selectedIds = [];
+
     public string $search = '';
+
     public string $folder = '';
+
     public string $activeTab = 'library';
 
     public $newFile = null;
+
     public string $newName = '';
+
     public string $newFolder = '';
+
     public bool $uploadSuccess = false;
 
     public function updatedSearch(): void
@@ -39,7 +46,7 @@ class MediaPickerBrowser extends Component
         $user = auth()->user();
 
         return MediaLibrary::whereNotNull('folder')
-            ->when($user && $user->isRider(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder')
@@ -49,8 +56,8 @@ class MediaPickerBrowser extends Component
     public function toggleSelect(int $id): void
     {
         // Livewire public methods are directly network-callable regardless of what
-        // the client rendered — a rider could call toggleSelect() with an id the
-        // scoped browse query never surfaced (house media, another rider's media).
+        // the client rendered — a contributor could call toggleSelect() with an id the
+        // scoped browse query never surfaced (house media, another contributor's media).
         // Re-check the same role-scoping predicate used in render() before adding it.
         if (! $this->isSelectableByCurrentUser($id)) {
             return;
@@ -80,7 +87,7 @@ class MediaPickerBrowser extends Component
             $ml = MediaLibrary::create([
                 'name' => $this->newName ?: $this->newFile->getClientOriginalName(),
                 'folder' => $this->newFolder ?: null,
-                'user_id' => auth()->user()?->isRider() ? auth()->id() : null,
+                'user_id' => auth()->user()?->isContributor() ? auth()->id() : null,
             ]);
 
             $ml->addMedia($this->newFile->getRealPath())
@@ -95,7 +102,7 @@ class MediaPickerBrowser extends Component
             $this->activeTab = 'library';
             $this->resetPage();
         } catch (\Throwable $e) {
-            $this->addError('newFile', 'Upload failed: ' . $e->getMessage());
+            $this->addError('newFile', 'Upload failed: '.$e->getMessage());
         }
     }
 
@@ -117,7 +124,7 @@ class MediaPickerBrowser extends Component
 
     /**
      * Whether the given media id is within the current user's selection scope:
-     * riders may only select their own uploads; owners (and guests, defensively)
+     * contributors may only select their own uploads; owners (and guests, defensively)
      * may select anything. Mirrors the role-scoping predicate used in render().
      */
     protected function isSelectableByCurrentUser(int $id): bool
@@ -125,7 +132,7 @@ class MediaPickerBrowser extends Component
         $user = auth()->user();
 
         return MediaLibrary::query()
-            ->when($user && $user->isRider(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
             ->whereKey($id)
             ->exists();
     }
@@ -135,8 +142,8 @@ class MediaPickerBrowser extends Component
         $user = auth()->user();
 
         $mediaItems = MediaLibrary::query()
-            ->when($user && $user->isRider(), fn ($q) => $q->where('user_id', $user->id))
-            ->when($this->search, fn ($q) => $q->where('name', 'like', '%' . $this->search . '%'))
+            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->folder, fn ($q) => $q->where('folder', $this->folder))
             ->latest()
             ->paginate(24);

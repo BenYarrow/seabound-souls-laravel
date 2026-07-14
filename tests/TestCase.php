@@ -41,16 +41,16 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Create a rider account and act as them. Optionally override attributes
+     * Create a contributor account and act as them. Optionally override attributes
      * (e.g. a specific email) for the caller's assertions.
      *
      * @param  array<string, mixed>  $attributes
      */
-    protected function actingAsRider(array $attributes = []): User
+    protected function actingAsContributor(array $attributes = []): User
     {
-        $rider = User::factory()->create(array_merge(['role' => User::ROLE_RIDER], $attributes));
-        $this->actingAs($rider);
+        $contributor = User::factory()->create(array_merge(['role' => User::ROLE_CONTRIBUTOR], $attributes));
+        $this->actingAs($contributor);
 
-        return $rider;
+        return $contributor;
     }
 }
