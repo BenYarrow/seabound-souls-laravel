@@ -4,8 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MediaLibraryResource\Pages;
 use App\Models\MediaLibrary;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,6 +14,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class MediaLibraryResource extends Resource
 {
@@ -98,7 +99,7 @@ class MediaLibraryResource extends Resource
 
     /**
      * Distinct folder names for the form Select and the table filter, scoped so a
-     * rider only ever sees (and can file into) their own folders — never the house
+     * contributor only ever sees (and can file into) their own folders — never the house
      * folders. Owners see every folder.
      *
      * @return array<string, string>
@@ -109,7 +110,7 @@ class MediaLibraryResource extends Resource
 
         return MediaLibrary::whereNotNull('folder')
             ->where('folder', '!=', '')
-            ->when($user && $user->isRider(), fn ($query) => $query->where('user_id', $user->id))
+            ->when($user && $user->isContributor(), fn ($query) => $query->where('user_id', $user->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder', 'folder')
@@ -117,14 +118,14 @@ class MediaLibraryResource extends Resource
     }
 
     /**
-     * Riders only ever see their own uploads; owners see everything.
+     * Contributors only ever see their own uploads; owners see everything.
      */
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->isRider()) {
+        if ($user && $user->isContributor()) {
             $query->where('user_id', $user->id);
         }
 

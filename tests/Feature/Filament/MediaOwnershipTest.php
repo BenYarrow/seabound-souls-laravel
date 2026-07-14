@@ -1,6 +1,6 @@
 <?php
 
-// Verifies media library ownership scoping: riders only ever see/manage their
+// Verifies media library ownership scoping: contributors only ever see/manage their
 // own uploads (never house media, user_id null), owners see everything.
 
 namespace Tests\Feature\Filament;
@@ -29,10 +29,10 @@ class MediaOwnershipTest extends TestCase
         $this->assertDatabaseMissing('media_library', ['name' => 'No image']);
     }
 
-    public function test_media_created_by_a_rider_via_the_resource_is_owned_by_them(): void
+    public function test_media_created_by_a_contributor_via_the_resource_is_owned_by_them(): void
     {
         Storage::fake(config('media-library.disk_name'));
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
 
         Livewire::test(CreateMediaLibrary::class)
             ->fillForm(['name' => 'My upload', 'file' => [UploadedFile::fake()->image('mine.jpg')]])
@@ -41,7 +41,7 @@ class MediaOwnershipTest extends TestCase
 
         $this->assertDatabaseHas('media_library', [
             'name' => 'My upload',
-            'user_id' => $rider->id,
+            'user_id' => $contributor->id,
         ]);
     }
 
@@ -61,37 +61,37 @@ class MediaOwnershipTest extends TestCase
         ]);
     }
 
-    public function test_folder_options_exclude_house_folders_for_riders(): void
+    public function test_folder_options_exclude_house_folders_for_contributors(): void
     {
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
         MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
-        MediaLibrary::create(['name' => 'o', 'folder' => 'OtherRider', 'user_id' => User::factory()->create()->id]);
-        MediaLibrary::create(['name' => 'm', 'folder' => 'MyFolder', 'user_id' => $rider->id]);
+        MediaLibrary::create(['name' => 'o', 'folder' => 'OtherContributor', 'user_id' => User::factory()->create()->id]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'MyFolder', 'user_id' => $contributor->id]);
 
         $options = MediaLibraryResource::folderOptions();
 
         $this->assertArrayHasKey('MyFolder', $options);
         $this->assertArrayNotHasKey('HouseFolder', $options);
-        $this->assertArrayNotHasKey('OtherRider', $options);
+        $this->assertArrayNotHasKey('OtherContributor', $options);
     }
 
     public function test_folder_options_show_all_folders_for_the_owner(): void
     {
         $this->actingAsOwner();
         MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
-        MediaLibrary::create(['name' => 'm', 'folder' => 'RiderFolder', 'user_id' => User::factory()->create()->id]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'ContributorFolder', 'user_id' => User::factory()->create()->id]);
 
         $options = MediaLibraryResource::folderOptions();
 
         $this->assertArrayHasKey('HouseFolder', $options);
-        $this->assertArrayHasKey('RiderFolder', $options);
+        $this->assertArrayHasKey('ContributorFolder', $options);
     }
 
-    public function test_rider_only_sees_their_own_media_in_the_resource_query(): void
+    public function test_contributor_only_sees_their_own_media_in_the_resource_query(): void
     {
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
         $houseMedia = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
-        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $contributor->id]);
         $other = MediaLibrary::create(['name' => 'Theirs', 'user_id' => User::factory()->create()->id]);
 
         $ids = MediaLibraryResource::getEloquentQuery()->pluck('id');
@@ -105,33 +105,33 @@ class MediaOwnershipTest extends TestCase
     {
         $this->actingAsOwner();
         MediaLibrary::create(['name' => 'House', 'user_id' => null]);
-        MediaLibrary::create(['name' => 'Rider', 'user_id' => User::factory()->create()->id]);
+        MediaLibrary::create(['name' => 'Contributor', 'user_id' => User::factory()->create()->id]);
 
         $this->assertCount(2, MediaLibraryResource::getEloquentQuery()->get());
     }
 
-    public function test_rider_cannot_view_house_media_via_policy(): void
+    public function test_contributor_cannot_view_house_media_via_policy(): void
     {
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
         $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
-        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $contributor->id]);
 
-        $this->assertFalse($rider->can('view', $house));
-        $this->assertTrue($rider->can('view', $mine));
+        $this->assertFalse($contributor->can('view', $house));
+        $this->assertTrue($contributor->can('view', $mine));
     }
 
     /**
      * Livewire public methods are directly network-callable regardless of what
-     * the client rendered — a rider could call toggleSelect() with an id the
-     * scoped browse query never surfaced (house media, another rider's media).
+     * the client rendered — a contributor could call toggleSelect() with an id the
+     * scoped browse query never surfaced (house media, another contributor's media).
      * The component must re-authorize the id itself, not just its render query.
      */
-    public function test_rider_cannot_select_house_or_foreign_media_via_toggle_select(): void
+    public function test_contributor_cannot_select_house_or_foreign_media_via_toggle_select(): void
     {
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
         $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
         $other = MediaLibrary::create(['name' => 'Theirs', 'user_id' => User::factory()->create()->id]);
-        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $contributor->id]);
 
         $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true]);
 
@@ -151,9 +151,9 @@ class MediaOwnershipTest extends TestCase
      */
     public function test_confirm_only_dispatches_ids_within_the_current_users_scope(): void
     {
-        $rider = $this->actingAsRider();
+        $contributor = $this->actingAsContributor();
         $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
-        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $rider->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $contributor->id]);
 
         $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true, 'fieldKey' => 'thumbnail_media_id']);
         $component->set('selectedIds', [$house->id, $mine->id]);

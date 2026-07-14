@@ -1,6 +1,6 @@
 <?php
 
-// Countries are shared house data. Riders may create a missing one (inline from
+// Countries are shared house data. Contributors may create a missing one (inline from
 // the guide form) and view them, but only owners may edit or delete existing ones.
 
 namespace App\Policies;

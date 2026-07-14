@@ -1,11 +1,11 @@
 <?php
 
-// Read-only panel on the Edit Rider page listing the spot guides this rider has
+// Read-only panel on the Edit Contributor page listing the spot guides this contributor has
 // authored, with their review status and a link to open each in the full guide
-// editor. Guides are created/edited by riders themselves, so this panel does not
+// editor. Guides are created/edited by contributors themselves, so this panel does not
 // create, attach, or inline-edit — it is a roster with an "Open" shortcut.
 
-namespace App\Filament\Resources\RiderResource\RelationManagers;
+namespace App\Filament\Resources\ContributorResource\RelationManagers;
 
 use App\Filament\Resources\SpotGuideResource;
 use App\Models\SpotGuide;

@@ -8,28 +8,28 @@ use App\Filament\Forms\ContentBuilderBlocks;
 use App\Filament\Resources\SpotGuideResource\Pages;
 use App\Models\Country;
 use App\Models\SpotGuide;
-use Filament\Forms;
 use Filament\Forms\Components\Builder;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
-use Filament\Tables\Table;
-use Illuminate\Support\Str;
-use Filament\Forms\Set;
-use Filament\Forms\Get;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Unique;
 
 class SpotGuideResource extends Resource
 {
@@ -51,12 +51,12 @@ class SpotGuideResource extends Resource
                             TextInput::make('title')
                                 ->required()
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
+                                ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
                             TextInput::make('slug')
                                 ->required()
                                 // Only clash with LIVE guides — a soft-deleted guide's
                                 // slug is free to reuse (matches the partial DB index).
-                                ->unique(ignoreRecord: true, modifyRuleUsing: fn (\Illuminate\Validation\Rules\Unique $rule) => $rule->whereNull('deleted_at')),
+                                ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->whereNull('deleted_at')),
                             Select::make('country_id')
                                 ->label('Country')
                                 ->options(Country::pluck('name', 'id'))
@@ -191,8 +191,8 @@ class SpotGuideResource extends Resource
                                 // Optional — no forced empty row on create.
                                 ->defaultItems(0)
                                 ->relationship('recommendations', modifyQueryUsing: fn ($query) => $query->where('type', 'stay'))
-                                ->mutateRelationshipDataBeforeCreateUsing(fn(array $data) => array_merge($data, ['type' => 'stay']))
-                                ->mutateRelationshipDataBeforeSaveUsing(fn(array $data) => array_merge($data, ['type' => 'stay']))
+                                ->mutateRelationshipDataBeforeCreateUsing(fn (array $data) => array_merge($data, ['type' => 'stay']))
+                                ->mutateRelationshipDataBeforeSaveUsing(fn (array $data) => array_merge($data, ['type' => 'stay']))
                                 ->schema([
                                     MediaPicker::make('thumbnail_media_id')
                                         ->label('Image')
@@ -222,8 +222,8 @@ class SpotGuideResource extends Resource
                                 // bare UK beach spot with no restaurants).
                                 ->defaultItems(0)
                                 ->relationship('recommendations', modifyQueryUsing: fn ($query) => $query->where('type', 'eat'))
-                                ->mutateRelationshipDataBeforeCreateUsing(fn(array $data) => array_merge($data, ['type' => 'eat']))
-                                ->mutateRelationshipDataBeforeSaveUsing(fn(array $data) => array_merge($data, ['type' => 'eat']))
+                                ->mutateRelationshipDataBeforeCreateUsing(fn (array $data) => array_merge($data, ['type' => 'eat']))
+                                ->mutateRelationshipDataBeforeSaveUsing(fn (array $data) => array_merge($data, ['type' => 'eat']))
                                 ->schema([
                                     MediaPicker::make('thumbnail_media_id')
                                         ->label('Image')
@@ -308,7 +308,7 @@ class SpotGuideResource extends Resource
                         default => 'gray',
                     }),
                 IconColumn::make('is_published')->label('Published')->boolean(),
-                // Featuring is owner-only — riders don't get the inline toggle
+                // Featuring is owner-only — contributors don't get the inline toggle
                 // (the model also guards this write path, see SpotGuide::booted).
                 ToggleColumn::make('is_featured')
                     ->label('Featured')
@@ -350,7 +350,7 @@ class SpotGuideResource extends Resource
             ->withoutGlobalScopes([SoftDeletingScope::class]);
 
         $user = auth()->user();
-        if ($user && $user->isRider()) {
+        if ($user && $user->isContributor()) {
             $query->where('user_id', $user->id);
         }
 

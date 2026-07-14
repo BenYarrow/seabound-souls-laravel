@@ -1,6 +1,6 @@
 <?php
 
-// Sent to owners when a rider submits a guide for review. Delivered in-panel now
+// Sent to owners when a contributor submits a guide for review. Delivered in-panel now
 // (Filament database notification). Email is a later drop-in: add 'mail' to via()
 // and a toMail() method — no other change needed.
 
@@ -25,7 +25,7 @@ class GuideSubmittedForReview extends Notification
     {
         return FilamentNotification::make()
             ->title('Guide submitted for review')
-            ->body(($this->guide->author?->name ?? 'A rider')." submitted “{$this->guide->title}” for review.")
+            ->body(($this->guide->author?->name ?? 'A contributor')." submitted “{$this->guide->title}” for review.")
             ->icon('heroicon-o-inbox-arrow-down')
             ->getDatabaseMessage();
     }

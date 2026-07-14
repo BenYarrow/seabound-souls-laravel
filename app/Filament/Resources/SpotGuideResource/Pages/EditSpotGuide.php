@@ -31,7 +31,7 @@ class EditSpotGuide extends EditRecord
     }
 
     /**
-     * If a rider edits a guide that was already APPROVED, keep it live but flag it
+     * If a contributor edits a guide that was already APPROVED, keep it live but flag it
      * back to review and notify the owners — so live content never changes silently
      * without you knowing. Owner edits, and edits to draft/changes-requested guides,
      * are left alone.
@@ -40,7 +40,7 @@ class EditSpotGuide extends EditRecord
     {
         $user = auth()->user();
 
-        if ($user?->isRider() && $this->reviewStatusBeforeSave === SpotGuide::STATUS_APPROVED) {
+        if ($user?->isContributor() && $this->reviewStatusBeforeSave === SpotGuide::STATUS_APPROVED) {
             $this->record->submitForReview();
             Notifier::send(User::where('role', User::ROLE_OWNER)->get(), new GuideSubmittedForReview($this->record));
         }
@@ -48,7 +48,7 @@ class EditSpotGuide extends EditRecord
 
     /**
      * Header actions differ by role:
-     *  - Rider: Submit for review + Preview.
+     *  - Contributor: Submit for review + Preview.
      *  - Owner: Publish, Request changes, Preview, Delete.
      */
     protected function getHeaderActions(): array
@@ -56,12 +56,12 @@ class EditSpotGuide extends EditRecord
         $user = auth()->user();
 
         return [
-            // Rider submits their own guide for review.
+            // Contributor submits their own guide for review.
             Actions\Action::make('submit')
                 ->label('Submit for review')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('primary')
-                ->visible(fn (SpotGuide $record): bool => $user?->isRider() && $record->user_id === $user->id)
+                ->visible(fn (SpotGuide $record): bool => $user?->isContributor() && $record->user_id === $user->id)
                 ->requiresConfirmation()
                 ->action(function (SpotGuide $record) {
                     $record->submitForReview();

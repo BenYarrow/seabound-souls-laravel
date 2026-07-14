@@ -42,8 +42,8 @@ interface Props {
         id: number
         title: string
         slug: string
-        /** Author attribution: 'house' (us) vs a named 'rider'. */
-        author: { kind: 'house' | 'rider'; name: string | null }
+        /** Author attribution: 'house' (us) vs a named 'contributor'. */
+        author: { kind: 'house' | 'contributor'; name: string | null }
         country: { name: string; slug: string; continent: string } | null
         latitude: number | null
         longitude: number | null
@@ -84,7 +84,7 @@ interface Props {
     meta: any
     /** True when rendering an unpublished guide for the owner/author preview. */
     is_preview?: boolean
-    /** True once a published rider guide exists — turns on the provenance byline. */
+    /** True once a published contributor guide exists — turns on the provenance byline. */
     showProvenance?: boolean
 }
 
@@ -166,11 +166,11 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
 
 /**
  * @param is_preview - true when rendering an unpublished guide for the owner/author
- * @param showProvenance - true once a rider guide exists; turns on the author byline
+ * @param showProvenance - true once a contributor guide exists; turns on the author byline
  */
 const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showProvenance = false }: Props) => {
-    /* Attribution byline: a rider's name, or the house brand. */
-    const byline = spotGuide.author.kind === 'rider' && spotGuide.author.name
+    /* Attribution byline: a contributor's name, or the house brand. */
+    const byline = spotGuide.author.kind === 'contributor' && spotGuide.author.name
         ? `By ${spotGuide.author.name}`
         : 'Seabound Souls'
     /* Aggregate all locations for the map */
@@ -221,7 +221,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 )}
             </div>
 
-            {/* ── Author byline — only once a rider guide exists on the site ── */}
+            {/* ── Author byline — only once a contributor guide exists on the site ── */}
             {showProvenance && (
                 <div className="bg-cream text-center pt-6">
                     <p className="text-secondary/70 text-sm italic tracking-wide">{byline}</p>

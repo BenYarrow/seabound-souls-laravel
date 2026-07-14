@@ -2,7 +2,7 @@
 
 // Covers SpotGuide's author-assignment behaviour: user_id defaults to the
 // authenticated user on create, but an explicitly-passed user_id (e.g. an
-// owner creating a guide on a rider's behalf) is never overwritten.
+// owner creating a guide on a contributor's behalf) is never overwritten.
 
 namespace Tests\Unit;
 
@@ -17,8 +17,8 @@ class SpotGuideAuthorTest extends TestCase
     public function test_author_is_set_to_the_authenticated_user_on_create(): void
     {
         Queue::fake(); // suppress the weather-fetch job
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
-        $this->actingAs($rider);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
+        $this->actingAs($contributor);
 
         $guide = SpotGuide::create([
             'title' => 'Pozo', 'slug' => 'pozo',
@@ -26,24 +26,24 @@ class SpotGuideAuthorTest extends TestCase
             'latitude' => 27.8, 'longitude' => -15.4,
         ]);
 
-        $this->assertSame($rider->id, $guide->fresh()->user_id);
-        $this->assertTrue($guide->author->is($rider));
-        $this->assertTrue($rider->authoredSpotGuides->contains($guide));
+        $this->assertSame($contributor->id, $guide->fresh()->user_id);
+        $this->assertTrue($guide->author->is($contributor));
+        $this->assertTrue($contributor->authoredSpotGuides->contains($guide));
     }
 
     public function test_explicit_author_is_not_overwritten(): void
     {
         Queue::fake();
-        $rider = User::factory()->create(['role' => User::ROLE_RIDER]);
+        $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
         $this->actingAsOwner();
 
         $guide = SpotGuide::create([
             'title' => 'Vass', 'slug' => 'vass',
             'country_id' => Country::factory()->create()->id,
             'latitude' => 38.6, 'longitude' => 20.6,
-            'user_id' => $rider->id,
+            'user_id' => $contributor->id,
         ]);
 
-        $this->assertSame($rider->id, $guide->fresh()->user_id);
+        $this->assertSame($contributor->id, $guide->fresh()->user_id);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
-// Authorises the User model. Only owners may manage user (rider) accounts via
-// the Riders admin section; riders have no access to it. Panel *login* is a
+// Authorises the User model. Only owners may manage user (contributor) accounts via
+// the Contributors admin section; contributors have no access to it. Panel *login* is a
 // separate concern handled by User::canAccessPanel(), not this policy.
 
 namespace App\Policies;

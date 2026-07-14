@@ -15,9 +15,9 @@ import { getSpotGuideColours } from '@/Helpers/colours'
 import type { WeatherDataset } from '@/Helpers/weatherDataHelpers'
 import type { FocalImage } from '@/types/media'
 
-/** Author attribution: 'house' (us) shows the brand; 'rider' shows the name. */
+/** Author attribution: 'house' (us) shows the brand; 'contributor' shows the name. */
 interface Author {
-    kind: 'house' | 'rider'
+    kind: 'house' | 'contributor'
     name: string | null
 }
 
@@ -36,7 +36,7 @@ interface SpotGuide {
 interface Props {
     spotGuides: SpotGuide[]
     weatherData: WeatherDataset
-    /** True once a published rider guide exists — turns on the provenance bylines. */
+    /** True once a published contributor guide exists — turns on the provenance bylines. */
     showProvenance: boolean
     /** Masthead from the "destinations" landing Page; null falls back to the first guide's thumbnail. */
     static_masthead: FocalImage | null
@@ -66,13 +66,13 @@ const CONTINENT_LABELS: Record<string, string> = {
 const CONTINENT_ORDER = ['europe', 'africa', 'asia', 'north-america', 'south-america', 'oceania']
 
 /**
- * Byline text for a guide's author: the rider's name, or the house brand.
+ * Byline text for a guide's author: the contributor's name, or the house brand.
  *
  * @param author - the guide's author attribution payload
  * @returns the label to display in the byline
  */
 const bylineFor = (author: Author): string =>
-    author.kind === 'rider' && author.name ? `By ${author.name}` : 'Seabound Souls'
+    author.kind === 'contributor' && author.name ? `By ${author.name}` : 'Seabound Souls'
 
 const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featuredSpotGuide, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
@@ -253,7 +253,7 @@ const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featu
                                                 {guide.country.name}
                                             </p>
                                         )}
-                                        {/* Provenance byline — only once a rider guide exists on the site */}
+                                        {/* Provenance byline — only once a contributor guide exists on the site */}
                                         {showProvenance && (
                                             <p className="text-white/75 text-[11px] mt-2 italic">
                                                 {bylineFor(guide.author)}
