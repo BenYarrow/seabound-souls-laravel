@@ -7,6 +7,7 @@ use App\Filament\Forms\ContentBuilderBlocks;
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
 use Filament\Forms\Components\Builder;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
@@ -53,6 +54,14 @@ class BlogResource extends Resource
                                 ->label('Featured')
                                 ->helperText('Only one blog can be featured — turning this on clears it from any other post.'),
                         ])->columns(2),
+
+                    Tabs\Tab::make('Tags')
+                        ->schema([
+                            CheckboxList::make('tags')
+                                ->relationship('tags', 'name')
+                                ->columns(3)
+                                ->helperText('Assign from the curated Blog Tags list. Manage the list under Blog Tags.'),
+                        ]),
 
                     Tabs\Tab::make('Masthead')
                         ->schema([
