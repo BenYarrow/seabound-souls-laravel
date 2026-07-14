@@ -1,2 +1,4 @@
 User-agent: *
 Disallow:
+
+Sitemap: https://seabound-souls-production-ewycw6.laravel.cloud/sitemap.xml
