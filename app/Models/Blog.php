@@ -10,6 +10,7 @@ use App\Models\Concerns\HasSingleFeatured;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
 
@@ -50,6 +51,12 @@ class Blog extends Model
     public function ogImageMedia(): BelongsTo
     {
         return $this->belongsTo(MediaLibrary::class, 'og_image_media_id');
+    }
+
+    /** Tags assigned to this post (curated, owner-managed). */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
     }
 
     /**
