@@ -8,6 +8,7 @@ use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SpotGuideController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,11 @@ Route::get('/contributor/set-password/{user}', [SetPasswordController::class, 's
     ->middleware('signed')->name('contributor.password.setup');
 Route::post('/contributor/set-password/{user}', [SetPasswordController::class, 'store'])
     ->middleware('signed')->name('contributor.password.store');
+
+// SEO: dynamic XML sitemap (generated on request, cached — see SitemapController).
+// Declared before the catch-all so it isn't swallowed by it. robots.txt is a
+// static file (public/robots.txt) — web servers serve /robots.txt directly.
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 // Catch-all for generic pages (must be last, exclude admin paths)
 Route::get('/{slug}', [PageController::class, 'show'])->where('slug', '^(?!admin).*$')->name('pages.show');

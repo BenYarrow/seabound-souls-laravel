@@ -60,4 +60,5 @@ The single owner login has been hardened with a strong env-driven password (set 
 
 ## Project B — go-live (separate effort)
 - [ ] Deploy Laravel to a host (first-ever deploy) + point `seaboundsouls.co.uk` at it, off the old Vercel holding page
+- [ ] When the custom domain goes live, update the `Sitemap:` URL in `public/robots.txt` to `https://seaboundsouls.co.uk/sitemap.xml` (currently points at the laravel.cloud URL). The sitemap itself is a dynamic cached route (`/sitemap.xml`, no cron) whose URLs already adapt to the serving host — only the static robots.txt line is host-specific. Also submit the sitemap in Google Search Console.
 - [ ] Real transactional email (Resend/Postmark) + verify sending domain (SPF/DKIM/DMARC) — then swap `MAIL_MAILER` from Herd's catcher; contact-enquiry notifications go live with no code change
