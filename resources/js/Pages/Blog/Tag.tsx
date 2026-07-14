@@ -8,7 +8,6 @@
  */
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
-import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import AnimateInView from '@/Components/Common/AnimateInView'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
