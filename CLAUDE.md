@@ -145,6 +145,10 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 **`blogs`**
 - `title`, `slug`, `content_blocks` (JSON), SEO fields, `is_published`, `is_featured` (bool — one featured post, `HasSingleFeatured`), soft deletes
 
+**`tags`** (curated blog tags)
+- `name`, `slug` (partial-unique `WHERE deleted_at IS NULL` — reusable after soft-delete), `description`, `seo_title`, `seo_description`, `sort_order`, `thumbnail_media_id` (FK, hub card), `static_masthead_media_id` (FK, tag hero), soft deletes
+- `blog_tag` pivot: `blog_id` + `tag_id` (unique together, cascade on delete)
+
 **`pages`**
 - `title`, `slug`, `template` (default: standard), `content_blocks` (JSON), SEO fields, `is_published`, soft deletes
 
@@ -173,7 +177,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 |-------|--------|---------------|
 | `MediaLibrary` | HasMedia | — (owns Spatie `file` collection) |
 | `SpotGuide` | SoftDeletes, Searchable | belongsTo Country; hasMany Recommendations, WindsurfingLocations, WeatherRecords; belongsTo MediaLibrary (×8) |
-| `Blog` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3) |
+| `Blog` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3); belongsToMany Tag |
+| `Tag` | SoftDeletes | belongsToMany Blog (curated blog tags); belongsTo MediaLibrary (×2: thumbnail, static_masthead) |
 | `Page` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3) |
 | `Country` | — | hasMany SpotGuides |
 | `Recommendation` | SoftDeletes | belongsTo SpotGuide; belongsTo MediaLibrary (thumbnail) |
@@ -202,6 +207,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | GET | `/destinations` | DestinationController@index | `destinations.index` |
 | GET | `/destinations/{slug}` | SpotGuideController@show | `spot-guides.show` |
 | GET | `/blog` | BlogController@index | `blog.index` |
+| GET | `/blog/tags` | TagController@index | `blog.tags.index` (hub — before `/blog/{slug}`) |
+| GET | `/blog/tags/{slug}` | TagController@show | `blog.tags.show` |
 | GET | `/blog/{slug}` | BlogController@show | `blog.show` |
 | GET | `/search` | SearchController@index | `search` |
 | GET | `/contact` | ContactController@index | `contact` |
@@ -280,6 +287,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | **BlogResource** | General, Content (blocks builder), Gallery, SEO |
 | **PageResource** | General, Content (blocks builder), Gallery & Images, SEO |
 | **CountryResource** | name, slug, continent |
+| **TagResource** (owner-only, "Blog Tags", `/admin/blog-tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
 | **ContributorResource** (owner-only) | Contributors roster (first/last name, email, guide count, joined) + per-contributor guides panel; **Invite Contributor** action. Built on the `User` model, scoped to `role = contributor`. |
 
 ---
