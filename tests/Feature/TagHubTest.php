@@ -36,6 +36,16 @@ class TagHubTest extends TestCase
                 ->where('tags.1.name', 'Second'));
     }
 
+    public function test_hub_renders_with_no_tags_rather_than_404ing(): void
+    {
+        // The bare /blog/tags path must always resolve (empty state), never 404.
+        $this->get('/blog/tags')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Blog/Tags')
+                ->has('tags', 0));
+    }
+
     public function test_hub_tag_cards_include_thumbnail_and_post_count(): void
     {
         $tag = Tag::factory()->create();
