@@ -1,11 +1,17 @@
 /**
- * StaticMasthead — the site-wide full-viewport page hero.
+ * StaticMasthead — the site-wide page hero.
  *
- * When an `imageUrl` is supplied it renders that photo (focal-aware) with the
- * usual colour-grade + legibility fades. When no image is supplied it renders
- * the designed default: a deep ocean-teal gradient with layered radial glows and
- * a subtle wave motif (pure CSS/SVG, no image request) — so every image-less
- * page across the site gets an intentional hero rather than a flat colour bar.
+ * When an `imageUrl` is supplied it renders that photo (focal-aware) at full
+ * viewport height with the usual colour-grade + legibility fades. When no image
+ * is supplied it renders the designed default: a deep ocean-teal gradient with
+ * layered radial glows and a subtle wave motif (pure CSS/SVG, no image request).
+ *
+ * Heights differ by intent: a real photo (or the SpotGuide centred layout, whose
+ * SpotOverview sidebar needs the room) fills the viewport; a plain gradient
+ * fallback on a standard page uses a shorter band so it sets the tone without
+ * dominating the screen. The outer container stays `overflow-visible` so the
+ * SpotOverview sidebar can extend beyond it, so the gradient's blurred glows are
+ * wrapped in an `overflow-hidden` clip to stop them bleeding into page content.
  */
 import { ReactNode } from 'react'
 import CoverImage from '@/Components/Common/CoverImage'
@@ -21,8 +27,13 @@ interface StaticMastheadProps {
 }
 
 const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: StaticMastheadProps) => {
+    // A plain gradient fallback (no image, no centred-layout children) uses a
+    // shorter band; photos and the SpotGuide centred layout stay full-viewport.
+    const isGradientBand = !imageUrl && !children
+    const heightClass = isGradientBand ? 'h-[55vh] min-h-[400px]' : 'h-[calc(100vh-5rem)]'
+
     return (
-        <div className="relative w-full h-[calc(100vh-5rem)] overflow-visible bg-primary-darker">
+        <div className={`relative w-full ${heightClass} overflow-visible bg-primary-darker`}>
             {imageUrl ? (
                 <>
                     <CoverImage
@@ -38,14 +49,16 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                     <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
                 </>
             ) : (
-                /* Designed gradient fallback — the default masthead when no image
-                   is supplied. Deep ocean-teal with glows + a wave motif. */
-                <>
+                /* Designed gradient fallback — the default masthead when no image is
+                   supplied. Deep ocean-teal with glows + a wave motif. Clipped by an
+                   overflow-hidden wrapper so the blurred glows don't bleed past the
+                   masthead into the content below (the outer div is overflow-visible). */
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-darker via-primary to-primary-darker" />
                     {/* Warm-teal glow, upper right — the primary source of "spark". */}
-                    <div className="absolute -top-1/4 -right-1/4 w-[70vw] h-[70vw] rounded-full bg-primary-lighter/25 blur-3xl pointer-events-none" />
+                    <div className="absolute -top-1/4 -right-1/4 w-[70vw] h-[70vw] rounded-full bg-primary-lighter/25 blur-3xl" />
                     {/* Deeper secondary glow, lower left, for tonal depth. */}
-                    <div className="absolute -bottom-1/3 -left-1/4 w-[60vw] h-[60vw] rounded-full bg-primary/50 blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-1/3 -left-1/4 w-[60vw] h-[60vw] rounded-full bg-primary/50 blur-3xl" />
                     {/* Layered wave motif along the bottom — evokes the ocean without an image. */}
                     <svg
                         className="absolute bottom-0 inset-x-0 w-full text-white/[0.07]"
@@ -66,19 +79,19 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                         <path d="M0,170 C300,120 560,200 820,160 C1080,120 1260,190 1440,150 L1440,220 L0,220 Z" />
                     </svg>
                     {/* Light bottom scrim for text legibility over the gradient. */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
                     {/* Centred-title layouts (SpotGuide) sit mid-hero, where the bottom
                         scrim is transparent — a soft central vignette keeps the white
                         title legible there without dimming the corner glows/waves. */}
                     {children && (
                         <div
-                            className="absolute inset-0 pointer-events-none"
+                            className="absolute inset-0"
                             style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35), transparent 65%)' }}
                         />
                     )}
                     {/* Top fade (nav legibility) */}
-                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/25 to-transparent pointer-events-none" />
-                </>
+                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/25 to-transparent" />
+                </div>
             )}
 
             {children ? (
@@ -114,8 +127,9 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                 </div>
             )}
 
-            {/* Scroll indicator — only without children */}
-            {!children && (
+            {/* Scroll indicator — only on full-height heroes without children
+                (a short gradient band doesn't need one). */}
+            {!children && !isGradientBand && (
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-scroll-nudge pointer-events-none">
                     <div className="w-px h-8 bg-white/40" />
                     <span className="text-white/40 text-[9px] uppercase tracking-[0.35em]">Scroll</span>
