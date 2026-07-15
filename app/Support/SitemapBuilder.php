@@ -28,6 +28,7 @@ class SitemapBuilder
         $sitemap->add(Url::create('/')->setPriority(1.0)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/destinations')->setPriority(0.9)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/blog')->setPriority(0.8)->setChangeFrequency(Url::CHANGE_FREQUENCY_DAILY));
+        $sitemap->add(Url::create('/blog/tags')->setPriority(0.6)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/contact')->setPriority(0.5));
 
         SpotGuide::published()->each(fn (SpotGuide $guide) => $sitemap->add(

@@ -7,6 +7,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\MediaPicker;
 use App\Filament\Resources\TagResource\Pages;
 use App\Models\Tag;
 use Filament\Forms\Components\Section;
@@ -51,6 +52,17 @@ class TagResource extends Resource
                 ->numeric()
                 ->default(0)
                 ->helperText('Lower numbers appear first in the tag bar.'),
+            Section::make('Images')
+                ->description('Optional. Each falls back to a designed gradient when unset.')
+                ->collapsed()
+                ->schema([
+                    MediaPicker::make('thumbnail_media_id')
+                        ->label('Card thumbnail')
+                        ->helperText('Shown for this tag on the /blog/tags hub.'),
+                    MediaPicker::make('static_masthead_media_id')
+                        ->label('Masthead image')
+                        ->helperText('Hero image at the top of this tag’s page.'),
+                ]),
             Section::make('SEO & intro')
                 ->description('Optional. Blank fields fall back to sensible defaults.')
                 ->collapsed()

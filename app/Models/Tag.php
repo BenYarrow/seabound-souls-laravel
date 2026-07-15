@@ -10,6 +10,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ class Tag extends Model
 
     protected $fillable = [
         'name', 'slug', 'description', 'seo_title', 'seo_description', 'sort_order',
+        'thumbnail_media_id', 'static_masthead_media_id',
     ];
 
     protected $casts = [
@@ -43,6 +45,18 @@ class Tag extends Model
     public function blogs(): BelongsToMany
     {
         return $this->belongsToMany(Blog::class);
+    }
+
+    /** Card image shown for this tag on the /blog/tags hub (null → gradient fallback). */
+    public function thumbnailMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaLibrary::class, 'thumbnail_media_id');
+    }
+
+    /** Hero image at the top of the tag's own page (null → gradient fallback). */
+    public function staticMastheadMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaLibrary::class, 'static_masthead_media_id');
     }
 
     /** Only the published blogs assigned this tag (drafts excluded from public views). */

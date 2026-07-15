@@ -9,6 +9,7 @@
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
 import AnimateInView from '@/Components/Common/AnimateInView'
+import TagMasthead from '@/Components/Masthead/TagMasthead'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
@@ -25,6 +26,8 @@ interface Post {
 
 interface Props {
     tag: { name: string; description: string | null }
+    /** Focal-bearing masthead image, or null → TagMasthead renders the gradient fallback. */
+    static_masthead: FocalImage | null
     posts: {
         data: Post[]
         links: any[]
@@ -54,18 +57,15 @@ const ArrowIcon = ({ className }: { className?: string }) => (
  * Public tag page — a crawlable topic hub listing every published post carrying
  * one tag, with optional intro copy above the grid.
  */
-const Tag = ({ tag, posts, meta }: Props) => {
+const Tag = ({ tag, static_masthead, posts, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            <div className="bg-primary py-16">
-                <div className="container mx-auto">
-                    <p className="text-white/70 text-[10px] uppercase tracking-[0.45em] mb-3">Tagged</p>
-                    <h1 className="text-white text-4xl md:text-5xl font-bold">{tag.name}</h1>
-                    {tag.description && (
-                        <p className="text-white/80 text-lg mt-4 max-w-3xl leading-relaxed">{tag.description}</p>
-                    )}
-                </div>
-            </div>
+            <TagMasthead
+                image={static_masthead}
+                eyebrow="Tagged"
+                title={tag.name}
+                subtitle={tag.description}
+            />
 
             <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
                 <div className="mb-10">

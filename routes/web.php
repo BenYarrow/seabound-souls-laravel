@@ -17,8 +17,11 @@ Route::get('/', [HomepageController::class, 'index'])->name('home');
 Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations.index');
 Route::get('/destinations/{slug}', [SpotGuideController::class, 'show'])->name('spot-guides.show');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+// Tag routes are declared BEFORE /blog/{slug} so the literal "/blog/tags" hub
+// isn't captured as a blog post with slug "tags".
+Route::get('/blog/tags', [TagController::class, 'index'])->name('blog.tags.index');
 Route::get('/blog/tags/{slug}', [TagController::class, 'show'])->name('blog.tags.show');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])

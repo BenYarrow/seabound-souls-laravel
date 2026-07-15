@@ -78,7 +78,7 @@ const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
                     <div className="h-px flex-1 bg-primary/20" />
                 </div>
 
-                {/* Tag bar — links to each crawlable tag page */}
+                {/* Tag bar — links to each crawlable tag page, plus the hub */}
                 {tags.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2.5 mb-12">
                         {tags.map((tag) => (
@@ -90,6 +90,12 @@ const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
                                 {tag.name}
                             </Link>
                         ))}
+                        <Link
+                            href="/blog/tags"
+                            className="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-primary text-white hover:bg-primary-darker transition-colors duration-200"
+                        >
+                            All topics
+                        </Link>
                     </div>
                 )}
 
