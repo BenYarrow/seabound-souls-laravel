@@ -38,15 +38,7 @@ const Search = ({ query, results, static_masthead, meta }: Props) => {
 
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            {static_masthead ? (
-                <StaticMasthead imageUrl={static_masthead} title="Search" />
-            ) : (
-                <div className="bg-primary py-16">
-                    <div className="container mx-auto">
-                        <h1 className="text-white text-4xl md:text-5xl font-bold">Search</h1>
-                    </div>
-                </div>
-            )}
+            <StaticMasthead imageUrl={static_masthead} title="Search" />
 
             <BlockWrapper>
                 <form onSubmit={handleSearch} className="mb-8">

@@ -54,20 +54,11 @@ const ArrowIcon = ({ className }: { className?: string }) => (
 const Index = ({ blogs, featured, static_masthead, tags, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            {static_masthead ? (
-                <StaticMasthead
-                    imageUrl={static_masthead}
-                    title="Blog"
-                    subtitle="Windsurfing tips, guides and destination insights"
-                />
-            ) : (
-                <div className="bg-primary py-16">
-                    <div className="container mx-auto">
-                        <h1 className="text-white text-4xl md:text-5xl font-bold">Blog</h1>
-                        <p className="text-white opacity-80 text-lg mt-3">Windsurfing tips and destination insights</p>
-                    </div>
-                </div>
-            )}
+            <StaticMasthead
+                imageUrl={static_masthead}
+                title="Blog"
+                subtitle="Windsurfing tips, guides and destination insights"
+            />
 
             <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
 

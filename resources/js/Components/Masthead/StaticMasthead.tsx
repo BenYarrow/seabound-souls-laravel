@@ -1,9 +1,18 @@
+/**
+ * StaticMasthead — the site-wide full-viewport page hero.
+ *
+ * When an `imageUrl` is supplied it renders that photo (focal-aware) with the
+ * usual colour-grade + legibility fades. When no image is supplied it renders
+ * the designed default: a deep ocean-teal gradient with layered radial glows and
+ * a subtle wave motif (pure CSS/SVG, no image request) — so every image-less
+ * page across the site gets an intentional hero rather than a flat colour bar.
+ */
 import { ReactNode } from 'react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
 
 interface StaticMastheadProps {
-    /** Focal-bearing image object (or legacy string URL / null when no image). */
+    /** Focal-bearing image object (or legacy string URL); null → gradient fallback. */
     imageUrl: FocalImage | string | null
     title: string
     subtitle?: string
@@ -14,20 +23,54 @@ interface StaticMastheadProps {
 const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: StaticMastheadProps) => {
     return (
         <div className="relative w-full h-[calc(100vh-5rem)] overflow-visible bg-primary-darker">
-            {imageUrl && (
-                <CoverImage
-                    image={imageUrl}
-                    alt={title}
-                    className="absolute inset-0 w-full h-full"
-                />
+            {imageUrl ? (
+                <>
+                    <CoverImage
+                        image={imageUrl}
+                        alt={title}
+                        className="absolute inset-0 w-full h-full"
+                    />
+                    {/* Teal colour grade */}
+                    <div className="absolute inset-0 bg-primary/20 mix-blend-multiply pointer-events-none" />
+                    {/* Bottom fade */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+                    {/* Top fade (nav legibility) */}
+                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
+                </>
+            ) : (
+                /* Designed gradient fallback — the default masthead when no image
+                   is supplied. Deep ocean-teal with glows + a wave motif. */
+                <>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-darker via-primary to-primary-darker" />
+                    {/* Warm-teal glow, upper right — the primary source of "spark". */}
+                    <div className="absolute -top-1/4 -right-1/4 w-[70vw] h-[70vw] rounded-full bg-primary-lighter/25 blur-3xl pointer-events-none" />
+                    {/* Deeper secondary glow, lower left, for tonal depth. */}
+                    <div className="absolute -bottom-1/3 -left-1/4 w-[60vw] h-[60vw] rounded-full bg-primary/50 blur-3xl pointer-events-none" />
+                    {/* Layered wave motif along the bottom — evokes the ocean without an image. */}
+                    <svg
+                        className="absolute bottom-0 inset-x-0 w-full text-white/[0.07]"
+                        viewBox="0 0 1440 220"
+                        preserveAspectRatio="none"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path d="M0,140 C240,200 480,80 720,120 C960,160 1200,90 1440,130 L1440,220 L0,220 Z" />
+                    </svg>
+                    <svg
+                        className="absolute bottom-0 inset-x-0 w-full text-white/[0.05]"
+                        viewBox="0 0 1440 220"
+                        preserveAspectRatio="none"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path d="M0,170 C300,120 560,200 820,160 C1080,120 1260,190 1440,150 L1440,220 L0,220 Z" />
+                    </svg>
+                    {/* Light bottom scrim for text legibility over the gradient. */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                    {/* Top fade (nav legibility) */}
+                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/25 to-transparent pointer-events-none" />
+                </>
             )}
-
-            {/* Teal colour grade */}
-            <div className="absolute inset-0 bg-primary/20 mix-blend-multiply pointer-events-none" />
-            {/* Bottom fade */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
-            {/* Top fade (nav legibility) */}
-            <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
 
             {children ? (
                 /* SpotGuide layout — title centred, SpotOverview rendered as children */

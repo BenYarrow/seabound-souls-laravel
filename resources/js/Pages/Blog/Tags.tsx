@@ -10,7 +10,7 @@
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
 import AnimateInView from '@/Components/Common/AnimateInView'
-import TagMasthead from '@/Components/Masthead/TagMasthead'
+import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
@@ -43,8 +43,8 @@ const articleLabel = (count: number): string => `${count} ${count === 1 ? 'artic
 const Tags = ({ tags, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            <TagMasthead
-                image={null}
+            <StaticMasthead
+                imageUrl={null}
                 eyebrow="Browse"
                 title="Topics"
                 subtitle="Every subject we write about — pick a thread and dive in."

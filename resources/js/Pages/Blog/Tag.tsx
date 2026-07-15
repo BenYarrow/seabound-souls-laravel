@@ -9,7 +9,7 @@
 import Layout from '@/Layouts/Layout'
 import BlockWrapper from '@/Components/Common/BlockWrapper'
 import AnimateInView from '@/Components/Common/AnimateInView'
-import TagMasthead from '@/Components/Masthead/TagMasthead'
+import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import { Link } from '@inertiajs/react'
 import CoverImage from '@/Components/Common/CoverImage'
 import type { FocalImage } from '@/types/media'
@@ -26,7 +26,7 @@ interface Post {
 
 interface Props {
     tag: { name: string; description: string | null }
-    /** Focal-bearing masthead image, or null → TagMasthead renders the gradient fallback. */
+    /** Focal-bearing masthead image, or null → StaticMasthead renders the gradient fallback. */
     static_masthead: FocalImage | null
     posts: {
         data: Post[]
@@ -60,11 +60,11 @@ const ArrowIcon = ({ className }: { className?: string }) => (
 const Tag = ({ tag, static_masthead, posts, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
-            <TagMasthead
-                image={static_masthead}
+            <StaticMasthead
+                imageUrl={static_masthead}
                 eyebrow="Tagged"
                 title={tag.name}
-                subtitle={tag.description}
+                subtitle={tag.description ?? undefined}
             />
 
             <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
