@@ -34,6 +34,13 @@ Sub-project 1 shipped 2026-07-13 (see history + SITREP). Remaining:
 - [ ] On Cloud/staging: set **`MAPBOX_TOKEN`** (map picker won't render without it) and confirm **`APP_URL`** matches the domain (signed set-password invite links are built from it).
 - [ ] Optional: a dedicated notification for "contributor edited a live guide" (today an approved-guide edit reuses `GuideSubmittedForReview` when it auto-flags back to review).
 
+## Blog tags (follow-ups)
+Shipped 2026-07-14 (crawlable `/blog/tags/{slug}` pages, tag bar, post chips, owner-only admin, sitemap). Remaining polish (all Minor, none blocking — from the whole-branch review):
+- [ ] **Visual eyeball** the new gradient masthead fallback, now the site-wide default for every image-less page (`StaticMasthead` no-image branch — full-viewport deep-teal gradient + glows + wave motif). Never seen live (browser preview tooling was unresponsive at build time). Check across: blog index/tag/hub, search, generic pages, homepage (no-image), and especially a **SpotGuide with no masthead image** (centred title + SpotOverview over the gradient — a central vignette was added for contrast; confirm it reads well at wide + mobile widths). Plus the tag bar/chips. These reuse raw colour utilities, so they inherit the blog's light-only state; the dark-mode token-layer sweep below will subsume that.
+- [ ] Consolidate the duplicated post-projection shape (`{id,title,slug,published_at,thumbnail,seo_description}`) used in `BlogController` (×2) + `TagController` into one helper (e.g. a `Blog` card accessor).
+- [ ] Consolidate `formatDate`: `Tag.tsx` + `Index.tsx` define a local copy while `Show.tsx` imports the shared `@/Helpers/helpers` one.
+- [ ] Minor: `Tag::publishedBlogs()` duplicates `blogs()`'s query; redundant `->map()` after `->get([...])` in `BlogController@index` tags; sitemap runs one query per tag (N+1, cached, fine at small scale); `TagResource` shares `navigationSort=3` with `PageResource` (harmless — alphabetical tie-break orders it correctly).
+
 ## Frontend
 - [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.
 - [ ] Dark-mode token layer (CSS vars on `:root` / `html.dark`), no-flash theme switch, CI colour-guard test — sweep includes `SearchPanel` (currently raw `bg-white`/`gray-*`). Would eventually subsume the hardcoded light utilities added for the destinations light theme (#24).

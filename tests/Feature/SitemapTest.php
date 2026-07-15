@@ -49,4 +49,26 @@ class SitemapTest extends TestCase
         $response->assertSee('/destinations', false);
         $response->assertSee('/blog', false);
     }
+
+    public function test_sitemap_includes_tags_with_published_posts(): void
+    {
+        $tag = \App\Models\Tag::factory()->create(['slug' => 'wave-sailing']);
+        $tag->blogs()->attach(\App\Models\Blog::factory()->create());
+
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertSee('/blog/tags/wave-sailing');
+    }
+
+    public function test_sitemap_excludes_empty_or_draft_only_tags(): void
+    {
+        $draftOnly = \App\Models\Tag::factory()->create(['slug' => 'draft-only']);
+        $draftOnly->blogs()->attach(\App\Models\Blog::factory()->unpublished()->create());
+        \App\Models\Tag::factory()->create(['slug' => 'totally-empty']);
+
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertDontSee('/blog/tags/draft-only');
+        $response->assertDontSee('/blog/tags/totally-empty');
+    }
 }

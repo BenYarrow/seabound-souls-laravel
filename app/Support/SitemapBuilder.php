@@ -11,6 +11,7 @@ namespace App\Support;
 use App\Models\Blog;
 use App\Models\Page;
 use App\Models\SpotGuide;
+use App\Models\Tag;
 use Spatie\Sitemap\Sitemap;
 use Spatie\Sitemap\Tags\Url;
 
@@ -27,6 +28,7 @@ class SitemapBuilder
         $sitemap->add(Url::create('/')->setPriority(1.0)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/destinations')->setPriority(0.9)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/blog')->setPriority(0.8)->setChangeFrequency(Url::CHANGE_FREQUENCY_DAILY));
+        $sitemap->add(Url::create('/blog/tags')->setPriority(0.6)->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         $sitemap->add(Url::create('/contact')->setPriority(0.5));
 
         SpotGuide::published()->each(fn (SpotGuide $guide) => $sitemap->add(
@@ -52,6 +54,20 @@ class SitemapBuilder
                         ->setPriority(0.6)
                 );
             }
+        });
+
+        // Crawlable topic hubs — one URL per tag that has published posts (empty
+        // and draft-only tags are excluded; they 404, so must not be advertised).
+        // lastmod comes from the tag's newest published post.
+        Tag::withPublishedPosts()->each(function (Tag $tag) use ($sitemap) {
+            $newestPost = $tag->publishedBlogs()->latest('updated_at')->first();
+
+            $sitemap->add(
+                Url::create("/blog/tags/{$tag->slug}")
+                    ->setLastModificationDate($newestPost?->updated_at ?? $tag->updated_at)
+                    ->setPriority(0.6)
+                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+            );
         });
 
         return $sitemap;
