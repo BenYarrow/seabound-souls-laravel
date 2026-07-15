@@ -162,3 +162,13 @@ and slug-reuse on the real Postgres dev DB (SQLite/Postgres divergence lesson).
   the post page.
 - On custom-domain launch the sitemap URLs adapt automatically (dynamic route);
   no tag-specific deploy step.
+
+---
+
+## Addendum (2026-07-14, approved mid-implementation) — tag hub, per-tag images, gradient fallback
+
+After the core feature was built and reviewed, three additions were approved and folded into the same branch:
+
+1. **`/blog/tags` hub page** — a browse-all-topics page and crawlable SEO hub listing every tag with published posts as cards (card → its tag page). Routed before `/blog/{slug}` so the literal path isn't read as a blog slug; added to the sitemap; always resolves (empty state) so the bare path never 404s. (A *deleted* tag's own page still correctly 404s — the hub does not change that.)
+2. **Optional images per tag** — `thumbnail_media_id` (hub card) and `static_masthead_media_id` (tag-page hero), nullable FKs to `media_library`, set via admin MediaPickers.
+3. **Designed gradient fallback** — a shared `TagMasthead` component renders the real masthead image when present, else an on-brand deep ocean-teal gradient hero (layered radial glows + subtle wave SVG, pure CSS/SVG). The hub cards get a matching mini-gradient when a tag has no thumbnail. Applies to the hub and individual tag pages.
