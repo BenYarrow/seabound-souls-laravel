@@ -67,6 +67,15 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                     </svg>
                     {/* Light bottom scrim for text legibility over the gradient. */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                    {/* Centred-title layouts (SpotGuide) sit mid-hero, where the bottom
+                        scrim is transparent — a soft central vignette keeps the white
+                        title legible there without dimming the corner glows/waves. */}
+                    {children && (
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35), transparent 65%)' }}
+                        />
+                    )}
                     {/* Top fade (nav legibility) */}
                     <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/25 to-transparent pointer-events-none" />
                 </>
