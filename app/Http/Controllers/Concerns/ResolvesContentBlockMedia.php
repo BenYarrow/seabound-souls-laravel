@@ -138,6 +138,7 @@ trait ResolvesContentBlockMedia
             // hand-picks these, so no ID list to resolve, just a fresh query.
             if (($block['type'] ?? '') === 'contributor_roll_up') {
                 $data['contributors_resolved'] = User::withPublicProfile()
+                    ->whereNotNull('slug')
                     ->with('profileImageMedia')
                     ->withCount(['authoredSpotGuides as guides_count' => fn ($query) => $query->where('is_published', true)])
                     ->orderBy('first_name')

@@ -47,4 +47,21 @@ class ContributorRollupBlockTest extends TestCase
         $this->assertNotContains('bea-draft', $slugs);
         $this->assertSame(1, $cards[0]['guides_count']);
     }
+
+    public function test_rollup_excludes_public_profile_contributor_with_null_slug(): void
+    {
+        $slugless = User::factory()->contributor()->create(['first_name' => 'Cid', 'last_name' => 'Null']);
+        SpotGuide::factory()->create(['user_id' => $slugless->id, 'is_published' => true]);
+        // Simulate a pre-feature contributor whose slug was never backfilled:
+        // bypass the model's saving hook so slug stays null despite a published guide.
+        $slugless->forceFill(['slug' => null])->saveQuietly();
+
+        $blocks = [['type' => 'contributor_roll_up', 'data' => ['heading' => 'Our Crew']]];
+        $resolved = $this->resolver()->run($blocks);
+
+        $slugs = array_column($resolved[0]['data']['contributors_resolved'], 'slug');
+
+        $this->assertNotContains(null, $slugs);
+        $this->assertNotContains('cid-null', $slugs);
+    }
 }

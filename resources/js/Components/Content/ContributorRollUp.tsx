@@ -23,7 +23,11 @@ interface Props {
 const guideLabel = (count: number): string => `${count} ${count === 1 ? 'guide' : 'guides'}`
 
 const ContributorRollUp = ({ heading, intro, contributors }: Props) => {
-    if (!contributors || contributors.length === 0) return null
+    // Defense-in-depth: the server already excludes slugless contributors, but
+    // never render a `/contributors/null` link if one slips through.
+    const validContributors = (contributors ?? []).filter((contributor) => contributor.slug)
+
+    if (validContributors.length === 0) return null
 
     return (
         <div className="py-4">
@@ -35,7 +39,7 @@ const ContributorRollUp = ({ heading, intro, contributors }: Props) => {
             {intro && <p className="text-center text-gray-500 mt-3 max-w-2xl mx-auto">{intro}</p>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
-                {contributors.map((contributor) => (
+                {validContributors.map((contributor) => (
                     <Link key={contributor.slug} href={`/contributors/${contributor.slug}`} className="group flex flex-col items-center text-center">
                         <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                             {contributor.profile_image ? (

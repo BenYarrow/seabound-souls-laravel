@@ -9,7 +9,6 @@ namespace App\Filament\Pages;
 
 use App\Filament\Forms\ContributorProfileForm;
 use App\Models\User;
-use Filament\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -37,6 +36,17 @@ class MyProfile extends Page implements HasForms
         return auth()->user()?->isContributor() ?? false;
     }
 
+    /**
+     * URL-level gate mirroring the nav gate above — a contributor navigating
+     * away and an owner (or unauthenticated request) hitting the URL directly
+     * must not reach a page whose record is always the current user.
+     */
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isContributor() ?? false;
+    }
+
+    /** Fill the form from the current user's own attributes on first load. */
     public function mount(): void
     {
         $this->form->fill($this->resolveRecord()->attributesToArray());
@@ -48,6 +58,7 @@ class MyProfile extends Page implements HasForms
         return auth()->user();
     }
 
+    /** Build the profile form bound to `data`, modelled on the current user. */
     public function form(Form $form): Form
     {
         return $form
@@ -56,17 +67,14 @@ class MyProfile extends Page implements HasForms
             ->model($this->resolveRecord());
     }
 
+    /**
+     * Persist the form state to the current user. Invariant: the record is
+     * always auth()->user() — there is no cross-user write path here.
+     */
     public function save(): void
     {
         $this->resolveRecord()->update($this->form->getState());
 
         Notification::make()->title('Profile saved')->success()->send();
-    }
-
-    protected function getFormActions(): array
-    {
-        return [
-            Action::make('save')->label('Save profile')->submit('save'),
-        ];
     }
 }
