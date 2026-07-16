@@ -245,19 +245,15 @@ const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featu
                                                 {guide.country.name}
                                             </p>
                                         )}
-                                        {/* Provenance byline — only once a contributor guide exists on the site */}
+                                        {/* Provenance byline — only once a contributor guide exists on the site.
+                                            Plain text (not a Link): this sits inside the full-card <Link> to the
+                                            guide, and a nested anchor is both invalid HTML and functionally dead
+                                            (the click bubbles to the outer card link before it can navigate here). */}
                                         {showProvenance && (
                                             <p className="text-white/75 text-[11px] mt-2 italic">
-                                                {guide.author.kind === 'contributor' && guide.author.slug ? (
-                                                    <Link
-                                                        href={`/contributors/${guide.author.slug}`}
-                                                        className="hover:text-primary transition-colors duration-200"
-                                                    >
-                                                        By {guide.author.name}
-                                                    </Link>
-                                                ) : (
-                                                    'Seabound Souls'
-                                                )}
+                                                {guide.author.kind === 'contributor' && guide.author.name
+                                                    ? `By ${guide.author.name}`
+                                                    : 'Seabound Souls'}
                                             </p>
                                         )}
                                         <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-10 transition-all duration-500 ease-out" />
