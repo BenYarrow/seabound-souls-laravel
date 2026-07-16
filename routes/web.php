@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\MediaFocalController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Contributor\SetPasswordController;
+use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PageController;
@@ -27,6 +28,7 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact')
     ->name('contact.store');
+Route::get('/contributors/{slug}', [ContributorController::class, 'show'])->name('contributors.show');
 
 // Admin: set focal point for a media library item (called by MediaPicker Alpine click handler)
 Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])
