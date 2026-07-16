@@ -5,13 +5,16 @@
 //   • media IDs → focal-bearing imagePayload objects (`{key}_image`/`_images`),
 //     so every <CoverImage> in content blocks can honour the focal point; and
 //   • list-block picks (list_content_blogs / list_content_spot_guides) → the
-//     published card entries (`{key}_resolved`), in authored order (drafts dropped).
+//     published card entries (`{key}_resolved`), in authored order (drafts dropped); and
+//   • contributor_roll_up → `contributors_resolved`, every contributor with a
+//     public profile (auto-populated, not hand-picked), ordered by name.
 
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Blog;
 use App\Models\MediaLibrary;
 use App\Models\SpotGuide;
+use App\Models\User;
 
 trait ResolvesContentBlockMedia
 {
@@ -128,6 +131,25 @@ trait ResolvesContentBlockMedia
                     ])
                     ->values()
                     ->toArray();
+            }
+
+            // Contributor roll-up: auto-populate with every contributor who has
+            // earned a public profile (≥1 published guide) — the owner never
+            // hand-picks these, so no ID list to resolve, just a fresh query.
+            if (($block['type'] ?? '') === 'contributor_roll_up') {
+                $data['contributors_resolved'] = User::withPublicProfile()
+                    ->with('profileImageMedia')
+                    ->withCount(['authoredSpotGuides as guides_count' => fn ($query) => $query->where('is_published', true)])
+                    ->orderBy('first_name')
+                    ->orderBy('last_name')
+                    ->get()
+                    ->map(fn (User $contributor) => [
+                        'name' => $contributor->name,
+                        'slug' => $contributor->slug,
+                        'profile_image' => $contributor->profileImageMedia?->imagePayload(),
+                        'guides_count' => $contributor->guides_count,
+                    ])
+                    ->all();
             }
 
             $block['data'] = $data;
