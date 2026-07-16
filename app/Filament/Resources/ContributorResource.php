@@ -7,6 +7,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\ContributorProfileForm;
 use App\Filament\Resources\ContributorResource\Pages;
 use App\Filament\Resources\ContributorResource\RelationManagers\SpotGuidesRelationManager;
 use App\Models\User;
@@ -50,11 +51,14 @@ class ContributorResource extends Resource
     {
         // Only the display fields are editable here; the password is set by the
         // contributor via their signed invite link, never by the owner. `name` is
-        // derived from first/last by the User saving hook.
+        // derived from first/last by the User saving hook. The public-profile
+        // fields (images, socials, story blocks) are the same shared schema the
+        // contributor edits themselves via the MyProfile self-service page.
         return $form->schema([
             TextInput::make('first_name')->label('First name')->required(),
             TextInput::make('last_name')->label('Last name')->required(),
             TextInput::make('email')->email()->required()->unique('users', 'email', ignoreRecord: true),
+            ...ContributorProfileForm::schema(),
         ]);
     }
 
