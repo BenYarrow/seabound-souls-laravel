@@ -47,5 +47,8 @@ Route::post('/contributor/set-password/{user}', [SetPasswordController::class, '
 // static file (public/robots.txt) — web servers serve /robots.txt directly.
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
+// Old About URL kept alive after the about-us → about rename.
+Route::redirect('/about-us', '/about', 301);
+
 // Catch-all for generic pages (must be last, exclude admin paths)
 Route::get('/{slug}', [PageController::class, 'show'])->where('slug', '^(?!admin).*$')->name('pages.show');
