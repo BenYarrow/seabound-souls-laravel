@@ -3,13 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\SlugGenerator;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -28,6 +32,11 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'role',
+        'slug',
+        'profile_image_media_id',
+        'static_masthead_media_id',
+        'profile_blocks',
+        'socials',
     ];
 
     /** Role values. Owner = the house account(s); Contributor = invited contributor. */
@@ -46,6 +55,13 @@ class User extends Authenticatable implements FilamentUser
         static::saving(function (User $user) {
             if ($user->isDirty(['first_name', 'last_name']) && ($user->first_name || $user->last_name)) {
                 $user->name = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+            }
+
+            // Contributors get a public URL slug from their full name, generated
+            // once and kept stable. Collision-suffixed so identical names differ.
+            if ($user->role === self::ROLE_CONTRIBUTOR && blank($user->slug) && ($user->first_name || $user->last_name)) {
+                $base = Str::slug(trim(($user->first_name ?? '').' '.($user->last_name ?? '')));
+                $user->slug = SlugGenerator::unique($base, static::class, 'slug', $user->id);
             }
         });
     }
@@ -70,6 +86,8 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'profile_blocks' => 'array',
+            'socials' => 'array',
         ];
     }
 
@@ -103,5 +121,44 @@ class User extends Authenticatable implements FilamentUser
     public function authoredSpotGuides(): HasMany
     {
         return $this->hasMany(SpotGuide::class);
+    }
+
+    /** Portrait image — roll-up card thumbnail + profile-page portrait. */
+    public function profileImageMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaLibrary::class, 'profile_image_media_id');
+    }
+
+    /** Profile-page hero image (null → gradient masthead fallback). */
+    public function staticMastheadMedia(): BelongsTo
+    {
+        return $this->belongsTo(MediaLibrary::class, 'static_masthead_media_id');
+    }
+
+    /**
+     * Authored guides that are published — the ones shown on the public profile
+     * and the gate for whether the profile exists at all.
+     *
+     * @return HasMany<SpotGuide>
+     */
+    public function publishedAuthoredGuides(): HasMany
+    {
+        return $this->authoredSpotGuides()->where('is_published', true);
+    }
+
+    /**
+     * A contributor's public profile is live only once they have a published
+     * guide — public presence earned by contributing. Owners have no profile.
+     */
+    public function hasPublicProfile(): bool
+    {
+        return $this->isContributor() && $this->publishedAuthoredGuides()->exists();
+    }
+
+    /** Contributors whose public profile is live (≥1 published guide). */
+    public function scopeWithPublicProfile(Builder $query): Builder
+    {
+        return $query->where('role', self::ROLE_CONTRIBUTOR)
+            ->whereHas('authoredSpotGuides', fn (Builder $guideQuery) => $guideQuery->where('is_published', true));
     }
 }
