@@ -15,10 +15,11 @@ import { getSpotGuideColours } from '@/Helpers/colours'
 import type { WeatherDataset } from '@/Helpers/weatherDataHelpers'
 import type { FocalImage } from '@/types/media'
 
-/** Author attribution: 'house' (us) shows the brand; 'contributor' shows the name. */
+/** Author attribution: 'house' (us) shows the brand; 'contributor' shows the name (and links to their profile). */
 interface Author {
     kind: 'house' | 'contributor'
     name: string | null
+    slug: string | null
 }
 
 interface SpotGuide {
@@ -64,15 +65,6 @@ const CONTINENT_LABELS: Record<string, string> = {
  * then Africa, then the rest. Continents not listed fall to the end alphabetically.
  */
 const CONTINENT_ORDER = ['europe', 'africa', 'asia', 'north-america', 'south-america', 'oceania']
-
-/**
- * Byline text for a guide's author: the contributor's name, or the house brand.
- *
- * @param author - the guide's author attribution payload
- * @returns the label to display in the byline
- */
-const bylineFor = (author: Author): string =>
-    author.kind === 'contributor' && author.name ? `By ${author.name}` : 'Seabound Souls'
 
 const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featuredSpotGuide, meta }: Props) => {
     const titles = Object.keys(weatherData).sort()
@@ -256,7 +248,16 @@ const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featu
                                         {/* Provenance byline — only once a contributor guide exists on the site */}
                                         {showProvenance && (
                                             <p className="text-white/75 text-[11px] mt-2 italic">
-                                                {bylineFor(guide.author)}
+                                                {guide.author.kind === 'contributor' && guide.author.slug ? (
+                                                    <Link
+                                                        href={`/contributors/${guide.author.slug}`}
+                                                        className="hover:text-primary transition-colors duration-200"
+                                                    >
+                                                        By {guide.author.name}
+                                                    </Link>
+                                                ) : (
+                                                    'Seabound Souls'
+                                                )}
                                             </p>
                                         )}
                                         <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-10 transition-all duration-500 ease-out" />

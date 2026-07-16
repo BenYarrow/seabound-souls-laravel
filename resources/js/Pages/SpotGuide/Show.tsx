@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from '@inertiajs/react'
 import { faDirections } from '@fortawesome/free-solid-svg-icons'
 
 import Layout from '@/Layouts/Layout'
@@ -42,8 +43,8 @@ interface Props {
         id: number
         title: string
         slug: string
-        /** Author attribution: 'house' (us) vs a named 'contributor'. */
-        author: { kind: 'house' | 'contributor'; name: string | null }
+        /** Author attribution: 'house' (us) vs a named 'contributor' (links to their profile). */
+        author: { kind: 'house' | 'contributor'; name: string | null; slug: string | null }
         country: { name: string; slug: string; continent: string } | null
         latitude: number | null
         longitude: number | null
@@ -169,10 +170,9 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
  * @param showProvenance - true once a contributor guide exists; turns on the author byline
  */
 const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showProvenance = false }: Props) => {
-    /* Attribution byline: a contributor's name, or the house brand. */
-    const byline = spotGuide.author.kind === 'contributor' && spotGuide.author.name
-        ? `By ${spotGuide.author.name}`
-        : 'Seabound Souls'
+    /* Attribution byline: a contributor's name (linked to their profile when they
+       have one), or the house brand. */
+    const isContributorAuthor = spotGuide.author.kind === 'contributor' && !!spotGuide.author.name
     /* Aggregate all locations for the map */
     const mapLocations = useMemo<MapLocation[]>(() => {
         const locs: MapLocation[] = []
@@ -224,7 +224,25 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
             {/* ── Author byline — only once a contributor guide exists on the site ── */}
             {showProvenance && (
                 <div className="bg-cream text-center pt-6">
-                    <p className="text-secondary/70 text-sm italic tracking-wide">{byline}</p>
+                    <p className="text-secondary/70 text-sm italic tracking-wide">
+                        {isContributorAuthor ? (
+                            <>
+                                By{' '}
+                                {spotGuide.author.slug ? (
+                                    <Link
+                                        href={`/contributors/${spotGuide.author.slug}`}
+                                        className="hover:text-primary transition-colors duration-200"
+                                    >
+                                        {spotGuide.author.name}
+                                    </Link>
+                                ) : (
+                                    spotGuide.author.name
+                                )}
+                            </>
+                        ) : (
+                            'Seabound Souls'
+                        )}
+                    </p>
                 </div>
             )}
 
