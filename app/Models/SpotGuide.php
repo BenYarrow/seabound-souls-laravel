@@ -134,10 +134,10 @@ class SpotGuide extends Model
     }
 
     /**
-     * Public attribution shape for this guide: a contributor (named) or the house.
-     * House = owner-authored or no author; contributors carry their display name.
+     * Public attribution shape for this guide: a contributor (named, with a
+     * profile slug) or the house. House = owner-authored or no author.
      *
-     * @return array{kind: 'house'|'contributor', name: string|null}
+     * @return array{kind: 'house'|'contributor', name: string|null, slug: string|null}
      */
     public function authorPayload(): array
     {
@@ -146,6 +146,7 @@ class SpotGuide extends Model
         return [
             'kind' => $isContributor ? 'contributor' : 'house',
             'name' => $isContributor ? $this->author->name : null,
+            'slug' => $isContributor ? $this->author->slug : null,
         ];
     }
 
