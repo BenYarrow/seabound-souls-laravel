@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from '@inertiajs/react'
 import { faDirections } from '@fortawesome/free-solid-svg-icons'
 
 import Layout from '@/Layouts/Layout'
@@ -42,8 +43,8 @@ interface Props {
         id: number
         title: string
         slug: string
-        /** Author attribution: 'house' (us) vs a named 'contributor'. */
-        author: { kind: 'house' | 'contributor'; name: string | null }
+        /** Author attribution: 'house' (us) vs a named 'contributor' (links to their profile). */
+        author: { kind: 'house' | 'contributor'; name: string | null; slug: string | null; image: FocalImage | null }
         country: { name: string; slug: string; continent: string } | null
         latitude: number | null
         longitude: number | null
@@ -169,10 +170,9 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
  * @param showProvenance - true once a contributor guide exists; turns on the author byline
  */
 const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showProvenance = false }: Props) => {
-    /* Attribution byline: a contributor's name, or the house brand. */
-    const byline = spotGuide.author.kind === 'contributor' && spotGuide.author.name
-        ? `By ${spotGuide.author.name}`
-        : 'Seabound Souls'
+    /* Attribution byline: a contributor's name (linked to their profile when they
+       have one), or the house brand. */
+    const isContributorAuthor = spotGuide.author.kind === 'contributor' && !!spotGuide.author.name
     /* Aggregate all locations for the map */
     const mapLocations = useMemo<MapLocation[]>(() => {
         const locs: MapLocation[] = []
@@ -221,15 +221,83 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 )}
             </div>
 
-            {/* ── Author byline — only once a contributor guide exists on the site ── */}
-            {showProvenance && (
-                <div className="bg-cream text-center pt-6">
-                    <p className="text-secondary/70 text-sm italic tracking-wide">{byline}</p>
-                </div>
-            )}
-
             {/* ── Sticky quick-nav ── */}
             <SpotGuideNav sections={navSections} />
+
+            {/* ── Author attribution — only once a contributor guide exists on the site ──
+                Sits below the quick-nav, leading the content.
+                Contributor: a prominent card (portrait + name) linking to their profile.
+                House: a simple "Written by Seabound Souls" label. */}
+            {showProvenance && (
+                <div className="relative overflow-hidden bg-gradient-to-br from-primary-darker via-primary to-primary-darker py-12">
+                    {/* Flowing wave lines — on-brand decoration; two periods across a
+                        double-width SVG, translated -50% for a seamless loop. */}
+                    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                        <svg className="absolute inset-x-0 bottom-4 h-20 w-[200%] text-white/10 animate-wave-flow-slow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M0,60 C360,10 1080,110 1440,60 C1800,10 2520,110 2880,60" />
+                        </svg>
+                        <svg className="absolute inset-x-0 top-4 h-20 w-[200%] text-white/[0.16] animate-wave-flow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M0,60 C360,110 1080,10 1440,60 C1800,110 2520,10 2880,60" />
+                        </svg>
+                    </div>
+
+                    {/* Fade the band's bottom into the cream content below for a seamless join. */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-cream" aria-hidden="true" />
+
+                    <div className="relative z-10 flex justify-center">
+                    {isContributorAuthor ? (
+                        (() => {
+                            // A contributor always gets the author card: linked to their
+                            // profile when they have a slug, plain (non-clickable) otherwise
+                            // — never misattributed to the house brand.
+                            const cardInner = (
+                                <>
+                                    {spotGuide.author.image ? (
+                                        <span className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary-lighter shrink-0">
+                                            <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" />
+                                        </span>
+                                    ) : (
+                                        <span className="w-14 h-14 rounded-full bg-primary-lighter shrink-0" />
+                                    )}
+                                    <span className="text-left">
+                                        <span className="block text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
+                                        <span
+                                            className="block font-title text-secondary uppercase leading-tight group-hover:text-primary transition-colors duration-200"
+                                            style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}
+                                        >
+                                            {spotGuide.author.name}
+                                        </span>
+                                    </span>
+                                </>
+                            )
+
+                            return spotGuide.author.slug ? (
+                                <Link
+                                    href={`/contributors/${spotGuide.author.slug}`}
+                                    className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-sm ring-1 ring-secondary/10 hover:shadow-md transition-shadow duration-300"
+                                >
+                                    {cardInner}
+                                    <svg className="w-4 h-4 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </Link>
+                            ) : (
+                                <div className="inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-sm ring-1 ring-secondary/10">
+                                    {cardInner}
+                                </div>
+                            )
+                        })()
+                    ) : (
+                        <div className="inline-flex flex-col items-center">
+                            <span className="text-[10px] uppercase tracking-[0.35em] text-white/60">Written by</span>
+                            <span className="font-title text-white uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
+                                Seabound Souls
+                            </span>
+                        </div>
+                    )}
+                    </div>
+                </div>
+            )}
 
             {/* ── Introduction ── */}
             {spotGuide.introduction_text && (

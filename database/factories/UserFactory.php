@@ -42,4 +42,14 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /** An invited contributor with structured first/last names (slug auto-generates). */
+    public function contributor(): static
+    {
+        return $this->state(fn () => [
+            'role' => User::ROLE_CONTRIBUTOR,
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+        ]);
+    }
 }

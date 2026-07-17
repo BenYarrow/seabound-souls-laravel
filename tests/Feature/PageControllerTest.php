@@ -16,7 +16,9 @@ class PageControllerTest extends TestCase
 {
     public function test_show_renders_a_published_page(): void
     {
-        $page = Page::factory()->create(['title' => 'About Us', 'slug' => 'about-us']);
+        // Uses a neutral generic slug (not "about-us") — that slug now
+        // permanently redirects to /about, see routes/web.php.
+        $page = Page::factory()->create(['title' => 'Sample Page', 'slug' => 'sample-page']);
 
         $response = $this->get(route('pages.show', $page->slug));
 
@@ -24,8 +26,8 @@ class PageControllerTest extends TestCase
         $response->assertInertia(
             fn (Assert $assert) => $assert
                 ->component('Page/Show')
-                ->where('page.slug', 'about-us')
-                ->where('page.title', 'About Us')
+                ->where('page.slug', 'sample-page')
+                ->where('page.title', 'Sample Page')
         );
     }
 

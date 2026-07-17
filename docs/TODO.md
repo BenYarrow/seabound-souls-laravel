@@ -30,8 +30,14 @@ Public controllers all covered. Remaining:
 ## Contributor workflow (follow-ups)
 Sub-project 1 shipped 2026-07-13 (see history + SITREP). Remaining:
 - [ ] **Email delivery** — wire the `mail` channel so contributor **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see Project B).
-- [ ] **Contributor public profile pages (sub-project 2)** — a public contributor page (bio, photo, social links, their guides) that the attribution byline links to; turn the About page into about-us + a crew/team roll-up. Attribution labels shipped; clickable pages deferred.
 - [ ] On Cloud/staging: set **`MAPBOX_TOKEN`** (map picker won't render without it) and confirm **`APP_URL`** matches the domain (signed set-password invite links are built from it).
+
+### Contributor profiles (sub-project 2 — shipped 2026-07-15, #36; follow-ups)
+- [ ] **On Cloud post-deploy:** drop the **"Contributor roll-up"** content block onto the About page's content builder (the `about-us`→`about` slug rename runs via migration; the block auto-lists public-profile contributors).
+- [ ] **Team feedback pass** on the profile page + spot-guide author-card design (Ben is sharing for review) — revisit styling if needed.
+- [ ] Optional: switch `/contributors` → `/crew` (one named-route change + a 301 redirect once a public domain exists) — pending a naming decision.
+- [ ] A Livewire `fillForm(...)->call('save')` test for the My Profile page (current tests cover the policy gate + model persistence, not the page's form round-trip).
+- [ ] Optional: a per-slug 301 when a contributor/tag is retired (keeps inbound links alive once the site is public/indexed).
 - [ ] Optional: a dedicated notification for "contributor edited a live guide" (today an approved-guide edit reuses `GuideSubmittedForReview` when it auto-flags back to review).
 
 ## Blog tags (follow-ups)

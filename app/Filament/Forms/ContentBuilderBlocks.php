@@ -147,6 +147,13 @@ class ContentBuilderBlocks
                         ->default('View all'),
                 ]),
 
+            Builder\Block::make('contributor_roll_up')
+                ->label('Contributor roll-up')
+                ->schema([
+                    TextInput::make('heading')->default('Meet the crew'),
+                    TextInput::make('intro')->label('Intro line')->helperText('Optional short line under the heading.'),
+                ]),
+
             Builder\Block::make('infographic')
                 ->label('Infographic')
                 ->schema([

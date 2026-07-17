@@ -6,6 +6,7 @@ import SingleImage from './Content/SingleImage'
 import ImagePair from './Content/ImagePair'
 import Gallery from './Content/Gallery'
 import FeaturedGrid from './Common/FeaturedGrid'
+import ContributorRollUp from '@/Components/Content/ContributorRollUp'
 
 interface ContentBlock {
     type: string
@@ -101,6 +102,15 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                                 linkLabel={block.data.viewAllLabel || 'View all'}
                                 backgroundColour={block.data.backgroundColour}
                                 buildHref={(entry) => `/destinations/${entry.slug}`}
+                            />
+                        )
+                    case 'contributor_roll_up':
+                        return (
+                            <ContributorRollUp
+                                key={index}
+                                heading={block.data.heading}
+                                intro={block.data.intro}
+                                contributors={block.data.contributors_resolved ?? []}
                             />
                         )
                     default:

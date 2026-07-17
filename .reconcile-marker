@@ -1,2 +1,2 @@
 date: 2026-07-15
-note: Reconcile 18 (folded into the blog-tags PR) — covers the Rider→Contributor rename (#33), the dynamic XML sitemap (#34), and blog tags: crawlable tag pages + hub + per-tag images + the site-wide gradient masthead fallback (#35).
+note: Reconcile 19 (folded into the contributor-profiles PR) — sub-project 2: public contributor profile pages, clickable author-card byline, about-us→about rename, contributor roll-up block, self-service My Profile page.

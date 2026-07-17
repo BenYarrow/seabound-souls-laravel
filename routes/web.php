@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\MediaFocalController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Contributor\SetPasswordController;
+use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PageController;
@@ -27,6 +28,7 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact')
     ->name('contact.store');
+Route::get('/contributors/{slug}', [ContributorController::class, 'show'])->name('contributors.show');
 
 // Admin: set focal point for a media library item (called by MediaPicker Alpine click handler)
 Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])
@@ -44,6 +46,9 @@ Route::post('/contributor/set-password/{user}', [SetPasswordController::class, '
 // Declared before the catch-all so it isn't swallowed by it. robots.txt is a
 // static file (public/robots.txt) — web servers serve /robots.txt directly.
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// Old About URL kept alive after the about-us → about rename.
+Route::redirect('/about-us', '/about', 301);
 
 // Catch-all for generic pages (must be last, exclude admin paths)
 Route::get('/{slug}', [PageController::class, 'show'])->where('slug', '^(?!admin).*$')->name('pages.show');
