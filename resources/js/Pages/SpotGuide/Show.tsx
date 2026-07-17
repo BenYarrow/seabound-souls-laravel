@@ -225,7 +225,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 Contributor: a prominent card (portrait + name) linking to their profile.
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
-                <div className="bg-cream flex justify-center pt-10">
+                <div className="bg-cream flex justify-center pt-10 pb-10">
                     {isContributorAuthor ? (
                         (() => {
                             // A contributor always gets the author card: linked to their

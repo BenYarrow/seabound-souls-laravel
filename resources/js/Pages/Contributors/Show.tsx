@@ -61,16 +61,19 @@ const Show = ({ contributor, static_masthead, guides, meta }: Props) => {
                 )}
             </BlockWrapper>
 
-            {/* Their guides — shared DestinationCard grid, matching the destinations page */}
+            {/* Their guides — mirrors the destinations section exactly (same
+                `container mx-auto` heading + grid) so the card width lines up. */}
             {guides.length > 0 && (
-                <BlockWrapper options={{ bgColourClass: 'bg-white' }}>
-                    <h2
-                        className="font-title text-secondary uppercase text-center mb-10"
-                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)' }}
-                    >
-                        Guides by {firstName}
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                <section className="bg-white">
+                    <div className="container mx-auto pt-14 lg:pt-18 pb-0">
+                        <h2
+                            className="font-title text-secondary uppercase text-center mb-10 lg:mb-12"
+                            style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)' }}
+                        >
+                            Guides by {firstName}
+                        </h2>
+                    </div>
+                    <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pb-14 lg:pb-18">
                         {guides.map((guide) => (
                             <div key={guide.id} className="aspect-square">
                                 {/* Byline hidden — every card here is already known to be theirs. */}
@@ -84,7 +87,7 @@ const Show = ({ contributor, static_masthead, guides, meta }: Props) => {
                             </div>
                         ))}
                     </div>
-                </BlockWrapper>
+                </section>
             )}
         </Layout>
     )
