@@ -229,7 +229,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 Contributor: a prominent card (portrait + name) linking to their profile.
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
-                <div className="bg-primary-lightest flex justify-center py-8">
+                <div className="bg-white flex justify-center py-6 border-b border-secondary/10">
                     {isContributorAuthor ? (
                         (() => {
                             // A contributor always gets the author card: linked to their
@@ -259,7 +259,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                             return spotGuide.author.slug ? (
                                 <Link
                                     href={`/contributors/${spotGuide.author.slug}`}
-                                    className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md hover:shadow-lg transition-shadow duration-300"
+                                    className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-sm ring-1 ring-secondary/10 hover:shadow-md transition-shadow duration-300"
                                 >
                                     {cardInner}
                                     <svg className="w-4 h-4 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -267,7 +267,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                                     </svg>
                                 </Link>
                             ) : (
-                                <div className="inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md">
+                                <div className="inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-sm ring-1 ring-secondary/10">
                                     {cardInner}
                                 </div>
                             )
