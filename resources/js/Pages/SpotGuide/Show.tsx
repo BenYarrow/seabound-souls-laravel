@@ -241,6 +241,9 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                         </svg>
                     </div>
 
+                    {/* Fade the band's bottom into the cream content below for a seamless join. */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-cream" aria-hidden="true" />
+
                     <div className="relative z-10 flex justify-center">
                     {isContributorAuthor ? (
                         (() => {
