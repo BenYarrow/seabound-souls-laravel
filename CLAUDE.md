@@ -213,6 +213,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | GET | `/search` | SearchController@index | `search` |
 | GET | `/contact` | ContactController@index | `contact` |
 | POST | `/contact` | ContactController@store | `contact.store` |
+| GET | `/contributors/{slug}` | ContributorController@show | `contributors.show` (public profile; 404 unless contributor has a published guide) |
+| GET | `/about-us` | — | 301 redirect → `/about` (page renamed) |
 | GET | `/contributor/set-password/{user}` | Contributor/SetPasswordController@show | `contributor.password.setup` (signed) |
 | POST | `/contributor/set-password/{user}` | Contributor/SetPasswordController@store | `contributor.password.store` (signed) |
 | GET | `/{slug}` | PageController@show | `pages.show` (catch-all, excludes /admin*) |
@@ -279,6 +281,8 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 **URL:** `/admin` | **Color:** Amber
 
 **Auth (owner + invited contributors):** two roles on `users.role` — `owner` and `contributor` (default `contributor`). `User::canAccessPanel()` admits any recognised role; the **real gating is per-resource Policies**, not the panel gate. No public registration and no self-service password reset. The **owner** is the house account: credentials from `ADMIN_EMAIL`/`ADMIN_PASSWORD` (env) via `config/admin.php`, seeded by `AdminUserSeeder` (`updateOrCreate` with `role = owner` — re-seed to rotate); locally unset, so the dev default `seabound.souls@outlook.com` / `password` applies. Never read the `ADMIN_*` env vars outside `config/admin.php`. **Contributors** are created only by the owner-only **Invite Contributor** action (Contributors admin section), which mints a signed 7-day set-password link (`contributor.password.setup`); the contributor sets their password (`Contributor\SetPasswordController`, `session()->regenerate()` on login). Contributors are policy-scoped to their **own** spot guides and their **own** media (house media, `media_library.user_id = null`, is invisible to them); `is_published` and `is_featured` are owner-only across every write path. See the contributor workflow: `docs/history/2026-07-13-rider-contributor-workflow.md`.
+
+**Contributor public profiles (sub-project 2):** contributors have public profile columns on `users` (`slug` from first+last, `profile_image_media_id`, `static_masthead_media_id`, `profile_blocks` JSON content-builder, `socials` JSON). A profile is public **iff** `User::hasPublicProfile()` (contributor with ≥1 published guide) — **derived, no manual flag**; owners never get one. Public page `/contributors/{slug}` (`ContributorController@show`); the spot-guide byline is a clickable author card (`SpotGuide::authorPayload()` carries `slug` + `image`). Contributors self-edit via the Filament **My Profile** page (`App\Filament\Pages\MyProfile`, record always `auth()->user()`); the owner edits via `ContributorResource` — both share `App\Filament\Forms\ContributorProfileForm::schema()`. The About page (`about`, renamed from `about-us` with a 301) hosts a `contributor_roll_up` content block that auto-lists public-profile contributors. See `docs/history/2026-07-15-contributor-profiles.md`.
 
 ### Resources
 | Resource | Key Tabs |
