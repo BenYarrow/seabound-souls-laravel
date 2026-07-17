@@ -221,7 +221,11 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 )}
             </div>
 
+            {/* ── Sticky quick-nav ── */}
+            <SpotGuideNav sections={navSections} />
+
             {/* ── Author attribution — only once a contributor guide exists on the site ──
+                Sits below the quick-nav, leading the content.
                 Contributor: a prominent card (portrait + name) linking to their profile.
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
@@ -278,9 +282,6 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                     )}
                 </div>
             )}
-
-            {/* ── Sticky quick-nav ── */}
-            <SpotGuideNav sections={navSections} />
 
             {/* ── Introduction ── */}
             {spotGuide.introduction_text && (
