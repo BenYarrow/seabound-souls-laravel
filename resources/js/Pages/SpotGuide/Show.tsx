@@ -226,31 +226,48 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
                 <div className="bg-cream flex justify-center pt-10">
-                    {isContributorAuthor && spotGuide.author.slug ? (
-                        <Link
-                            href={`/contributors/${spotGuide.author.slug}`}
-                            className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md hover:shadow-lg transition-shadow duration-300"
-                        >
-                            {spotGuide.author.image ? (
-                                <span className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary-lighter shrink-0">
-                                    <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" />
-                                </span>
-                            ) : (
-                                <span className="w-14 h-14 rounded-full bg-primary-lighter shrink-0" />
-                            )}
-                            <span className="text-left">
-                                <span className="block text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
-                                <span
-                                    className="block font-title text-secondary uppercase leading-tight group-hover:text-primary transition-colors duration-200"
-                                    style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}
+                    {isContributorAuthor ? (
+                        (() => {
+                            // A contributor always gets the author card: linked to their
+                            // profile when they have a slug, plain (non-clickable) otherwise
+                            // — never misattributed to the house brand.
+                            const cardInner = (
+                                <>
+                                    {spotGuide.author.image ? (
+                                        <span className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary-lighter shrink-0">
+                                            <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" />
+                                        </span>
+                                    ) : (
+                                        <span className="w-14 h-14 rounded-full bg-primary-lighter shrink-0" />
+                                    )}
+                                    <span className="text-left">
+                                        <span className="block text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
+                                        <span
+                                            className="block font-title text-secondary uppercase leading-tight group-hover:text-primary transition-colors duration-200"
+                                            style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}
+                                        >
+                                            {spotGuide.author.name}
+                                        </span>
+                                    </span>
+                                </>
+                            )
+
+                            return spotGuide.author.slug ? (
+                                <Link
+                                    href={`/contributors/${spotGuide.author.slug}`}
+                                    className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md hover:shadow-lg transition-shadow duration-300"
                                 >
-                                    {spotGuide.author.name}
-                                </span>
-                            </span>
-                            <svg className="w-4 h-4 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </Link>
+                                    {cardInner}
+                                    <svg className="w-4 h-4 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </Link>
+                            ) : (
+                                <div className="inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md">
+                                    {cardInner}
+                                </div>
+                            )
+                        })()
                     ) : (
                         <div className="inline-flex flex-col items-center">
                             <span className="text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>

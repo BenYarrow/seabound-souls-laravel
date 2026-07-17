@@ -70,7 +70,7 @@ const Show = ({ contributor, static_masthead, guides, meta }: Props) => {
                     >
                         Guides by {firstName}
                     </h2>
-                    <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                         {guides.map((guide) => (
                             <div key={guide.id} className="aspect-square">
                                 {/* Byline hidden — every card here is already known to be theirs. */}
