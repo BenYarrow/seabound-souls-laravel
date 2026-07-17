@@ -44,7 +44,7 @@ interface Props {
         title: string
         slug: string
         /** Author attribution: 'house' (us) vs a named 'contributor' (links to their profile). */
-        author: { kind: 'house' | 'contributor'; name: string | null; slug: string | null }
+        author: { kind: 'house' | 'contributor'; name: string | null; slug: string | null; image: FocalImage | null }
         country: { name: string; slug: string; continent: string } | null
         latitude: number | null
         longitude: number | null
@@ -221,28 +221,44 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 )}
             </div>
 
-            {/* ── Author byline — only once a contributor guide exists on the site ── */}
+            {/* ── Author attribution — only once a contributor guide exists on the site ──
+                Contributor: a prominent card (portrait + name) linking to their profile.
+                House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
-                <div className="bg-cream text-center pt-6">
-                    <p className="text-secondary/70 text-sm italic tracking-wide">
-                        {isContributorAuthor ? (
-                            <>
-                                By{' '}
-                                {spotGuide.author.slug ? (
-                                    <Link
-                                        href={`/contributors/${spotGuide.author.slug}`}
-                                        className="hover:text-primary transition-colors duration-200"
-                                    >
-                                        {spotGuide.author.name}
-                                    </Link>
-                                ) : (
-                                    spotGuide.author.name
-                                )}
-                            </>
-                        ) : (
-                            'Seabound Souls'
-                        )}
-                    </p>
+                <div className="bg-cream flex justify-center pt-10">
+                    {isContributorAuthor && spotGuide.author.slug ? (
+                        <Link
+                            href={`/contributors/${spotGuide.author.slug}`}
+                            className="group inline-flex items-center gap-4 rounded-full bg-white py-2 pl-2 pr-6 shadow-md hover:shadow-lg transition-shadow duration-300"
+                        >
+                            {spotGuide.author.image ? (
+                                <span className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary-lighter shrink-0">
+                                    <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" />
+                                </span>
+                            ) : (
+                                <span className="w-14 h-14 rounded-full bg-primary-lighter shrink-0" />
+                            )}
+                            <span className="text-left">
+                                <span className="block text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
+                                <span
+                                    className="block font-title text-secondary uppercase leading-tight group-hover:text-primary transition-colors duration-200"
+                                    style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}
+                                >
+                                    {spotGuide.author.name}
+                                </span>
+                            </span>
+                            <svg className="w-4 h-4 text-primary/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </Link>
+                    ) : (
+                        <div className="inline-flex flex-col items-center">
+                            <span className="text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
+                            <span className="font-title text-secondary uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
+                                Seabound Souls
+                            </span>
+                        </div>
+                    )}
                 </div>
             )}
 

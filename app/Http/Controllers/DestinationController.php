@@ -32,7 +32,7 @@ class DestinationController extends Controller
             ->first();
 
         $spotGuides = SpotGuide::published()
-            ->with(['country', 'thumbnailMedia', 'weatherRecords', 'author'])
+            ->with(['country', 'thumbnailMedia', 'weatherRecords', 'author.profileImageMedia'])
             ->orderBy('title')
             ->get();
 

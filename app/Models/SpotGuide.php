@@ -135,9 +135,11 @@ class SpotGuide extends Model
 
     /**
      * Public attribution shape for this guide: a contributor (named, with a
-     * profile slug) or the house. House = owner-authored or no author.
+     * profile slug + portrait) or the house. House = owner-authored or no author.
+     * Eager-load `author.profileImageMedia` where this is called for many guides
+     * to avoid an N+1 on the portrait.
      *
-     * @return array{kind: 'house'|'contributor', name: string|null, slug: string|null}
+     * @return array{kind: 'house'|'contributor', name: string|null, slug: string|null, image: array|null}
      */
     public function authorPayload(): array
     {
@@ -147,6 +149,7 @@ class SpotGuide extends Model
             'kind' => $isContributor ? 'contributor' : 'house',
             'name' => $isContributor ? $this->author->name : null,
             'slug' => $isContributor ? $this->author->slug : null,
+            'image' => $isContributor ? $this->author->profileImageMedia?->imagePayload() : null,
         ];
     }
 

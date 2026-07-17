@@ -37,7 +37,7 @@ class SpotGuideController extends Controller
         $spotGuide = SpotGuide::where('slug', $slug)
             ->with([
                 'country',
-                'author',
+                'author.profileImageMedia',
                 'recommendations.thumbnailMedia',
                 'windsurfingLocations.thumbnailMedia',
                 'weatherRecords',

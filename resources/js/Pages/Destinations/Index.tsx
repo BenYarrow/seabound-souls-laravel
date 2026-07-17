@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/react'
 import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
-import CoverImage from '@/Components/Common/CoverImage'
+import DestinationCard from '@/Components/Common/DestinationCard'
 import FeaturedHero from '@/Components/Common/FeaturedHero'
 import StaticMasthead from '@/Components/Masthead/StaticMasthead'
 import DestinationsMap from '@/Components/Map/DestinationsMap'
@@ -218,47 +218,19 @@ const Index = ({ spotGuides, weatherData, showProvenance, static_masthead, featu
                     >
                         {guides.map((guide) => (
                             <li key={guide.id} className="aspect-square">
-                                <Link
-                                    href={`/destinations/${guide.slug}`}
-                                    className="group relative block w-full h-full overflow-hidden bg-primary-darker"
-                                >
-                                    {guide.thumbnail && (
-                                        <CoverImage
-                                            image={guide.thumbnail}
-                                            alt={guide.title}
-                                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
-                                        />
-                                    )}
-                                    <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-                                    {/* Card text — bottom-left editorial */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                                        <h3
-                                            className="font-display text-white leading-none tracking-wide drop-shadow-lg"
-                                            style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.9rem)' }}
-                                        >
-                                            {guide.title}
-                                        </h3>
-                                        {guide.country && (
-                                            <p className="text-white/55 text-[10px] mt-1.5 uppercase tracking-[0.2em]">
-                                                {guide.country.name}
-                                            </p>
-                                        )}
-                                        {/* Provenance byline — only once a contributor guide exists on the site.
-                                            Plain text (not a Link): this sits inside the full-card <Link> to the
-                                            guide, and a nested anchor is both invalid HTML and functionally dead
-                                            (the click bubbles to the outer card link before it can navigate here). */}
-                                        {showProvenance && (
-                                            <p className="text-white/75 text-[11px] mt-2 italic">
-                                                {guide.author.kind === 'contributor' && guide.author.name
-                                                    ? `By ${guide.author.name}`
-                                                    : 'Seabound Souls'}
-                                            </p>
-                                        )}
-                                        <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-10 transition-all duration-500 ease-out" />
-                                    </div>
-                                </Link>
+                                <DestinationCard
+                                    title={guide.title}
+                                    slug={guide.slug}
+                                    thumbnail={guide.thumbnail}
+                                    countryName={guide.country?.name}
+                                    byline={
+                                        showProvenance
+                                            ? guide.author.kind === 'contributor' && guide.author.name
+                                                ? `By ${guide.author.name}`
+                                                : 'Seabound Souls'
+                                            : null
+                                    }
+                                />
                             </li>
                         ))}
                     </AnimateInView>

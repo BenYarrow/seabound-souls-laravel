@@ -49,6 +49,7 @@ class ContributorController extends Controller
         return Inertia::render('Contributors/Show', [
             'contributor' => [
                 'name' => $contributor->name,
+                'first_name' => $contributor->first_name,
                 'profile_image' => $contributor->profileImageMedia?->imagePayload(),
                 'socials' => $socials,
                 'profile_blocks' => $this->resolveContentBlockMedia($contributor->profile_blocks ?? []),
