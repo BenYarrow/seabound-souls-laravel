@@ -229,7 +229,19 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 Contributor: a prominent card (portrait + name) linking to their profile.
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
-                <div className="bg-white flex justify-center py-6 border-b border-secondary/10">
+                <div className="relative overflow-hidden bg-gradient-to-br from-primary-darker via-primary to-primary-darker py-12">
+                    {/* Flowing wave lines — on-brand decoration; two periods across a
+                        double-width SVG, translated -50% for a seamless loop. */}
+                    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                        <svg className="absolute inset-x-0 bottom-4 h-20 w-[200%] text-white/10 animate-wave-flow-slow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M0,60 C360,10 1080,110 1440,60 C1800,10 2520,110 2880,60" />
+                        </svg>
+                        <svg className="absolute inset-x-0 top-4 h-20 w-[200%] text-white/[0.16] animate-wave-flow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M0,60 C360,110 1080,10 1440,60 C1800,110 2520,10 2880,60" />
+                        </svg>
+                    </div>
+
+                    <div className="relative z-10 flex justify-center">
                     {isContributorAuthor ? (
                         (() => {
                             // A contributor always gets the author card: linked to their
@@ -274,12 +286,13 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                         })()
                     ) : (
                         <div className="inline-flex flex-col items-center">
-                            <span className="text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
-                            <span className="font-title text-secondary uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
+                            <span className="text-[10px] uppercase tracking-[0.35em] text-white/60">Written by</span>
+                            <span className="font-title text-white uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
                                 Seabound Souls
                             </span>
                         </div>
                     )}
+                    </div>
                 </div>
             )}
 

@@ -24,6 +24,28 @@
     animation: scroll-nudge 2s ease-in-out infinite;
 }
 
+/* Flowing wave line (author-attribution band). The SVG holds two identical wave
+   periods across a double-width element; translating by -50% loops seamlessly. */
+@keyframes wave-flow {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+.animate-wave-flow {
+    animation: wave-flow 12s linear infinite;
+}
+
+.animate-wave-flow-slow {
+    animation: wave-flow 20s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-wave-flow,
+    .animate-wave-flow-slow {
+        animation: none;
+    }
+}
+
 /* Destinations map — dark popup */
 .destinations-map .mapboxgl-popup-content {
     background: hsl(192 89% 18%);
