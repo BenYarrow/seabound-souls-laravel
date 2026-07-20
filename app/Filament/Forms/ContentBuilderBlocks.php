@@ -18,6 +18,7 @@ class ContentBuilderBlocks
         return Select::make('backgroundColour')
             ->label('Background Colour')
             ->options([
+                'bg-cream' => 'Cream',
                 'bg-white' => 'White',
                 'bg-primary' => 'Primary',
                 'bg-primary-lighter' => 'Primary Lighter',
@@ -96,6 +97,9 @@ class ContentBuilderBlocks
             Builder\Block::make('split_image_text')
                 ->label('Split Image & Text')
                 ->schema([
+                    // Cream-first default preserves the block's established look while
+                    // letting consecutive split blocks alternate backgrounds.
+                    static::backgroundColourSelect()->default('bg-cream'),
                     MediaPicker::make('media_library_id')
                         ->label('Image'),
                     RichEditor::make('text')

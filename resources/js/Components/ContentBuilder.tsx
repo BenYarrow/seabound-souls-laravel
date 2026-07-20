@@ -76,6 +76,7 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                                 image={block.data.media_library_id_image}
                                 text={block.data.text}
                                 reverse={block.data.reverse ?? false}
+                                backgroundColour={block.data.backgroundColour}
                             />
                         )
                     case 'infographic':
