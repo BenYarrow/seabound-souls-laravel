@@ -9,13 +9,19 @@ interface SplitImageTextProps {
     image: FocalImage | string | null
     text: string
     reverse: boolean
+    /** Section background utility class (defaults to cream; lets adjacent blocks differ). */
+    backgroundColour?: string
 }
 
-const SplitImageText = ({ image, text, reverse }: SplitImageTextProps) => {
+/** Dark section backgrounds that need light text — mirrors RichText. */
+const DARK_BACKGROUNDS = ['bg-secondary', 'bg-primary', 'bg-primary-darker']
+
+const SplitImageText = ({ image, text, reverse, backgroundColour = 'bg-cream' }: SplitImageTextProps) => {
     const [toggler, setToggler] = useState(false)
+    const invert = DARK_BACKGROUNDS.includes(backgroundColour)
 
     return (
-        <section className="bg-cream overflow-hidden">
+        <section className={`${backgroundColour} overflow-hidden`}>
             <div className="container mx-auto py-16 lg:py-24">
                 <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-10 lg:gap-16 xl:gap-24 items-center`}>
 
@@ -60,7 +66,11 @@ const SplitImageText = ({ image, text, reverse }: SplitImageTextProps) => {
                         >
                             <div className="w-8 h-0.5 bg-orange mb-6" />
                             <div
-                                className="prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-wide prose-headings:text-secondary prose-a:text-primary [&>*:last-child]:!mb-0"
+                                className={`prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-wide [&>*:last-child]:!mb-0 ${
+                                    invert
+                                        ? 'prose-headings:!text-primary-lighter prose-p:text-white prose-a:!text-primary-lighter marker:!text-white [&_li]:text-white'
+                                        : 'prose-headings:!text-secondary prose-p:text-secondary prose-a:!text-primary'
+                                }`}
                                 dangerouslySetInnerHTML={{ __html: text }}
                             />
                         </AnimateInView>
