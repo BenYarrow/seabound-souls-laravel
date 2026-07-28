@@ -351,9 +351,10 @@ git commit -m "feat: WeatherFetcher persists daily sailable-wind layer"
 
 **Interfaces:**
 - Produces two new Inertia props (replacing `weatherData`):
-  - `sailableDays`: `{ [title: string]: { [month: number 1-12]: { values: number[], years: number } } }` — `values` = every day's `qualifying_wind_kts` for that spot+month pooled across all held years; `years` = distinct year count.
+  - `sailableDays`: `{ [title: string]: { [month: number 1-12]: { values: number[] } } }` — `values` = every day's `qualifying_wind_kts` for that spot+month pooled across all held years. No per-year division server-side; the browser computes the coverage-normalised rate.
   - `climate`: `{ [title: string]: Array<{ month: string, avgTemp, ktsWind, ktsGust, mphWind, mphGust, kphWind, kphGust }> }` — one entry per month present, cross-year-averaged, sorted by month.
 - Keeps: `spotGuides`, `featuredSpotGuide`, `showProvenance`, `static_masthead`, `meta`.
+- Removes: the server-side `SpotGuide::sortByGustiestThisMonth($spotGuides)` re-order (the client re-ranks on every filter change, so a server-side order is dead weight).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -373,19 +374,20 @@ class DestinationSailablePayloadTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_pools_sailable_days_by_month_with_a_year_count(): void
+    public function test_it_pools_sailable_days_by_month(): void
     {
         $spot = SpotGuide::factory()->create(['title' => 'Vassiliki', 'is_published' => true]);
 
-        // Two Augusts (2024, 2025), one day each.
+        // Two Augusts (2024, 2025), one day each — pooled into a single flat values array.
         SailableDay::factory()->for($spot)->create(['date' => '2024-08-10', 'year' => 2024, 'month' => 8, 'qualifying_wind_kts' => 22.0]);
         SailableDay::factory()->for($spot)->create(['date' => '2025-08-11', 'year' => 2025, 'month' => 8, 'qualifying_wind_kts' => 12.0]);
 
         $response = $this->get('/destinations');
 
+        // Values are pooled across both years; there is no server-side `years` field.
         $response->assertInertia(fn ($page) => $page
-            ->where('sailableDays.Vassiliki.8.years', 2)
             ->where('sailableDays.Vassiliki.8.values', [22.0, 12.0])
+            ->missing('sailableDays.Vassiliki.8.years')
         );
     }
 
@@ -425,18 +427,30 @@ In `DestinationController::index`, add `sailableDays` to the eager-load on line 
             ->get();
 ```
 
+**Remove the dead server-side gustiest re-order.** Delete this line (currently line 40), which re-sorts `$spotGuides` "gustiest first" for the current month:
+
+```php
+        // DELETE — the client re-ranks live on every filter change, so a fixed
+        // server-side order is dead weight (and would fight the client ranking).
+        $spotGuides = SpotGuide::sortByGustiestThisMonth($spotGuides);
+```
+
+Keep the `SpotGuide::sortByGustiestThisMonth()` static method itself — **grep first** (`grep -rn sortByGustiestThisMonth app resources`) to confirm no other caller before deciding whether to remove the method; this task only removes the controller call. The matching "Ordered by gusts for {month}" note-section in `Index.tsx` is deleted by the Task 8 rewrite (called out there).
+
 Replace the `$weatherData` block (lines 68–83) with the two new builders:
 
 ```php
         // Pooled daily sailable-wind values, keyed by title then month (1-12).
-        // The browser counts values >= minimum and divides by `years` to get the
-        // typical (climatological) number of sailable days in that month.
+        // The browser counts values >= minimum, divides by the held-day count and
+        // scales by the month's length to get the typical (climatological) number
+        // of sailable days that month — a coverage-normalised rate that is robust
+        // to the rolling window's partial boundary months (so no `years` field is
+        // shipped; per-year division would undercount the boundary months).
         $sailableDays = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->sailableDays
                 ->groupBy('month')
                 ->map(fn ($monthDays) => [
                     'values' => $monthDays->map(fn ($day) => (float) $day->qualifying_wind_kts)->values()->toArray(),
-                    'years' => $monthDays->pluck('year')->unique()->count(),
                 ])
                 ->toArray(),
         ])->toArray();
@@ -496,14 +510,14 @@ git commit -m "feat: destinations controller ships sailableDays + climate props"
 **Interfaces:**
 - Produces:
   - `type WindUnit = 'kts' | 'mph' | 'kph'`
-  - `interface SailableMonth { values: number[]; years: number }`
+  - `interface SailableMonth { values: number[] }`
   - `type SailableDataset = Record<string, Record<number, SailableMonth>>`
   - `unitToKts(value: number, unit: WindUnit): number`
   - `ktsToUnit(kts: number, unit: WindUnit): number`
   - `MIN_OPTIONS: Record<WindUnit, number[]>`
   - `snapToUnitOption(kts: number, unit: WindUnit): number` — nearest option in that unit
-  - `sailableDaysInMonth(month: SailableMonth | undefined, minKts: number): number`
-  - `interface RankedSpot { title: string; avgDaysThisMonth: number; daysPerMonth: number[] }` (`daysPerMonth` length 12, index 0 = January)
+  - `sailableDaysInMonth(month: SailableMonth | undefined, minKts: number, monthNumber: number): number` — `monthNumber` (1-12) selects the calendar-day count for the rate scaling
+  - `interface RankedSpot { title: string; avgDaysThisMonth: number; daysPerMonth: number[] }` (`daysPerMonth` length 12, index 0 = January; `avgDaysThisMonth` is the coverage-normalised typical count, kept under the existing name for downstream consumers)
   - `rankSpots(dataset: SailableDataset, titles: string[], month: number, minKts: number): RankedSpot[]`
 
 - [ ] **Step 1: Write the failing test**
@@ -522,54 +536,60 @@ describe('unit conversion', () => {
         expect(unitToKts(ktsToUnit(20, 'mph'), 'mph')).toBeCloseTo(20, 5)
     })
     it('snaps a kts value to the nearest option in the target unit', () => {
-        // 20 kts ~= 23.0 mph -> nearest 5-step mph option is 25
+        // 20 kts * 1.15078 = 23.0156 mph -> nearest 5-step mph option (5..55) is 25 (|25-23.02|=1.98 < |20-23.02|=3.02)
         expect(snapToUnitOption(20, 'mph')).toBe(25)
+        // 20 kts * 1.852 = 37.04 kph -> nearest 5-step kph option (10..95) is 35 (|35-37.04|=2.04 < |40-37.04|=2.96)
+        expect(snapToUnitOption(20, 'kph')).toBe(35)
         expect(snapToUnitOption(20, 'kts')).toBe(20)
     })
 })
 
 describe('sailableDaysInMonth', () => {
-    it('counts values >= minimum and divides by years', () => {
-        const month = { values: [22, 12, 25, 8, 30, 21], years: 2 }
-        // >= 20kts: 22,25,30,21 => 4 days across 2 years => avg 2
-        expect(sailableDaysInMonth(month, 20)).toBe(2)
+    it('scales the qualifying share to the length of the month', () => {
+        // >= 20kts: 22,25,30,21 => 4 of 6 held days qualify.
+        // August (monthNumber 8) has 31 days: 4/6 * 31 = 20.6667 typical sailable days.
+        const month = { values: [22, 12, 25, 8, 30, 21] }
+        expect(sailableDaysInMonth(month, 20, 8)).toBeCloseTo(20.6667, 3)
     })
-    it('returns 0 for an undefined month or zero years', () => {
-        expect(sailableDaysInMonth(undefined, 20)).toBe(0)
-        expect(sailableDaysInMonth({ values: [30], years: 0 }, 20)).toBe(0)
+    it('returns 0 for an undefined month or no held days', () => {
+        expect(sailableDaysInMonth(undefined, 20, 8)).toBe(0)
+        expect(sailableDaysInMonth({ values: [] }, 20, 8)).toBe(0)
     })
 })
 
 describe('rankSpots', () => {
+    // All August (monthNumber 8, 31 days) unless stated. Typical days = (qualifying / held) * 31.
     const dataset: SailableDataset = {
-        Windy: { 8: { values: [30, 30, 30, 30], years: 1 } },   // Aug: 4 days
-        Calm: { 8: { values: [10, 10], years: 1 } },            // Aug: 0 days
-        Mid: { 8: { values: [25, 25], years: 1 }, 7: { values: [25, 25, 25], years: 1 } }, // Aug: 2
+        Windy: { 8: { values: [30, 30, 30, 10] } },  // Aug: 3/4 * 31 = 23.25
+        Calm: { 8: { values: [10, 10] } },           // Aug: 0/2 * 31 = 0
+        Mid: { 8: { values: [25, 10] }, 7: { values: [25, 25, 25] } }, // Aug: 1/2 * 31 = 15.5; Jul: 3/3 * 31 = 31
     }
 
-    it('ranks by average sailable days in the selected month, descending', () => {
+    it('ranks by typical sailable days in the selected month, descending', () => {
         const ranked = rankSpots(dataset, ['Windy', 'Calm', 'Mid'], 8, 20)
         expect(ranked.map((row) => row.title)).toEqual(['Windy', 'Mid', 'Calm'])
-        expect(ranked[0].avgDaysThisMonth).toBe(4)
-        expect(ranked[2].avgDaysThisMonth).toBe(0)
+        expect(ranked[0].avgDaysThisMonth).toBeCloseTo(23.25, 5)  // Windy: 3/4 * 31
+        expect(ranked[2].avgDaysThisMonth).toBe(0)                // Calm: 0/2 * 31
     })
 
     it('breaks ties by peak month then alphabetically', () => {
         const tie: SailableDataset = {
-            Bravo: { 8: { values: [25, 25], years: 1 }, 7: { values: [25], years: 1 } }, // Aug 2, peak 2
-            Alpha: { 8: { values: [25, 25], years: 1 }, 7: { values: [25, 25, 25, 25], years: 1 } }, // Aug 2, peak 4
+            // Aug 1/2*31 = 15.5; Jul 1/4*31 = 7.75 => peak 15.5
+            Bravo: { 8: { values: [25, 10] }, 7: { values: [25, 10, 10, 10] } },
+            // Aug 1/2*31 = 15.5; Jul 3/3*31 = 31   => peak 31
+            Alpha: { 8: { values: [25, 10] }, 7: { values: [25, 25, 25] } },
         }
         const ranked = rankSpots(tie, ['Bravo', 'Alpha'], 8, 20)
-        // Same Aug count (2); Alpha has the higher peak month (4) so it leads.
+        // Equal August count (15.5); Alpha has the higher peak month (31 vs 15.5) so it leads.
         expect(ranked.map((row) => row.title)).toEqual(['Alpha', 'Bravo'])
     })
 
     it('fills daysPerMonth with 12 entries indexed from January', () => {
         const ranked = rankSpots(dataset, ['Mid'], 8, 20)
         expect(ranked[0].daysPerMonth).toHaveLength(12)
-        expect(ranked[0].daysPerMonth[7]).toBe(2) // August
-        expect(ranked[0].daysPerMonth[6]).toBe(3) // July
-        expect(ranked[0].daysPerMonth[0]).toBe(0) // January (no data)
+        expect(ranked[0].daysPerMonth[7]).toBeCloseTo(15.5, 5) // August: 1/2 * 31
+        expect(ranked[0].daysPerMonth[6]).toBeCloseTo(31, 5)   // July:   3/3 * 31
+        expect(ranked[0].daysPerMonth[0]).toBe(0)              // January (no data)
     })
 })
 ```
@@ -587,16 +607,24 @@ Expected: FAIL — module `@/Helpers/sailableDays` not found.
 // Client-side sailable-days ranking for the destinations page. A day is
 // "sailable" at a minimum X (kts) when its stored 2nd-windiest sailing-window
 // hour >= X. Per month we hold every such daily value pooled across the years we
-// have; the typical sailable-day count is (values >= X) / years. Spots are then
-// ranked by the selected month's typical count.
+// have. Because the fetch window rolls (so boundary years are only partially
+// covered — and the current month is always a boundary), we do NOT divide by a
+// year count: that would undercount partial months by nearly half. Instead the
+// typical sailable-day count is a coverage-normalised rate — the share of held
+// days that qualify, scaled to the month's calendar length:
+//   (values >= X).length / values.length * daysInMonth.
+// Spots are then ranked by the selected month's typical count.
 
 export type WindUnit = 'kts' | 'mph' | 'kph'
 
-/** One spot-month: every day's qualifying wind (kts), pooled across `years` years. */
+/** One spot-month: every day's qualifying wind (kts), pooled across all held years. */
 export interface SailableMonth {
     values: number[]
-    years: number
 }
+
+/** Calendar days per month, index 0 = January. February fixed at 28 — the sub-day
+ *  leap-year error is immaterial to a climatological estimate. */
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 /** title -> month (1-12) -> pooled daily data. */
 export type SailableDataset = Record<string, Record<number, SailableMonth>>
@@ -608,7 +636,7 @@ const KTS_TO: Record<WindUnit, number> = { kts: 1, mph: 1.15078, kph: 1.852 }
 export const MIN_OPTIONS: Record<WindUnit, number[]> = {
     kts: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
     mph: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-    kph: [10, 20, 30, 40, 50, 60, 70, 80, 90],
+    kph: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
 }
 
 /** Convert a value in the given unit to knots. */
@@ -630,18 +658,27 @@ export const snapToUnitOption = (kts: number, unit: WindUnit): number => {
 }
 
 /**
- * Typical number of sailable days in a month for the given minimum (kts):
- * count of pooled daily values at/above the minimum, divided by the year count.
+ * Typical (coverage-normalised) number of sailable days in a month for the given
+ * minimum (kts): the share of pooled daily values at/above the minimum, scaled to
+ * the month's calendar length. `monthNumber` is 1-12 and selects that length.
+ * Robust to partial boundary months because it normalises by held days, not years.
  */
-export const sailableDaysInMonth = (month: SailableMonth | undefined, minKts: number): number => {
-    if (!month || month.years <= 0) {
+export const sailableDaysInMonth = (
+    month: SailableMonth | undefined,
+    minKts: number,
+    monthNumber: number
+): number => {
+    if (!month || month.values.length === 0) {
         return 0
     }
-    const qualifyingDays = month.values.filter((value) => value >= minKts).length
-    return qualifyingDays / month.years
+    const qualifyingCount = month.values.filter((value) => value >= minKts).length
+    const daysInMonth = DAYS_IN_MONTH[monthNumber - 1]
+    return (qualifyingCount / month.values.length) * daysInMonth
 }
 
-/** A spot ranked for a selected month: this month's count plus all 12 months. */
+/** A spot ranked for a selected month: this month's typical count plus all 12 months.
+ *  `avgDaysThisMonth` is the coverage-normalised typical count (name kept for
+ *  downstream consumers), not a literal average across years. */
 export interface RankedSpot {
     title: string
     avgDaysThisMonth: number
@@ -651,8 +688,9 @@ export interface RankedSpot {
 /**
  * Rank spots by typical sailable days in `month` (1-12) at `minKts`, descending.
  * Ties break by the spot's single best month, then alphabetically by title, so
- * the order is deterministic and shareable. Spots with no qualifying days remain
- * in the list (at the bottom).
+ * the order is deterministic and shareable. Spots with no qualifying days — and
+ * spots with no dataset entry at all — remain in the list (ranked 0, at the
+ * bottom), so a dataless spot never disappears from the page.
  */
 export const rankSpots = (
     dataset: SailableDataset,
@@ -663,7 +701,7 @@ export const rankSpots = (
     const ranked: RankedSpot[] = titles.map((title) => {
         const spotMonths = dataset[title] ?? {}
         const daysPerMonth = Array.from({ length: 12 }, (_unused, index) =>
-            sailableDaysInMonth(spotMonths[index + 1], minKts)
+            sailableDaysInMonth(spotMonths[index + 1], minKts, index + 1)
         )
         return {
             title,
@@ -705,7 +743,7 @@ git commit -m "feat: client-side sailable-days ranking helpers"
 **Interfaces:**
 - Produces:
   - `type GroupBy = 'continent' | 'country' | 'global'`
-  - `interface DestinationFilters { month: number; min: number; unit: WindUnit; group: GroupBy; spots: string[] }` (`min` is in `unit`; `spots` empty = all)
+  - `interface DestinationFilters { month: number; min: number; unit: WindUnit; group: GroupBy; spots: string[] }` (`min` is in `unit`; `spots` are **slugs**, empty = all)
   - `parseFilters(search: string, defaults: { month: number }): DestinationFilters`
   - `filtersToQuery(filters: DestinationFilters): Record<string, string>`
 
@@ -754,7 +792,9 @@ Expected: FAIL — module not found.
 //
 // Serialise/parse the destinations-page filter state to and from the URL query
 // string, so a filtered view is shareable and bookmarkable. `min` is stored in
-// the user's chosen unit; empty `spots` means "all destinations".
+// the user's chosen unit; empty `spots` means "all destinations". **`spots` are
+// serialised as slugs**, not titles (titles contain spaces/commas that would
+// break the comma-join); the page resolves slugs → titles for ranking.
 
 import type { WindUnit } from '@/Helpers/sailableDays'
 
@@ -983,6 +1023,7 @@ git commit -m "feat: sailable-days-per-month chart + data helper"
 
 **Files:**
 - Create: `resources/js/Helpers/climate.ts` (types + pivot for 12-month climate data)
+- Create: `resources/js/Helpers/selectTypes.ts` (neutral home for `SelectOption`, moved out of `FilterDataset.tsx`)
 - Modify: `resources/js/Components/Destinations/AllDestinationsWindChart.tsx`
 - Modify: `resources/js/Components/Destinations/AllDestinationsTempChart.tsx`
 - Test: `resources/js/Helpers/__tests__/climate.test.ts`
@@ -992,9 +1033,11 @@ git commit -m "feat: sailable-days-per-month chart + data helper"
   - `interface ClimateMonth { month: string; avgTemp: number; ktsWind: number; ktsGust: number; mphWind: number; mphGust: number; kphWind: number; kphGust: number }`
   - `type ClimateDataset = Record<string, ClimateMonth[]>`
   - `prepareClimateData(dataset: ClimateDataset, datapoint: keyof ClimateMonth): Array<Record<string, any>>` — 12-ish rows `{ month, [title]: value }`.
-- Wind chart new props: `{ climate: ClimateDataset; activeDestinations: SelectOption[]; showAverageGustData; activeWindUnit; setActiveWindUnit; setShowAverageGustData; colours; selectedMonth: number }` — the `activeYear`/`weatherData` props are gone; unit control stays inside the chart (moves to the page bar in Task 8's Index rewrite? — **No:** keep unit control here, but it is now driven by shared page state passed as props, same as today).
+  - `interface SelectOption { label: string; value: string }` in `resources/js/Helpers/selectTypes.ts`.
+- **Wind chart final props** (single unit control now lives in the filter bar; gust toggle is chart-local state): `{ climate: ClimateDataset; activeDestinations: SelectOption[]; activeWindUnit: WindUnit; colours: Record<string, string>; selectedMonth: number }`. The `weatherData`/`activeYear` props are gone; the `showAverageGustData`/`setShowAverageGustData`/`setActiveWindUnit` props are **removed** — `activeWindUnit` is now a display-only prop (the chart composes its datapoint key from it but no longer offers a unit control), and the gust toggle becomes local `useState` inside the chart.
+- **Temp chart final props:** `{ climate: ClimateDataset; activeDestinations: SelectOption[]; colours: Record<string, string>; selectedMonth: number }` — `weatherData`/`activeYear` gone.
 
-> Rationale: today the wind chart already owns the unit + gust controls via props from the page. We keep that contract; only the *data source* changes from `weatherData[year]` to `climate` (already a single typical-year series, so no year lookup).
+> Rationale: the page now has exactly one unit control (the filter bar, Task 8) — the chart's own unit radios are removed to avoid two live controls for one piece of state. The gust wind/gust toggle is chart-specific and out of the URL scope, so it lives as local state inside the wind chart. Only the *data source* also changes, from `weatherData[year]` to `climate` (already a single typical-year series, so no year lookup).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1088,30 +1131,49 @@ export const prepareClimateData = (
 Run: `export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH" && npm run test:js -- climate`
 Expected: PASS.
 
-- [ ] **Step 5: Rewrite the wind chart to consume `climate`**
+- [ ] **Step 5: Give `SelectOption` a neutral home and repoint the charts**
+
+Create `resources/js/Helpers/selectTypes.ts`:
+
+```ts
+// resources/js/Helpers/selectTypes.ts
+//
+// Shared react-select option shape. Lived in FilterDataset.tsx originally; moved
+// here so components can import it without depending on that (soon-deleted) file.
+
+export interface SelectOption {
+    label: string
+    value: string
+}
+```
+
+In **both** chart files, change the `SelectOption` import from `import type { SelectOption } from './FilterDataset'` to `import type { SelectOption } from '@/Helpers/selectTypes'`. (This is required now so that when Task 8 greps for remaining `FilterDataset` importers before deleting it, the charts no longer show up.)
+
+- [ ] **Step 6: Rewrite the wind chart to consume `climate`**
 
 Open `resources/js/Components/Destinations/AllDestinationsWindChart.tsx`. Replace its data wiring:
-- Change the props type: remove `weatherData` + `activeYear`; add `climate: ClimateDataset` and `selectedMonth: number`.
+- Change the props type to the final shape: `{ climate: ClimateDataset; activeDestinations: SelectOption[]; activeWindUnit: WindUnit; colours: Record<string, string>; selectedMonth: number }`. Remove `weatherData`, `activeYear`, `showAverageGustData`, `setShowAverageGustData`, and `setActiveWindUnit`. Import `WindUnit` from `@/Helpers/sailableDays`.
+- Move the gust toggle to **local state inside the chart**: `const [showAverageGustData, setShowAverageGustData] = useState(false)`. The wind/gust toggle control stays in the chart's header and drives this local state.
+- **Remove the unit radios** from the chart header entirely — the filter bar (Task 8) is the single unit control. `activeWindUnit` arrives as a display-only prop.
+- The `datapoint` composition (`` `${activeWindUnit}${showAverageGustData ? 'Gust' : 'Wind'}` ``) is unchanged (now reading the prop + local gust state).
 - Replace the `prepareYearlyWindData(weatherData, activeYear, datapoint)` call with `prepareClimateData(filteredClimate, datapoint as keyof ClimateMonth)`, where `filteredClimate` is `climate` narrowed to the active destination titles (mirror the existing active-destination filtering the chart already does on the series list).
-- The `datapoint` composition (`` `${activeWindUnit}${showAverageGustData ? 'Gust' : 'Wind'}` ``) is unchanged.
 - Add a `<ReferenceLine x={selectedMonth-1's month name}>` marker consistent with `SailableDaysChart` (import full month names or map index→name). Use the month name from `prepareClimateData` rows; if the selected month has no data, skip the reference line.
 - Update imports: `import { prepareClimateData, type ClimateDataset, type ClimateMonth } from '@/Helpers/climate'` and drop the `prepareYearlyWindData`/`WeatherDataset` imports.
-- Keep the unit radios + gust toggle exactly as they are (still driven by the props from the page).
 
-- [ ] **Step 6: Rewrite the temp chart to consume `climate`**
+- [ ] **Step 7: Rewrite the temp chart to consume `climate`**
 
-Open `resources/js/Components/Destinations/AllDestinationsTempChart.tsx`. Same shape of change: props lose `weatherData`+`activeYear`, gain `climate: ClimateDataset` and `selectedMonth`; replace `prepareYearlyTempData(weatherData, activeYear)` with `prepareClimateData(filteredClimate, 'avgTemp')`; add the selected-month reference line.
+Open `resources/js/Components/Destinations/AllDestinationsTempChart.tsx`. Final props: `{ climate: ClimateDataset; activeDestinations: SelectOption[]; colours: Record<string, string>; selectedMonth: number }` — lose `weatherData`+`activeYear`, gain `climate` and `selectedMonth`; replace `prepareYearlyTempData(weatherData, activeYear)` with `prepareClimateData(filteredClimate, 'avgTemp')`; add the selected-month reference line. (The temp chart has no unit or gust control, so nothing to remove there.)
 
-- [ ] **Step 7: Verify the build compiles**
+- [ ] **Step 8: Verify the build compiles**
 
 Run: `export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH" && npx vite build --logLevel error`
 Expected: no errors. (Index.tsx still references the old props at this point — if the build fails only on `Destinations/Index.tsx`, that is expected and fixed in Task 8; the chart files themselves must compile.)
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add resources/js/Helpers/climate.ts resources/js/Helpers/__tests__/climate.test.ts resources/js/Components/Destinations/AllDestinationsWindChart.tsx resources/js/Components/Destinations/AllDestinationsTempChart.tsx
-git commit -m "feat: wind/temp charts consume typical-year climate data"
+git add resources/js/Helpers/climate.ts resources/js/Helpers/selectTypes.ts resources/js/Helpers/__tests__/climate.test.ts resources/js/Components/Destinations/AllDestinationsWindChart.tsx resources/js/Components/Destinations/AllDestinationsTempChart.tsx
+git commit -m "feat: wind/temp charts consume typical-year climate data; SelectOption moves to selectTypes"
 ```
 
 ---
@@ -1127,6 +1189,7 @@ git commit -m "feat: wind/temp charts consume typical-year climate data"
 **Interfaces:**
 - Consumes: `sailableDays` + `climate` props (Tasks 3, 4, 7), `rankSpots`, `parseFilters`/`filtersToQuery`, `SailableDaysChart`, adapted wind/temp charts.
 - Produces: `DestinationFilterBar` with props `{ monthOptions; groupOptions; destinationOptions; filters: DestinationFilters; onChange(next: DestinationFilters): void }`.
+- **Spots are serialised as slugs:** `destinationOptions` are `{ label: title, value: slug }`, `filters.spots` holds slugs, and Index resolves slugs → titles (via a `slugToTitle` lookup) before calling `rankSpots` (which is keyed by title). Unknown/stale slugs in a shared URL are silently dropped.
 
 - [ ] **Step 1: Add `stat` + `continentLabel` to `DestinationCard`**
 
@@ -1275,15 +1338,14 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
 export default DestinationFilterBar
 ```
 
-> Sub-step: create `resources/js/Helpers/selectTypes.ts` exporting `export interface SelectOption { label: string; value: string }` (the old `SelectOption` lived in `FilterDataset.tsx`; give it a neutral home so both the bar and Index can import it). Copy the `selectStyles` object from the old `FilterDataset.tsx` verbatim into `DestinationFilterBar.tsx` where marked.
+> Sub-step: `resources/js/Helpers/selectTypes.ts` (exporting `SelectOption`) was already created in Task 7 — just import it here. Copy the `selectStyles` object from the old `FilterDataset.tsx` verbatim into `DestinationFilterBar.tsx` where marked (this is the last consumer of anything in `FilterDataset.tsx` before it is deleted below).
 
 - [ ] **Step 3: Rewrite `Destinations/Index.tsx`**
 
-Replace the component wholesale. Key changes: new props (`sailableDays`, `climate` instead of `weatherData`); filter state initialised from the URL via `parseFilters`; every filter change calls `updateFilters`, which writes state and pushes the query string with Inertia's `router.get(..., { preserveState: true, preserveScroll: true, replace: true })`; ranked layouts driven by `rankSpots`; charts consume `climate` + ranked data.
+Replace the component wholesale. Key changes: new props (`sailableDays`, `climate` instead of `weatherData`); filter state initialised from the URL via `parseFilters` in a lazy `useState` initialiser; every filter change calls `updateFilters`, which writes state and mirrors the query string to the URL via `window.history.replaceState` (**no Inertia visit / server round-trip** — all the data is already in the browser); ranked layouts driven by `rankSpots` over **all published spots** (dataless spots rank 0 and stay visible); charts consume `climate` + ranked data. The old server-side "Ordered by gusts for {month}" note-section is gone with this rewrite.
 
 ```tsx
 import { useMemo, useState } from 'react'
-import { router } from '@inertiajs/react'
 import { groupBy } from 'lodash'
 
 import Layout from '@/Layouts/Layout'
@@ -1339,18 +1401,40 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
  * the sailable-days / wind / temperature charts below.
  */
 const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masthead, featuredSpotGuide, meta }: Props) => {
-    const titles = Object.keys(climate).sort()
-    const colours = useMemo(() => getSpotGuideColours(titles), [titles])
-    const destinationOptions: SelectOption[] = spotGuides.map((guide) => ({ label: guide.title, value: guide.title }))
+    // The ranking universe is EVERY published spot — not only those with weather
+    // data. A spot missing from `sailableDays` ranks 0 and sinks to the bottom
+    // (per the spec's "zero-day spots stay visible" rule), so it never vanishes.
+    const allTitles = spotGuides.map((guide) => guide.title)
+    // Colours are keyed by title and built from the full set so a spot's colour is
+    // stable regardless of which spots are selected. `climate` (chart series only)
+    // must NOT seed the ranking — that is what silently dropped dataless spots.
+    const colours = useMemo(() => getSpotGuideColours(allTitles), [allTitles])
+
+    // Multiselect options carry the title as label and the SLUG as value — slugs
+    // are what we serialise to the URL (titles contain spaces/commas that would
+    // break the comma-join).
+    const destinationOptions: SelectOption[] = spotGuides.map((guide) => ({ label: guide.title, value: guide.slug }))
+    // Resolve URL slugs back to titles (ranking + charts are keyed by title).
+    const slugToTitle = useMemo(() => {
+        const lookup: Record<string, string> = {}
+        spotGuides.forEach((guide) => { lookup[guide.slug] = guide.title })
+        return lookup
+    }, [spotGuides])
 
     const currentMonth = new Date().getMonth() + 1
-    const initialFilters = parseFilters(typeof window !== 'undefined' ? window.location.search : '', { month: currentMonth })
-    const [filters, setFilters] = useState<DestinationFilters>(initialFilters)
+    // Lazy initialiser: parse the URL exactly once on mount. SSR is not enabled in
+    // this project, so `window` is always defined here.
+    const [filters, setFilters] = useState<DestinationFilters>(
+        () => parseFilters(window.location.search, { month: currentMonth })
+    )
 
-    /** Apply a filter change: update local state and mirror to the URL (no server round-trip needed for data). */
+    /** Apply a filter change: update local state and mirror it to the URL. */
     const updateFilters = (next: DestinationFilters) => {
         setFilters(next)
-        router.get('/destinations', filtersToQuery(next), { preserveState: true, preserveScroll: true, replace: true })
+        const query = new URLSearchParams(filtersToQuery(next)).toString()
+        // Mirror to the URL without an Inertia visit — no server round-trip, and
+        // Inertia's history state object is preserved (passed straight back).
+        window.history.replaceState(window.history.state, '', `/destinations?${query}`)
     }
 
     const monthOptions = MONTH_NAMES.map((name, index) => ({ label: name, value: index + 1 }))
@@ -1361,7 +1445,11 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
     ]
 
     const minKts = unitToKts(filters.min, filters.unit)
-    const activeTitles = filters.spots.length > 0 ? filters.spots : titles
+    // Selected slugs → titles (dropping any unknown/stale slug from a shared link);
+    // empty selection = the whole published set.
+    const activeTitles = filters.spots.length > 0
+        ? filters.spots.map((slug) => slugToTitle[slug]).filter(Boolean)
+        : allTitles
     const ranked = useMemo(
         () => rankSpots(sailableDays, activeTitles, filters.month, minKts),
         [sailableDays, activeTitles, filters.month, minKts]
@@ -1387,6 +1475,8 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
         return `≈ ${days} ${days === 1 ? 'day' : 'days'} ≥ ${filters.min} ${filters.unit}`
     }
 
+    // `ranked` covers every active title (all published spots when nothing is
+    // selected), so every spot — dataless ones included — appears in the grid.
     const rankedGuides = ranked.map((row) => spotByTitle[row.title]).filter(Boolean) as SpotGuide[]
 
     const mastheadImage = static_masthead ?? spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
@@ -1470,7 +1560,7 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
             )}
 
             {/* Charts */}
-            {titles.length > 0 && (
+            {allTitles.length > 0 && (
                 <section className="bg-primary-lightest">
                     <div className="container mx-auto pt-16 lg:pt-20 pb-10 lg:pb-12">
                         <div className="flex items-start gap-4">
@@ -1486,10 +1576,7 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
                         <AllDestinationsWindChart
                             climate={climate}
                             activeDestinations={activeTitles.map((title) => ({ label: title, value: title }))}
-                            showAverageGustData={false}
                             activeWindUnit={filters.unit}
-                            setActiveWindUnit={(unit: string) => updateFilters({ ...filters, unit: unit as DestinationFilters['unit'] })}
-                            setShowAverageGustData={() => { /* gust toggle handled inside the chart's local state */ }}
                             colours={colours}
                             selectedMonth={filters.month}
                         />
@@ -1537,7 +1624,7 @@ const CardGrid = ({ guides, showProvenance, statFor, withContinent = false }: {
 export default Index
 ```
 
-> Note on the wind chart's gust toggle: it currently expects `showAverageGustData`/`setShowAverageGustData` from the page. To avoid adding gust to the URL scope (out of scope), move that toggle to **local state inside `AllDestinationsWindChart`** as a small follow-up within this step (a `useState(false)` in the chart, dropping the two props). Update the chart's props type accordingly and remove the two props from the Index call above.
+> The wind chart's gust toggle and the removal of its unit radios are handled in Task 7 (the toggle is now chart-local `useState`, the unit is a display-only prop). The Index call above therefore passes neither `showAverageGustData`/`setShowAverageGustData` nor `setActiveWindUnit`.
 
 - [ ] **Step 4: Verify the build compiles**
 
@@ -1552,7 +1639,8 @@ Expected: PASS (all helper suites).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add resources/js/Components/Destinations/DestinationFilterBar.tsx resources/js/Helpers/selectTypes.ts resources/js/Components/Common/DestinationCard.tsx resources/js/Pages/Destinations/Index.tsx resources/js/Components/Destinations/AllDestinationsWindChart.tsx
+# selectTypes.ts + the wind chart were committed in Task 7; not re-added here.
+git add resources/js/Components/Destinations/DestinationFilterBar.tsx resources/js/Components/Common/DestinationCard.tsx resources/js/Pages/Destinations/Index.tsx
 git rm resources/js/Components/Destinations/FilterDataset.tsx  # only if grep showed no other importers
 git commit -m "feat: URL-synced sailable-days filter bar + ranked destinations layouts"
 ```
@@ -1581,7 +1669,7 @@ Start Vite (`export PATH=... && npm run dev`) with Herd serving the app, then op
 - Change **Month** → ranking + reference line move; intro heading month updates.
 - Switch **Unit** → the minimum snaps to the nearest option (e.g. 20 kts → 25 mph), ranking unchanged in spirit.
 - Switch **Group by** between Continent / Country / Global → layout regroups; Global shows a continent tag on each card.
-- Confirm the **URL query string** updates on every change, and that pasting the URL into a fresh tab reproduces the same view.
+- Confirm the **URL query string** updates on every change **with no network request** (the Network tab stays quiet — the change is a `history.replaceState` mirror, not a server visit), and that pasting the URL into a fresh tab reproduces the same view.
 - Empty the Spots select → label reads "All destinations".
 
 - [ ] **Step 4: Verify both themes and all breakpoints**
@@ -1608,5 +1696,13 @@ Run `reconcile-everything` on this branch (folds the history doc into the PR), t
 
 ## Self-Review notes (author)
 
-- **Spec coverage:** data layer (Task 1–2), sailable-day rule via 2nd-highest hour (Task 2), month-based cross-year ranking (Tasks 3–4), Approach-1 client compute (Tasks 4–8), URL sync (Task 5, wired Task 8), filter bar + defaults incl. "All destinations" label (Task 8), three group-by layouts (Task 8), new days-per-month chart + kept typical-year wind/temp charts + unit control (Tasks 6–8), zero-day spots visible (rankSpots keeps them), TDD + Postgres smoke-test + dark/responsive (Task 9). All spec sections map to a task.
-- **Known judgement calls handed to the implementer:** (a) the gust toggle moves to local chart state to keep it out of the URL scope; (b) `selectStyles` is copied into the new bar rather than shared, matching the existing one-off pattern; (c) continent grouping now orders by best-ranked spot (spec-approved) rather than the old editorial `CONTINENT_ORDER`.
+- **Spec coverage:** data layer (Task 1–2), sailable-day rule via 2nd-highest hour (Task 2), month-based **coverage-normalised** ranking — `qualifyingCount ÷ heldDayCount × daysInMonth`, robust to the rolling window's partial boundary months (Tasks 3–4), Approach-1 client compute (Tasks 4–8), URL sync via `history.replaceState` with **spots as slugs** (Task 5, wired Task 8), filter bar + defaults incl. "All destinations" label + the single page-level unit control (Task 8), three group-by layouts (Task 8), new days-per-month chart + kept typical-year wind/temp charts (Tasks 6–8), zero-day **and dataless** spots visible — the ranking universe is all published spots, not `Object.keys(climate)` (Task 8, rankSpots keeps them), TDD + Postgres smoke-test + dark/responsive (Task 9). All spec sections map to a task.
+- **Key decisions carried through the design review:**
+  - **Rate normalisation, not ÷years.** The typical-days figure is `(qualifyingCount ÷ heldDayCount) × daysInMonth`, so partial boundary months (and the always-partial current month) are not undercounted. No `years` field ships from the server; `SailableMonth` is `{ values }`.
+  - **Dataless spots stay visible.** The card layouts rank over `allTitles` (from `spotGuides`), never `Object.keys(climate)`; `climate` keys drive only chart series/colours. Colours are built from `allTitles` for stability.
+  - **URL mirroring, no server round-trip.** `updateFilters` calls `window.history.replaceState` (preserving Inertia's history state object), not `router.get`. Initial state is parsed once in a lazy `useState` initialiser.
+  - **Spots serialised as slugs.** `destinationOptions` values are slugs; Index resolves them to titles for ranking; stale slugs are dropped.
+  - **One unit control.** The chart's unit radios are removed; the filter bar is the single unit control; the wind chart receives `activeWindUnit` as a display-only prop.
+  - **Gust toggle is chart-local.** `showAverageGustData` is `useState` inside `AllDestinationsWindChart`, kept out of the URL scope (decided in Task 7, not re-passed from Index).
+  - **kph minimums step 5 to 95** (`[10,15,…,95]`), matching kts/mph granularity.
+- **Remaining judgement calls handed to the implementer:** (a) `selectStyles` is copied into the new bar rather than shared, matching the existing one-off pattern; (b) continent grouping now orders by best-ranked spot (spec-approved) rather than the old editorial `CONTINENT_ORDER`; (c) `SpotGuide::sortByGustiestThisMonth()` — the controller call is deleted, but grep before removing the method itself (other callers may exist).

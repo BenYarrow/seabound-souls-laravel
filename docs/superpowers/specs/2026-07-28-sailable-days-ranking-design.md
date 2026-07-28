@@ -20,11 +20,13 @@ A day counts as sailable, for a chosen minimum `X`, if **at least 2 hours within
 - **Why sustained wind, not gusts:** gust-based counting would reward squally days that aren't actually sailable. Sustained wind captures "consistently blowing."
 - **Key insight:** "≥2 hours ≥ X" is exactly equivalent to **"the 2nd-windiest hour of the day ≥ X."** So a single stored number per day — the 2nd-highest sailing-window hourly wind — answers the sailable test for *any* minimum the user picks, with no recomputation.
 
-## Ranking model (approved: month-based, averaged across years)
+## Ranking model (approved: month-based, coverage-normalised rate)
 
 - The rank axis is **month**, not year — "how many sailable days in August" is a real planning question; "across the whole year" is not.
-- We hold ~3 years of data. For a chosen month we **average the sailable-day count across the years we hold** → a typical/climatological figure (e.g. "Vassiliki — avg 19 days ≥ 20 kts in August"). This is more robust than any single year and matches the charts' existing "long-term averages" framing.
-- **Rank key:** average sailable days in the selected month, descending.
+- We hold ~3 years of data on a **rolling** window, so a month's boundary years are only partially covered (e.g. fetched 2026-07-28, we hold ~4 days of July 2023, full Julys for 2024–2025, and ~28 days of July 2026 — only ~2.1 full-month-equivalents). Dividing a pooled qualifying-day count by the number of distinct years would therefore undercount by nearly half — and the **current month (the default selection) is always a partial boundary**. Instead we compute a **coverage-normalised rate**: the share of *held* days in that month that qualify, scaled up to the month's calendar length →
+  `typicalDays = (qualifyingCount ÷ heldDayCount) × daysInMonth`
+  where `qualifyingCount` = pooled daily values ≥ the minimum, `heldDayCount` = the number of pooled daily values, and `daysInMonth` = `[31,28,31,30,31,30,31,31,30,31,30,31][month-1]` (February fixed at 28 — the sub-day error from leap years is immaterial to a climatological estimate). This yields a typical/climatological figure (e.g. "Vassiliki — ≈19 days ≥ 20 kts in August") that is robust to partial boundary months.
+- **Rank key:** the coverage-normalised typical sailable days in the selected month, descending.
 - **Tie-break:** higher sailable-day count in the spot's *peak* month, then alphabetical by title — deterministic, so shared links reproduce an identical order.
 - **Zero-day spots stay visible** at the bottom, labelled "0 days ≥ X kts", so cranking the minimum to 50 kts shows an honest "nowhere qualifies" rather than an empty page.
 - The **Spots multiselect** narrows the field (empty = all spots); ranking and charts operate on the selected set.
@@ -72,14 +74,13 @@ Ships three props (replacing today's per-year `weatherData` prop):
 
 2. **`sailableDays[title]`** — ranking fuel. Per spot, per month (1–12):
    ```
-   { values: number[],  // daily qualifying_wind_kts, pooled across all held years
-     years: number }    // distinct years contributing for that spot/month
+   { values: number[] }  // daily qualifying_wind_kts, pooled across all held years
    ```
-   The browser counts `values ≥ X_kts` and divides by `years` → average sailable days that month. Pooling-then-dividing handles spots with fewer years of history. Keyed by title to match chart series labels (consistent with existing convention).
+   The browser counts `values ≥ X_kts`, divides by `values.length` (the held-day count), and scales by the month's calendar length → the coverage-normalised typical sailable days that month (see the Ranking model above). Rate-then-scale is robust both to spots with fewer years of history and to partial boundary months. Keyed by title to match chart series labels (consistent with existing convention).
 
 3. **`climate[title]`** — the kept wind/temp charts, averaged across years server-side into one typical-year 12-month array: `{ month, avgTemp, ktsWind, ktsGust, mphWind, mphGust, kphWind, kphGust }`, built from `weather_records` with a simple `AVG` grouped by month.
 
-Server does: the cross-year `AVG` for `climate`, and the pooling + distinct-year count for `sailableDays`. Browser does: all threshold counting and ranking. No new API endpoint; no per-keystroke round-trips.
+Server does: the cross-year `AVG` for `climate`, and the by-month pooling of daily values for `sailableDays` (no per-year division — the browser does the rate normalisation). Browser does: all threshold counting and ranking. No new API endpoint; no per-keystroke round-trips.
 
 ### 4. Frontend — `resources/js/Pages/Destinations/Index.tsx`
 
@@ -95,9 +96,11 @@ Server does: the cross-year `AVG` for `climate`, and the pooling + distinct-year
 
 **Switching units:** when the user changes the unit, the current minimum is converted into the new unit and snapped to the nearest 5-step option (e.g. 20 kts → ~23 mph → snaps to 25 mph), so the intended wind strength is roughly preserved rather than reset.
 
-**URL sync:** every change is instant (client-side) and written to the query string via Inertia's router with `preserveState` + `preserveScroll` — e.g. `/destinations?month=8&min=20&unit=kts&group=continent&spots=vassiliki,tarifa`. Initial state is read from the URL on load (falling back to defaults), so a shared link reproduces the exact view. The minimum is stored/serialised in the user's chosen unit and converted to kts for comparison.
+**URL sync:** every change is instant (client-side) and mirrored to the query string via `window.history.replaceState` — **no server request**, since all the ranking data is already in the browser — e.g. `/destinations?month=8&min=20&unit=kts&group=continent&spots=vassiliki,tarifa`. **Spots are serialised as slugs** (not titles, which contain spaces/commas that would break the comma-join); the page resolves slugs → titles for ranking and silently drops any unknown/stale slug in a shared link. Initial state is read from the URL on load (falling back to defaults), so a shared link reproduces the exact view. The minimum is stored/serialised in the user's chosen unit and converted to kts for comparison.
 
 **`useSailableRanking` hook** — pure function `(sailableDays, spots, month, minKts) → { spot, avgDaysThisMonth, daysPerMonth[12] }[]`, sorted by `avgDaysThisMonth` desc with peak-month → alphabetical tie-break. Trivially unit-testable.
+
+**Ranking universe:** the ranking (and therefore every card layout) is built from **all published spots**, not only those that have fetched weather data. A spot with no `spot_sailable_days` rows simply ranks 0 and sinks to the bottom — it never silently disappears from the grid (this is the "zero-day spots stay visible" rule applied to dataless spots too). The `climate` map (which only has entries for spots with weather records) drives the chart series/colours, but must **not** seed the card ranking.
 
 **Three layouts**, all consuming the ranked array:
 - **Global** — one flat grid in rank order; each card shows its "≈19 days ≥ 20 kts in August" figure and a continent tag.
@@ -107,7 +110,7 @@ Each card gains a small **"≈N sailable days"** stat for the selected month + m
 
 ### 5. Visualisations (bottom of page)
 
-- **New "Sailable days per month" chart** (hero): 12-month line chart, one series per selected spot, y = average sailable days, reacting live to minimum/unit/spots, with the **selected month marked** (emphasis dot / reference line). Line (not bars) for consistency with the existing comparison charts and readability with many spots.
+- **New "Sailable days per month" chart** (hero): 12-month line chart, one series per selected spot, y = typical (coverage-normalised) sailable days, reacting live to minimum/unit/spots, with the **selected month marked** (emphasis dot / reference line). Line (not bars) for consistency with the existing comparison charts and readability with many spots.
 - **Kept wind & temperature charts:** the existing line charts, now drawn as the **typical-year** 12-month curve (averaged across years), selected month marked. The **unit** selector moves up to the shared filter bar (it now governs the whole page); the wind chart keeps its own **avg-wind / gust** toggle (chart-specific). These curves guide the "which month?" choice.
 
 ---
@@ -116,13 +119,13 @@ Each card gains a small **"≈N sailable days"** stat for the selected month + m
 
 **PHP (PHPUnit, SQLite):**
 - `WeatherFetcher`: given mocked Open-Meteo hourly data, a day's `qualifying_wind_kts` equals the 2nd-highest 9am–7pm sustained-wind hour; monthly `weather_records` still produced unchanged in the same pass.
-- `DestinationController@index`: `sailableDays` pooling and correct `years` count; `climate` cross-year averaging; keyed by title.
+- `DestinationController@index`: `sailableDays` pooling by month (values only, no per-year division server-side); `climate` cross-year averaging; both keyed by title.
 - All external HTTP (Open-Meteo) mocked.
 
 **JS (Vitest, Node 22):**
-- `useSailableRanking`: threshold counting, average-across-years, rank order, peak-month/alphabetical tie-break, zero-day spots sink to the bottom.
-- Minimum unit→kts conversion.
-- URL serialise/deserialise round-trip restores an identical view.
+- `sailableDaysInMonth` / `rankSpots`: threshold counting, the coverage-normalised rate formula (`qualifyingCount ÷ heldDayCount × daysInMonth`), rank order, peak-month → alphabetical tie-break, zero-day and dataless spots sink to the bottom but stay in the list.
+- Minimum unit→kts conversion and unit-switch snapping (kts/mph/kph, including kph 10–95 in steps of 5).
+- URL serialise/deserialise round-trip restores an identical view, with **spots carried as slugs**.
 
 **Standard project checks before done:** `php artisan test` green; `npm run test:js` green; both light and dark themes and mobile/tablet/desktop breakpoints verified on the redesigned page; no banned raw colour utilities.
 
