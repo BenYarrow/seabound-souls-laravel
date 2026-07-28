@@ -1,4 +1,11 @@
-import { useMemo } from 'react'
+// resources/js/Components/Destinations/AllDestinationsWindChart.tsx
+//
+// Line chart comparing typical-year wind speed averages across the active
+// destinations. Wind/gust is a chart-local toggle (out of URL scope); the unit
+// (kts/mph/kph) is display-only here — the filter bar (Task 8) owns the single
+// live unit control so there aren't two controls fighting over one piece of state.
+
+import { useMemo, useState } from 'react'
 import {
     LineChart,
     Line,
@@ -6,45 +13,59 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
+    ReferenceLine,
     ResponsiveContainer,
 } from 'recharts'
-import { prepareYearlyWindData, WeatherDataset } from '@/Helpers/weatherDataHelpers'
-import type { SelectOption } from './FilterDataset'
+import { prepareClimateData, MONTH_NAMES, type ClimateDataset, type ClimateMonth } from '@/Helpers/climate'
+import type { WindUnit } from '@/Helpers/sailableDays'
+import type { SelectOption } from '@/Helpers/selectTypes'
 
 interface Props {
-    weatherData: WeatherDataset
-    activeYear: number
+    climate: ClimateDataset
     activeDestinations: SelectOption[]
-    showAverageGustData: boolean
-    activeWindUnit: string
-    setActiveWindUnit: (unit: string) => void
-    setShowAverageGustData: (state: boolean) => void
+    activeWindUnit: WindUnit
     colours: Record<string, string>
+    selectedMonth: number
 }
-
-const unitOptions = ['kts', 'mph', 'kph']
 
 const AXIS_TICK = { fill: 'rgba(0,0,0,0.6)', fontSize: 11 }
 const AXIS_LINE = { stroke: 'rgba(0,0,0,0.15)' }
 
 const AllDestinationsWindChart = ({
-    weatherData,
-    activeYear,
+    climate,
     activeDestinations,
-    showAverageGustData,
     activeWindUnit,
-    setActiveWindUnit,
-    setShowAverageGustData,
     colours,
+    selectedMonth,
 }: Props) => {
+    // Wind vs gust is specific to this chart (not part of the shared filter bar
+    // state / URL), so it stays as local state rather than a lifted prop.
+    const [showAverageGustData, setShowAverageGustData] = useState(false)
+
     const windDatapoint = showAverageGustData
         ? `${activeWindUnit}Gust`
         : `${activeWindUnit}Wind`
 
+    // Narrow the full climate dataset down to the currently-active destinations,
+    // mirroring the same active-destination filtering the chart previously
+    // applied via the rendered <Line> list — now applied to the data source too
+    // so prepareClimateData only pivots the series actually shown.
+    const filteredClimate = useMemo(() => {
+        const activeLabels = activeDestinations.map((d) => d.label)
+        return Object.fromEntries(
+            Object.entries(climate).filter(([title]) => activeLabels.includes(title))
+        )
+    }, [climate, activeDestinations])
+
     const chartData = useMemo(
-        () => prepareYearlyWindData(weatherData, activeYear, windDatapoint),
-        [weatherData, activeYear, windDatapoint]
+        () => prepareClimateData(filteredClimate, windDatapoint as keyof ClimateMonth),
+        [filteredClimate, windDatapoint]
     )
+
+    // The selected-month reference line only renders if that month is actually
+    // present among the pivoted rows (typical-year data may not cover every month).
+    const selectedMonthLabel = MONTH_NAMES[selectedMonth - 1]
+    const hasSelectedMonth = chartData.some((row) => row.month === selectedMonthLabel)
 
     const CustomTooltip = ({ payload }: any) => {
         if (!payload?.length) return null
@@ -60,7 +81,7 @@ const AllDestinationsWindChart = ({
         return (
             <div className="min-w-[10rem] bg-white border border-black/10 p-3 shadow-xl">
                 <p className="text-primary text-xs uppercase tracking-wide border-b border-black/10 pb-2 mb-2 flex items-center justify-between gap-x-3">
-                    {month} <span className="text-secondary/50">{activeYear}</span>
+                    {month}
                 </p>
                 <ul className="space-y-1.5">
                     {orderedData.map(({ location, value }) => (
@@ -89,7 +110,7 @@ const AllDestinationsWindChart = ({
                         style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)' }}>
                         Wind Speed Averages
                     </h3>
-                    <p className="text-secondary/50 text-xs mt-1">Monthly breakdown by spot · {activeYear}</p>
+                    <p className="text-secondary/50 text-xs mt-1">Typical-year monthly breakdown by spot</p>
                 </div>
 
                 {/* Controls */}
@@ -110,26 +131,6 @@ const AllDestinationsWindChart = ({
                             Gust
                         </span>
                     </label>
-
-                    {/* Unit radios */}
-                    <div className="flex items-center gap-1 border border-secondary/15">
-                        {unitOptions.map((unit) => {
-                            const active = activeWindUnit === unit
-                            return (
-                                <button
-                                    key={unit}
-                                    onClick={() => setActiveWindUnit(unit)}
-                                    className={`px-3 py-1.5 text-xs uppercase tracking-wide transition-colors duration-200 ${
-                                        active
-                                            ? 'bg-primary text-white'
-                                            : 'text-secondary/50 hover:text-secondary'
-                                    }`}
-                                >
-                                    {unit}
-                                </button>
-                            )
-                        })}
-                    </div>
                 </div>
             </div>
 
@@ -160,6 +161,13 @@ const AllDestinationsWindChart = ({
                             }}
                         />
                         <Tooltip content={<CustomTooltip />} />
+                        {hasSelectedMonth && (
+                            <ReferenceLine
+                                x={selectedMonthLabel}
+                                stroke="hsl(11 61% 58%)"
+                                strokeDasharray="4 2"
+                            />
+                        )}
                         {activeDestinations.map(({ label }) => (
                             <Line
                                 key={label}
