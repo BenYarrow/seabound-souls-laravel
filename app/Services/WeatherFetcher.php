@@ -70,8 +70,23 @@ class WeatherFetcher
         }
 
         // Daily buckets, restricted to the 9am–7pm sailing window.
+        //
+        // Chunk seams share a boundary day: $chunkStart re-uses the previous
+        // chunk's $chunkEnd, and Open-Meteo's date range is inclusive, so that
+        // day's hourly readings come back from BOTH requests and land twice in
+        // $times/$winds/etc via array_merge. Monthly averages are invariant to
+        // an exact duplicate, but the daily 2nd-highest order-statistic is not
+        // (two copies of the max would wrongly outrank the true 2nd-highest) —
+        // so de-dup by the exact timestamp string here, keeping the first
+        // occurrence, before any bucketing happens.
+        $seenTimestamps = [];
         $dailyMap = [];
         foreach ($times as $index => $datetime) {
+            if (isset($seenTimestamps[$datetime])) {
+                continue;
+            }
+            $seenTimestamps[$datetime] = true;
+
             $hour = (int) substr($datetime, 11, 2);
             if ($hour < 9 || $hour > 19) {
                 continue;
@@ -131,9 +146,9 @@ class WeatherFetcher
         // hour (when winds are sorted high-to-low) already clears it. A day with
         // fewer than 2 in-window readings can never be sailable, so it scores 0.
         foreach ($dailyMap as $date => $values) {
-            $winds = $values['winds'];
-            rsort($winds); // highest first
-            $secondHighest = count($winds) >= 2 ? $winds[1] : 0.0;
+            $dailyWinds = $values['winds'];
+            rsort($dailyWinds); // highest first
+            $secondHighest = count($dailyWinds) >= 2 ? $dailyWinds[1] : 0.0;
 
             [$year, $monthNumber] = explode('-', $date);
 

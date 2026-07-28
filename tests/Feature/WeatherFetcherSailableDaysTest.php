@@ -20,11 +20,12 @@ class WeatherFetcherSailableDaysTest extends TestCase
         Sleep::fake();
 
         // fetchForSpot splits the 3-year range into 3-month chunks (~13 requests),
-        // all matching this URL pattern. The real archive API would only return
-        // this single day inside the one chunk whose date range covers it; the
-        // sequence fake reproduces that — only the FIRST request gets the day's
-        // 09:00 -> 22kts, 10:00 -> 18kts readings (08:00 is outside the 9am-7pm
-        // window and must be ignored), every other chunk gets an empty response.
+        // all matching this URL pattern. Http::sequence() doesn't correlate
+        // responses to the request's query params, so we simply make the FIRST
+        // request return this day's 09:00 -> 22kts, 10:00 -> 18kts readings
+        // (08:00 is outside the 9am-7pm window and must be ignored) and every
+        // other chunk return an empty response — what matters is that bucketing
+        // keys off the response's own `time` field, not which chunk it came from.
         Http::fake([
             'archive-api.open-meteo.com/*' => Http::sequence()
                 ->push([
@@ -54,9 +55,10 @@ class WeatherFetcherSailableDaysTest extends TestCase
     {
         Sleep::fake();
 
-        // Same reasoning as above: only the first of the ~13 chunk requests should
-        // carry this day's single in-window reading, the rest must be empty so the
-        // day isn't artificially duplicated into a "2+ readings" day.
+        // Same reasoning as above: the fake simply returns this day's single
+        // in-window reading on the first of the ~13 chunk requests and an empty
+        // response thereafter — bucketing keys off the response's own `time`
+        // field, not which chunk the request happened to be for.
         Http::fake([
             'archive-api.open-meteo.com/*' => Http::sequence()
                 ->push([
@@ -76,5 +78,44 @@ class WeatherFetcherSailableDaysTest extends TestCase
         $day = SailableDay::where('spot_guide_id', $spot->id)->where('date', '2025-08-02')->first();
         $this->assertNotNull($day);
         $this->assertSame('0.0', (string) $day->qualifying_wind_kts); // <2 hours => never sailable
+    }
+
+    public function test_it_dedupes_chunk_boundary_hourly_readings_before_ranking(): void
+    {
+        Sleep::fake();
+
+        // A chunk boundary lands on this day, so in production the same day's
+        // hourly readings are returned by TWO consecutive chunk requests
+        // (fetchForSpot re-uses the previous chunk's end_date as the next
+        // chunk's start_date, and Open-Meteo treats the range as inclusive).
+        // We reproduce that by pushing the identical payload twice before
+        // falling back to empty responses for the remaining chunks.
+        $boundaryDayPayload = [
+            'hourly' => [
+                'time' => ['2025-08-01T09:00', '2025-08-01T10:00'],
+                'temperature_2m' => [21.0, 22.0],
+                'wind_speed_10m' => [25.0, 15.0],
+                'wind_gusts_10m' => [30.0, 20.0],
+            ],
+        ];
+
+        Http::fake([
+            'archive-api.open-meteo.com/*' => Http::sequence()
+                ->push($boundaryDayPayload)
+                ->push($boundaryDayPayload)
+                ->whenEmpty(Http::response(['hourly' => ['time' => [], 'temperature_2m' => [], 'wind_speed_10m' => [], 'wind_gusts_10m' => []]])),
+        ]);
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $day = SailableDay::where('spot_guide_id', $spot->id)->where('date', '2025-08-01')->first();
+        $this->assertNotNull($day);
+        // Without dedup, the duplicated readings become [25, 25, 15, 15] and the
+        // "2nd-highest" is wrongly 25.0 (the day's own max). De-duplicated by
+        // exact timestamp, the true readings are [25, 15] and the 2nd-highest
+        // is 15.0.
+        $this->assertSame('15.0', (string) $day->qualifying_wind_kts);
     }
 }
