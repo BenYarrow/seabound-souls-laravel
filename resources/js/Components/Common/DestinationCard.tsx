@@ -18,12 +18,16 @@ interface DestinationCardProps {
     countryName?: string | null
     /** Attribution line (e.g. "By Marina Reef" / "Seabound Souls"); null hides it. */
     byline?: string | null
+    /** e.g. "≈ 19 days ≥ 20 kts" — the sailable-days figure for the active filter; null hides it. */
+    stat?: string | null
+    /** Continent label shown in the flat "global" ranking so region is still visible; null hides it. */
+    continentLabel?: string | null
 }
 
 /**
  * Render a single spot-guide card linking to its destination page.
  */
-const DestinationCard = ({ title, slug, thumbnail, countryName, byline }: DestinationCardProps) => (
+const DestinationCard = ({ title, slug, thumbnail, countryName, byline, stat, continentLabel }: DestinationCardProps) => (
     <Link
         href={`/destinations/${slug}`}
         className="group relative block w-full h-full overflow-hidden bg-primary-darker"
@@ -46,8 +50,15 @@ const DestinationCard = ({ title, slug, thumbnail, countryName, byline }: Destin
             >
                 {title}
             </h3>
-            {countryName && (
-                <p className="text-white/55 text-[10px] mt-1.5 uppercase tracking-[0.2em]">{countryName}</p>
+            {stat && (
+                <p className="text-primary-lighter text-[11px] mt-1 font-medium tracking-wide tabular-nums">
+                    {stat}
+                </p>
+            )}
+            {(countryName || continentLabel) && (
+                <p className="text-white/55 text-[10px] mt-1.5 uppercase tracking-[0.2em]">
+                    {[countryName, continentLabel].filter(Boolean).join(' · ')}
+                </p>
             )}
             {byline && <p className="text-white/75 text-[11px] mt-2 italic">{byline}</p>}
             <div className="mt-3 h-px w-0 bg-primary-lighter group-hover:w-10 transition-all duration-500 ease-out" />
