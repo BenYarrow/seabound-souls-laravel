@@ -1,7 +1,7 @@
 # Sailable-days ranking — destinations page redesign
 
 **Date:** 2026-07-28
-**Status:** Design approved, pending spec review
+**Status:** Shipped 2026-07-28. Design evolved post-validation: the sailable metric changed from sustained wind (as designed below) to **gust-based** after real-data testing showed sustained wind under-reads thermal/venturi spots — see `docs/history/2026-07-28-sailable-days-ranking.md` for the full rationale. The "Why sustained wind, not gusts" bullet and the out-of-scope line below are annotated accordingly rather than silently rewritten.
 **Area:** `/destinations` page, weather data pipeline
 
 ---
@@ -17,7 +17,8 @@ So we want a **custom ranking**: the user sets a minimum wind speed, and the pag
 A day counts as sailable, for a chosen minimum `X`, if **at least 2 hours within the 9am–7pm sailing window blew at or above `X`** (sustained wind, not gusts).
 
 - **Why 2 hours:** two solid hours guarantees a proper session; it's a fixed rule, not a user knob.
-- **Why sustained wind, not gusts:** gust-based counting would reward squally days that aren't actually sailable. Sustained wind captures "consistently blowing."
+- **Why sustained wind, not gusts *(as originally designed — reversed post-build, see below)*:** gust-based counting would reward squally days that aren't actually sailable. Sustained wind captures "consistently blowing."
+- **UPDATE (2026-07-28, post-build):** shipped as designed, then reversed after real data exposed the flaw. Karpathos's June reading came back at ~1 sailable day at 20kts sustained — implausible, since the Aegean meltemi blows there almost daily in summer. Open-Meteo's sustained 10m wind under-reads thermal/venturi spots (~14kt logged there) while gusts (~28kt) tracked what a windsurfer actually feels. The ranking metric switched to **gust-based** (`qualifying_gust_kts`); the sustained column (`qualifying_wind_kts`) is retained in `spot_sailable_days` for a possible future toggle. See `docs/history/2026-07-28-sailable-days-ranking.md`.
 - **Key insight:** "≥2 hours ≥ X" is exactly equivalent to **"the 2nd-windiest hour of the day ≥ X."** So a single stored number per day — the 2nd-highest sailing-window hourly wind — answers the sailable test for *any* minimum the user picks, with no recomputation.
 
 ## Ranking model (approved: month-based, coverage-normalised rate)
@@ -134,7 +135,7 @@ Each card gains a small **"≈N sailable days"** stat for the selected month + m
 ## Out of scope (YAGNI)
 
 - Configurable "N hours" (fixed at 2).
-- Gust-based sailable counting.
+- ~~Gust-based sailable counting.~~ **Now IN scope — shipped as the ranking metric, see the 2026-07-28 update above.** The new out-of-scope/future item in its place: a **sustained/gust UI toggle** (the sustained column, `qualifying_wind_kts`, is stored but not exposed in the UI).
 - Per-specific-year ranking (dropped the year axis deliberately).
 - Threshold-bucket precomputation (Approach 3 — defeats the custom-minimum requirement).
 - A dedicated ranking API endpoint (client-side compute makes it unnecessary).

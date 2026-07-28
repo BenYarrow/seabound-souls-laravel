@@ -1,2 +1,2 @@
-date: 2026-07-17
-note: Reconcile 20 (folded into the split-block PR) — Background Colour option on the Split Image & Text content block.
+date: 2026-07-28
+note: Reconcile 21 (folded into the sailable-days-ranking PR) — gust-based sailable-days ranking on /destinations + daily spot_sailable_days weather layer, URL-synced filter bar, 3 group-by layouts, sailable-days bar chart.

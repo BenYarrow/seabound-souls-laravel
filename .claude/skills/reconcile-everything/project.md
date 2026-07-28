@@ -11,8 +11,8 @@ Update this file when project conventions change. Don't put procedure logic here
 | Key | Value |
 |---|---|
 | `memory_dir` | `~/.claude/projects/-Users-benyarrow-sites-personal-claude-seabound-souls-laravel/memory/` |
-| `situation_report` | `SITREP.md` _(not created yet — first reconcile creates it)_ |
-| `todo` | `docs/TODO.md` _(not created yet)_ |
+| `situation_report` | `SITREP.md` |
+| `todo` | `docs/TODO.md` |
 | `history_docs` | `docs/history/` _(filenames: `YYYY-MM-DD-<slug>.md`)_ |
 | `docs_index` | `docs/README.md` |
 | `repo_level_claude_md` | `CLAUDE.md` |
@@ -28,7 +28,7 @@ Update this file when project conventions change. Don't put procedure logic here
 | `test_runner` | `php artisan test` (PHPUnit 11) |
 | `frontend_build_cmd` | `npm run build` _(requires Node 22+; shell default v14 fails — see CLAUDE.md)_ |
 | `db_engine` | PostgreSQL. Local `seabound_souls_dev` on Homebrew `postgresql@16` (server); prod DB is **`main`** on Laravel Cloud / Neon (Postgres **17**). Client tools `postgresql@17` also installed locally for `db:pull-from-production`. Tests run on in-memory SQLite (`phpunit.xml`). |
-| `deploy_platform` | Laravel Cloud (targeted — serverless Postgres; not yet deployed) |
+| `deploy_platform` | Laravel Cloud (serverless Postgres) — **live** since 2026-07-09, `https://seabound-souls-production-ewycw6.laravel.cloud` (see SITREP roadmap #18/#19); custom domain still pending |
 
 ## Code directories — for stable-doc deep-audit (10a)
 
