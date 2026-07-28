@@ -229,20 +229,18 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                 Contributor: a prominent card (portrait + name) linking to their profile.
                 House: a simple "Written by Seabound Souls" label. */}
             {showProvenance && (
-                <div className="relative overflow-hidden bg-gradient-to-br from-primary-darker via-primary to-primary-darker py-12">
-                    {/* Flowing wave lines — on-brand decoration; two periods across a
-                        double-width SVG, translated -50% for a seamless loop. */}
+                <div className="relative overflow-hidden bg-cream py-12">
+                    {/* Flowing wave lines — soft on-brand decoration on the cream
+                        band; two blue tones (primary + primary-darker), each a
+                        double-width SVG translated -50% for a seamless loop. */}
                     <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-                        <svg className="absolute inset-x-0 bottom-4 h-20 w-[200%] text-white/10 animate-wave-flow-slow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg className="absolute inset-x-0 bottom-4 h-20 w-[200%] text-primary/30 animate-wave-flow-slow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path d="M0,60 C360,10 1080,110 1440,60 C1800,10 2520,110 2880,60" />
                         </svg>
-                        <svg className="absolute inset-x-0 top-4 h-20 w-[200%] text-white/[0.16] animate-wave-flow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg className="absolute inset-x-0 top-4 h-20 w-[200%] text-primary-darker/30 animate-wave-flow" viewBox="0 0 2880 120" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path d="M0,60 C360,110 1080,10 1440,60 C1800,110 2520,10 2880,60" />
                         </svg>
                     </div>
-
-                    {/* Fade the band's bottom into the cream content below for a seamless join. */}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-cream" aria-hidden="true" />
 
                     <div className="relative z-10 flex justify-center">
                     {isContributorAuthor ? (
@@ -289,8 +287,8 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                         })()
                     ) : (
                         <div className="inline-flex flex-col items-center">
-                            <span className="text-[10px] uppercase tracking-[0.35em] text-white/60">Written by</span>
-                            <span className="font-title text-white uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
+                            <span className="text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
+                            <span className="font-title text-secondary uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
                                 Seabound Souls
                             </span>
                         </div>
