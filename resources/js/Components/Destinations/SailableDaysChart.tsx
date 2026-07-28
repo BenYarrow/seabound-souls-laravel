@@ -1,11 +1,12 @@
 // resources/js/Components/Destinations/SailableDaysChart.tsx
 //
-// "Sailable days per month" comparison chart: one line per selected spot,
-// y-axis = typical sailable days, with the selected month marked by a reference
-// line. Reacts to the minimum/unit/spot filters via the ranked data it is given.
+// "Sailable days per month" comparison chart: a grouped bar chart with one bar
+// per selected spot per month, y-axis = typical sailable days, with the
+// selected month marked by a reference line. Reacts to the minimum/unit/spot
+// filters via the ranked data it is given.
 
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts'
 import { prepareSailableChartData, MONTH_LABELS } from '@/Helpers/sailableChartData'
 import type { RankedSpot } from '@/Helpers/sailableDays'
@@ -20,7 +21,7 @@ interface Props {
 }
 
 /**
- * Render the sailable-days-per-month line chart for the ranked spots.
+ * Render the sailable-days-per-month grouped bar chart for the ranked spots.
  */
 const SailableDaysChart = ({ ranked, colours, selectedMonth, minLabel }: Props) => {
     const data = prepareSailableChartData(ranked)
@@ -32,7 +33,7 @@ const SailableDaysChart = ({ ranked, colours, selectedMonth, minLabel }: Props) 
                 Typical days with 2+ hours at or above {minLabel}
             </p>
             <ResponsiveContainer width="100%" height={360}>
-                <LineChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+                <BarChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
@@ -44,16 +45,15 @@ const SailableDaysChart = ({ ranked, colours, selectedMonth, minLabel }: Props) 
                         strokeDasharray="4 2"
                     />
                     {ranked.map((spot) => (
-                        <Line
+                        <Bar
                             key={spot.title}
-                            type="monotone"
                             dataKey={spot.title}
-                            stroke={colours[spot.title]}
-                            strokeWidth={2}
-                            dot={false}
+                            fill={colours[spot.title]}
+                            radius={[2, 2, 0, 0]}
+                            maxBarSize={40}
                         />
                     ))}
-                </LineChart>
+                </BarChart>
             </ResponsiveContainer>
         </div>
     )

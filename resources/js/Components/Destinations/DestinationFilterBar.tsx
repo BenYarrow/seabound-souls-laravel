@@ -91,13 +91,14 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
     return (
         <div className="bg-white border-y border-secondary/10 sticky top-0 z-20">
             <div className="container mx-auto py-4 lg:py-5">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-5">
-                    <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-5">
+                    <div className="flex items-center gap-2.5 shrink-0 lg:pb-2.5">
                         <Icon icon={faSlidersH} customClasses="text-primary" size="size-4" />
                         <span className="text-primary text-xs uppercase tracking-[0.2em] font-medium">Find your spot</span>
                     </div>
 
-                    <div className="lg:w-36 shrink-0">
+                    <div className="flex flex-col lg:w-36 shrink-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Month</label>
                         <Select
                             options={monthOptions}
                             value={monthOptions.find((opt) => opt.value === filters.month)}
@@ -107,7 +108,8 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
                         />
                     </div>
 
-                    <div className="lg:w-40 shrink-0">
+                    <div className="flex flex-col lg:w-40 shrink-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Group by</label>
                         <Select
                             options={groupOptions}
                             value={groupOptions.find((opt) => opt.value === filters.group)}
@@ -117,7 +119,8 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
                         />
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Destinations</label>
                         <Select
                             isMulti
                             options={destinationOptions}
@@ -128,7 +131,8 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
                         />
                     </div>
 
-                    <div className="lg:w-28 shrink-0">
+                    <div className="flex flex-col lg:w-28 shrink-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Unit</label>
                         <Select
                             options={unitOptions}
                             value={unitOptions.find((opt) => opt.value === filters.unit)}
@@ -138,7 +142,8 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
                         />
                     </div>
 
-                    <div className="lg:w-36 shrink-0">
+                    <div className="flex flex-col lg:w-36 shrink-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Min. wind</label>
                         <Select
                             options={minOptions}
                             value={minOptions.find((opt) => opt.value === filters.min) ?? minOptions[0]}
