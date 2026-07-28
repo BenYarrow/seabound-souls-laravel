@@ -17,11 +17,12 @@ class DestinationController extends Controller
     /**
      * Render the destinations index. Returns props built from one query:
      * `spotGuides` (cards, title-ordered), `sailableDays` — pooled daily
-     * qualifying-GUST values keyed by guide title then month (1-12), for the
-     * client to rank by coverage-normalised sailable-day rate — and `climate`
-     * — cross-year-averaged monthly conditions keyed by guide title, matching
-     * the shape the wind/temperature comparison charts expect (keyed by the
-     * same title the chart legend uses).
+     * qualifying gust AND sustained-wind values keyed by guide title then
+     * month (1-12), for the client to rank by a coverage-normalised sailable-
+     * day rate under the blend (gust >= min AND sustained >= 60% of min) —
+     * and `climate` — cross-year-averaged monthly conditions keyed by guide
+     * title, matching the shape the wind/temperature comparison charts expect
+     * (keyed by the same title the chart legend uses).
      */
     public function index(): Response
     {
@@ -64,20 +65,26 @@ class DestinationController extends Controller
             ->with(['country', 'thumbnailMedia'])
             ->first();
 
-        // Pooled daily sailable-GUST values, keyed by title then month (1-12).
-        // The browser counts values >= minimum, divides by the held-day count and
-        // scales by the month's length to get the typical (climatological) number
-        // of sailable days that month — a coverage-normalised rate that is robust
-        // to the rolling window's partial boundary months (so no `years` field is
+        // Pooled daily gust + sustained-wind values, keyed by title then month
+        // (1-12), index-aligned (gusts[i] and winds[i] are the same day). The
+        // browser blends the two client-side: a day counts only if
+        // gust >= minimum AND sustained >= 60% of minimum, then divides the
+        // qualifying count by the held-day count and scales by the month's
+        // length to get the typical (climatological) number of sailable days
+        // that month — a coverage-normalised rate that is robust to the
+        // rolling window's partial boundary months (so no `years` field is
         // shipped; per-year division would undercount the boundary months).
-        // Ranking on gust (not sustained wind) because sustained 10m wind
-        // under-reads the felt wind at thermal/meltemi spots (e.g. Karpathos),
-        // while gusts track what sailors actually ride.
+        // The blend exists because pure-gust ranking let gusty storm-prone
+        // spots (e.g. Karpathos) outrank steady spots (e.g. Langebaan) even
+        // midwinter; the sustained floor filters gusty-but-not-steady days
+        // while leaving steady spots (whose sustained wind already tracks
+        // their gust) unaffected.
         $sailableDays = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->sailableDays
                 ->groupBy('month')
                 ->map(fn ($monthDays) => [
-                    'values' => $monthDays->map(fn ($day) => (float) $day->qualifying_gust_kts)->values()->toArray(),
+                    'gusts' => $monthDays->map(fn ($day) => (float) $day->qualifying_gust_kts)->values()->toArray(),
+                    'winds' => $monthDays->map(fn ($day) => (float) $day->qualifying_wind_kts)->values()->toArray(),
                 ])
                 ->toArray(),
         ])->toArray();

@@ -17,23 +17,23 @@ class DestinationSailablePayloadTest extends TestCase
     {
         $spot = SpotGuide::factory()->create(['title' => 'Vassiliki', 'is_published' => true]);
 
-        // Two Augusts (2024, 2025), one day each — pooled into a single flat values array.
-        // qualifying_wind_kts is set too (but no longer what the payload ships) to
-        // prove the payload picks gusts, not sustained wind.
+        // Two Augusts (2024, 2025), one day each — pooled into index-aligned
+        // gusts/winds arrays (same day, same position). The payload now ships
+        // BOTH values so the client can blend gust + sustained-floor.
         SailableDay::factory()->for($spot)->create(['date' => '2024-08-10', 'year' => 2024, 'month' => 8, 'qualifying_wind_kts' => 22.0, 'qualifying_gust_kts' => 28.0]);
         SailableDay::factory()->for($spot)->create(['date' => '2025-08-11', 'year' => 2025, 'month' => 8, 'qualifying_wind_kts' => 12.0, 'qualifying_gust_kts' => 14.0]);
 
         $response = $this->get('/destinations');
 
         // Values are pooled across both years; there is no server-side `years` field.
-        // The ranking metric is GUSTS (28/14), not sustained wind (22/12) — sustained
-        // under-reads thermal/meltemi wind, gusts track what sailors actually ride.
+        // gusts (28/14) and winds (22/12) are index-aligned to the same days.
         // Note: expected as ints (not 28.0/14.0) — Inertia's assertInertia() round-trips
         // the page data through json_encode()/json_decode() before comparing with
         // assertSame(), and PHP's json_encode collapses whole-number floats (28.0 -> "28"),
         // so a literal float here would mismatch the decoded int on type alone.
         $response->assertInertia(fn ($page) => $page
-            ->where('sailableDays.Vassiliki.8.values', [28, 14])
+            ->where('sailableDays.Vassiliki.8.gusts', [28, 14])
+            ->where('sailableDays.Vassiliki.8.winds', [22, 12])
             ->missing('sailableDays.Vassiliki.8.years')
         );
     }

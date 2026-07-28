@@ -1,22 +1,42 @@
 // resources/js/Helpers/sailableDays.ts
 //
 // Client-side sailable-days ranking for the destinations page. A day is
-// "sailable" at a minimum X (kts) when its stored 2nd-windiest sailing-window
-// hour >= X. Per month we hold every such daily value pooled across the years we
-// have. Because the fetch window rolls (so boundary years are only partially
-// covered — and the current month is always a boundary), we do NOT divide by a
-// year count: that would undercount partial months by nearly half. Instead the
-// typical sailable-day count is a coverage-normalised rate — the share of held
-// days that qualify, scaled to the month's calendar length:
-//   (values >= X).length / values.length * daysInMonth.
+// "sailable" at a minimum X (kts) when BOTH: its stored 2nd-highest sailing-
+// window GUST >= X, AND its 2nd-highest sailing-window SUSTAINED wind clears a
+// floor of 60% of X. The sustained floor filters out gusty-but-not-steady days
+// (storm spikes with a high gust over a low steady baseline) that pure-gust
+// ranking let through — steady spots, whose sustained wind already tracks their
+// gust, are unaffected. Per month we hold every such daily (gust, wind) pair
+// pooled across the years we have. Because the fetch window rolls (so boundary
+// years are only partially covered — and the current month is always a
+// boundary), we do NOT divide by a year count: that would undercount partial
+// months by nearly half. Instead the typical sailable-day count is a
+// coverage-normalised rate — the share of held days that qualify under the
+// blend, scaled to the month's calendar length:
+//   (qualifying under blend).length / gusts.length * daysInMonth.
 // Spots are then ranked by the selected month's typical count.
 
 export type WindUnit = 'kts' | 'mph' | 'kph'
 
-/** One spot-month: every day's qualifying wind (kts), pooled across all held years. */
+/**
+ * One spot-month: every held day's qualifying gust and sustained wind (kts),
+ * pooled across all held years. `gusts[i]` and `winds[i]` are the SAME day's
+ * 2nd-highest sailing-window gust and sustained hour — the two arrays are
+ * index-aligned and guaranteed equal length.
+ */
 export interface SailableMonth {
-    values: number[]
+    gusts: number[]
+    winds: number[]
 }
+
+/**
+ * The sustained-wind floor, as a fraction of the chosen minimum gust. A day
+ * only counts as sailable when its sustained wind is at least this fraction of
+ * the minimum, in addition to clearing the gust minimum outright. This filters
+ * gusty-but-not-steady days (storm spikes) without penalising steady spots,
+ * whose sustained wind already sits close to their gust.
+ */
+export const SUSTAINED_FLOOR_FRACTION = 0.6
 
 /** Calendar days per month, index 0 = January. February fixed at 28 — the sub-day
  *  leap-year error is immaterial to a climatological estimate. */
@@ -55,21 +75,26 @@ export const snapToUnitOption = (kts: number, unit: WindUnit): number => {
 
 /**
  * Typical (coverage-normalised) number of sailable days in a month for the given
- * minimum (kts): the share of pooled daily values at/above the minimum, scaled to
- * the month's calendar length. `monthNumber` is 1-12 and selects that length.
- * Robust to partial boundary months because it normalises by held days, not years.
+ * minimum gust (kts): the share of pooled held days that clear the BLEND —
+ * gust >= minKts AND sustained wind >= SUSTAINED_FLOOR_FRACTION * minKts —
+ * scaled to the month's calendar length. `monthNumber` is 1-12 and selects that
+ * length. Robust to partial boundary months because it normalises by held days,
+ * not years. `gusts` and `winds` are index-aligned (same day, per position).
  */
 export const sailableDaysInMonth = (
     month: SailableMonth | undefined,
     minKts: number,
     monthNumber: number
 ): number => {
-    if (!month || month.values.length === 0) {
+    if (!month || month.gusts.length === 0) {
         return 0
     }
-    const qualifyingCount = month.values.filter((value) => value >= minKts).length
+    const floor = minKts * SUSTAINED_FLOOR_FRACTION
+    const qualifyingCount = month.gusts.filter(
+        (gust, index) => gust >= minKts && month.winds[index] >= floor
+    ).length
     const daysInMonth = DAYS_IN_MONTH[monthNumber - 1]
-    return (qualifyingCount / month.values.length) * daysInMonth
+    return (qualifyingCount / month.gusts.length) * daysInMonth
 }
 
 /** A spot ranked for a selected month: this month's typical count plus all 12 months.
