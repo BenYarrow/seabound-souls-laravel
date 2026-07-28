@@ -8,6 +8,7 @@
 
 namespace App\Services;
 
+use App\Models\SailableDay;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Facades\Http;
@@ -120,6 +121,28 @@ class WeatherFetcher
                     'mph_gust' => (int) round($ktsGust * 1.15078),
                     'kph_wind' => (int) round($ktsWind * 1.852),
                     'kph_gust' => (int) round($ktsGust * 1.852),
+                ]
+            );
+        }
+
+        // Persist the daily sailable-wind layer from the same 9am-7pm buckets.
+        // qualifying_wind_kts = the day's 2nd-highest sustained-wind hour, because
+        // "sailable" means >= 2 hours at/above the user's minimum, i.e. the 2nd
+        // hour (when winds are sorted high-to-low) already clears it. A day with
+        // fewer than 2 in-window readings can never be sailable, so it scores 0.
+        foreach ($dailyMap as $date => $values) {
+            $winds = $values['winds'];
+            rsort($winds); // highest first
+            $secondHighest = count($winds) >= 2 ? $winds[1] : 0.0;
+
+            [$year, $monthNumber] = explode('-', $date);
+
+            SailableDay::updateOrCreate(
+                ['spot_guide_id' => $spot->id, 'date' => $date],
+                [
+                    'year' => (int) $year,
+                    'month' => (int) $monthNumber,
+                    'qualifying_wind_kts' => round($secondHighest, 1),
                 ]
             );
         }
