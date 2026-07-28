@@ -1,5 +1,8 @@
 <?php
-// database/migrations/2026_07_28_100000_create_spot_sailable_days_table.php
+
+// Creates `spot_sailable_days`: one row per spot guide per date, storing the
+// day's qualifying sailing-window wind reading (kts). Feeds the client-side
+// sailable-days ranking on /destinations.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

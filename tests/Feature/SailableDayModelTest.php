@@ -1,5 +1,7 @@
 <?php
-// tests/Feature/SailableDayModelTest.php
+
+// Feature tests for App\Models\SailableDay — the spot-guide relationship and
+// the (spot_guide_id, date) uniqueness constraint.
 
 namespace Tests\Feature;
 

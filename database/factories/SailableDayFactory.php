@@ -1,5 +1,8 @@
 <?php
 
+// Factory for App\Models\SailableDay — one day's qualifying sailing-window
+// wind reading for a spot guide, with a random recent date and wind speed.
+
 namespace Database\Factories;
 
 use App\Models\SpotGuide;
