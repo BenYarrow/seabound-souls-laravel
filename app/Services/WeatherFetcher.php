@@ -141,14 +141,25 @@ class WeatherFetcher
         }
 
         // Persist the daily sailable-wind layer from the same 9am-7pm buckets.
-        // qualifying_wind_kts = the day's 2nd-highest sustained-wind hour, because
-        // "sailable" means >= 2 hours at/above the user's minimum, i.e. the 2nd
-        // hour (when winds are sorted high-to-low) already clears it. A day with
-        // fewer than 2 in-window readings can never be sailable, so it scores 0.
+        // Both qualifying_wind_kts (sustained) and qualifying_gust_kts (gust) are
+        // the day's 2nd-highest hour of that metric, because "sailable" means
+        // >= 2 hours at/above the user's minimum, i.e. the 2nd hour (when values
+        // are sorted high-to-low) already clears it. A day with fewer than 2
+        // in-window readings can never be sailable, so it scores 0.
+        //
+        // The sailable-day RANKING uses qualifying_gust_kts, not sustained wind:
+        // real-world validation at meltemi/thermal spots (e.g. Karpathos) showed
+        // Open-Meteo's sustained 10m wind under-reads the felt wind there, while
+        // gusts track what sailors actually ride. Sustained wind is still stored
+        // for a possible future toggle.
         foreach ($dailyMap as $date => $values) {
             $dailyWinds = $values['winds'];
             rsort($dailyWinds); // highest first
-            $secondHighest = count($dailyWinds) >= 2 ? $dailyWinds[1] : 0.0;
+            $secondHighestWind = count($dailyWinds) >= 2 ? $dailyWinds[1] : 0.0;
+
+            $dailyGusts = $values['gusts'];
+            rsort($dailyGusts); // highest first
+            $secondHighestGust = count($dailyGusts) >= 2 ? $dailyGusts[1] : 0.0;
 
             [$year, $monthNumber] = explode('-', $date);
 
@@ -157,7 +168,8 @@ class WeatherFetcher
                 [
                     'year' => (int) $year,
                     'month' => (int) $monthNumber,
-                    'qualifying_wind_kts' => round($secondHighest, 1),
+                    'qualifying_wind_kts' => round($secondHighestWind, 1),
+                    'qualifying_gust_kts' => round($secondHighestGust, 1),
                 ]
             );
         }

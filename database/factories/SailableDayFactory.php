@@ -21,6 +21,7 @@ class SailableDayFactory extends Factory
             'year' => (int) $date->format('Y'),
             'month' => (int) $date->format('n'),
             'qualifying_wind_kts' => $this->faker->randomFloat(1, 0, 40),
+            'qualifying_gust_kts' => $this->faker->randomFloat(1, 0, 45),
         ];
     }
 }

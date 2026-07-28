@@ -17,7 +17,7 @@ class DestinationController extends Controller
     /**
      * Render the destinations index. Returns props built from one query:
      * `spotGuides` (cards, title-ordered), `sailableDays` — pooled daily
-     * qualifying-wind values keyed by guide title then month (1-12), for the
+     * qualifying-GUST values keyed by guide title then month (1-12), for the
      * client to rank by coverage-normalised sailable-day rate — and `climate`
      * — cross-year-averaged monthly conditions keyed by guide title, matching
      * the shape the wind/temperature comparison charts expect (keyed by the
@@ -64,17 +64,20 @@ class DestinationController extends Controller
             ->with(['country', 'thumbnailMedia'])
             ->first();
 
-        // Pooled daily sailable-wind values, keyed by title then month (1-12).
+        // Pooled daily sailable-GUST values, keyed by title then month (1-12).
         // The browser counts values >= minimum, divides by the held-day count and
         // scales by the month's length to get the typical (climatological) number
         // of sailable days that month — a coverage-normalised rate that is robust
         // to the rolling window's partial boundary months (so no `years` field is
         // shipped; per-year division would undercount the boundary months).
+        // Ranking on gust (not sustained wind) because sustained 10m wind
+        // under-reads the felt wind at thermal/meltemi spots (e.g. Karpathos),
+        // while gusts track what sailors actually ride.
         $sailableDays = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->sailableDays
                 ->groupBy('month')
                 ->map(fn ($monthDays) => [
-                    'values' => $monthDays->map(fn ($day) => (float) $day->qualifying_wind_kts)->values()->toArray(),
+                    'values' => $monthDays->map(fn ($day) => (float) $day->qualifying_gust_kts)->values()->toArray(),
                 ])
                 ->toArray(),
         ])->toArray();

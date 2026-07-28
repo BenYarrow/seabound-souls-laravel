@@ -47,6 +47,8 @@ class WeatherFetcherSailableDaysTest extends TestCase
         $this->assertNotNull($day);
         // 2nd-highest of the in-window winds [22, 18] is 18.0 (08:00's 40 is excluded).
         $this->assertSame('18.0', (string) $day->qualifying_wind_kts);
+        // 2nd-highest of the in-window gusts [30, 26] is 26.0 (08:00's 50 is excluded).
+        $this->assertSame('26.0', (string) $day->qualifying_gust_kts);
         $this->assertSame(2025, $day->year);
         $this->assertSame(8, $day->month);
     }
@@ -78,6 +80,7 @@ class WeatherFetcherSailableDaysTest extends TestCase
         $day = SailableDay::where('spot_guide_id', $spot->id)->where('date', '2025-08-02')->first();
         $this->assertNotNull($day);
         $this->assertSame('0.0', (string) $day->qualifying_wind_kts); // <2 hours => never sailable
+        $this->assertSame('0.0', (string) $day->qualifying_gust_kts); // <2 hours => never sailable
     }
 
     public function test_it_dedupes_chunk_boundary_hourly_readings_before_ranking(): void
@@ -117,5 +120,8 @@ class WeatherFetcherSailableDaysTest extends TestCase
         // exact timestamp, the true readings are [25, 15] and the 2nd-highest
         // is 15.0.
         $this->assertSame('15.0', (string) $day->qualifying_wind_kts);
+        // Same reasoning for gusts: deduped readings are [30, 20], so the
+        // 2nd-highest is 20.0 (not the duplicated-max 30.0).
+        $this->assertSame('20.0', (string) $day->qualifying_gust_kts);
     }
 }
