@@ -5,9 +5,10 @@
 // state lives in the parent; this component is presentational (props in,
 // onChange out).
 
+import { useState } from 'react'
 import Select from 'react-select'
 import Icon from '@/Components/Common/Icon'
-import { faSlidersH } from '@fortawesome/free-solid-svg-icons'
+import { faSlidersH, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { MIN_OPTIONS, snapToUnitOption, unitToKts, type WindUnit } from '@/Helpers/sailableDays'
 import type { DestinationFilters, GroupBy } from '@/Helpers/destinationFilters'
 import type { SelectOption } from '@/Helpers/selectTypes'
@@ -88,11 +89,51 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
         onChange({ ...filters, unit, min: snapToUnitOption(currentKts, unit) })
     }
 
+    // Mobile-only collapse: on small screens the five stacked controls take up
+    // too much of the sticky bar, so they're hidden behind a tap-to-expand
+    // header. Desktop (lg+) always shows the inline row, unaffected by this.
+    const [isExpanded, setIsExpanded] = useState(false)
+
+    // One-line summary of the active filters, shown in the collapsed mobile
+    // header so the current selection is visible without expanding.
+    const monthLabel = monthOptions.find((opt) => opt.value === filters.month)?.label ?? ''
+    const groupLabel = groupOptions.find((opt) => opt.value === filters.group)?.label ?? ''
+    const spotsLabel = isAllSpots
+        ? 'All spots'
+        : `${filters.spots.length} spot${filters.spots.length === 1 ? '' : 's'}`
+    const filterSummary = `${monthLabel} · ${filters.min} ${filters.unit} · ${spotsLabel} · ${groupLabel}`
+
     return (
         <div className="bg-white border-y border-secondary/10 sticky top-0 z-20">
             <div className="container mx-auto py-4 lg:py-5">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-5">
-                    <div className="flex items-center gap-2.5 shrink-0 lg:pb-2.5">
+                {/* Mobile-only header: tap to expand/collapse the controls. Hidden on lg+. */}
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded((open) => !open)}
+                    aria-expanded={isExpanded}
+                    aria-controls="destination-filter-controls"
+                    className="flex w-full items-center justify-between gap-3 lg:hidden"
+                >
+                    <span className="flex items-center gap-2.5 shrink-0">
+                        <Icon icon={faSlidersH} customClasses="text-primary" size="size-4" />
+                        <span className="text-primary text-xs uppercase tracking-[0.2em] font-medium">Find your spot</span>
+                    </span>
+                    <span className="flex items-center gap-2 min-w-0">
+                        <span className="text-secondary/60 text-xs truncate">{filterSummary}</span>
+                        <Icon
+                            icon={faChevronDown}
+                            size="size-3.5"
+                            customClasses={`text-secondary/50 transition-transform duration-200 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                        />
+                    </span>
+                </button>
+
+                <div
+                    id="destination-filter-controls"
+                    className={`${isExpanded ? 'flex' : 'hidden'} lg:flex flex-col gap-4 mt-4 lg:mt-0 lg:flex-row lg:items-end lg:gap-5`}
+                >
+                    {/* Desktop-only inline label (the mobile header above carries it on small screens). */}
+                    <div className="hidden lg:flex items-center gap-2.5 shrink-0 lg:pb-2.5">
                         <Icon icon={faSlidersH} customClasses="text-primary" size="size-4" />
                         <span className="text-primary text-xs uppercase tracking-[0.2em] font-medium">Find your spot</span>
                     </div>
