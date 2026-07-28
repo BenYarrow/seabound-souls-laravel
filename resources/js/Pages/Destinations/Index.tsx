@@ -22,7 +22,7 @@ import AnimateInView from '@/Components/Common/AnimateInView'
 import { getSpotGuideColours } from '@/Helpers/colours'
 import { rankSpots, unitToKts, type SailableDataset } from '@/Helpers/sailableDays'
 import { parseFilters, filtersToQuery, type DestinationFilters, type GroupBy } from '@/Helpers/destinationFilters'
-import { MONTH_NAMES, type ClimateDataset } from '@/Helpers/climate'
+import { MONTH_NAMES, climateTempForMonth, type ClimateDataset } from '@/Helpers/climate'
 import type { SelectOption } from '@/Helpers/selectTypes'
 import type { FocalImage } from '@/types/media'
 
@@ -117,12 +117,29 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
         [sailableDays, activeTitles, filters.month, minKts]
     )
 
+    // Full name of the selected month, for looking up climate temps below —
+    // computed once so every consumer (filter, statFor) shares the same value.
+    const monthName = MONTH_NAMES[filters.month - 1]
+
+    // Opt-in temperature filter (default 0 = off, so cold-water spots like
+    // Brouwersdam are NOT penalised by default). When a minimum is set, drop
+    // spots whose typical temp that month is below it (or unknown) — the wind
+    // ranking itself never considers temperature, so this is a separate,
+    // user-chosen narrowing of the view, not a change to how spots are ranked.
+    const visibleRanked = useMemo(() => {
+        if (filters.minTemp <= 0) return ranked
+        return ranked.filter((row) => {
+            const temp = climateTempForMonth(climate, row.title, monthName)
+            return temp !== null && temp >= filters.minTemp
+        })
+    }, [ranked, climate, monthName, filters.minTemp])
+
     // Rank order as a lookup so card grids can sort by it.
     const rankIndex = useMemo(() => {
         const lookup: Record<string, number> = {}
-        ranked.forEach((row, index) => { lookup[row.title] = index })
+        visibleRanked.forEach((row, index) => { lookup[row.title] = index })
         return lookup
-    }, [ranked])
+    }, [visibleRanked])
 
     const spotByTitle = useMemo(() => {
         const lookup: Record<string, SpotGuide> = {}
@@ -130,16 +147,23 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
         return lookup
     }, [spotGuides])
 
-    /** "≈ N days ≥ X unit" stat for a card, from the ranked row. */
+    /** "≈ N windy days · T°C" stat for a card, from the ranked row + that month's typical temp. */
     const statFor = (title: string): string => {
         const row = ranked.find((entry) => entry.title === title)
         const days = row ? Math.round(row.avgDaysThisMonth) : 0
-        return `≈ ${days} ${days === 1 ? 'day' : 'days'} ≥ ${filters.min} ${filters.unit}`
+        const temp = climateTempForMonth(climate, title, monthName)
+        const tempPart = temp !== null ? ` · ${Math.round(temp)}°C` : ''
+        return `≈ ${days} windy ${days === 1 ? 'day' : 'days'}${tempPart}`
     }
 
-    // `ranked` covers every active title (all published spots when nothing is
-    // selected), so every spot — dataless ones included — appears in the grid.
-    const rankedGuides = ranked.map((row) => spotByTitle[row.title]).filter(Boolean) as SpotGuide[]
+    // `visibleRanked` covers every active title minus any dropped by the opt-in
+    // temperature filter, so the card grid always matches what's charted below.
+    const rankedGuides = visibleRanked.map((row) => spotByTitle[row.title]).filter(Boolean) as SpotGuide[]
+    // The temperature filter can legitimately empty the set (e.g. Brouwersdam
+    // in January at a 25°C minimum) — unlike the stale-slug fallback (which
+    // always guarantees a non-empty set), this is a real "nothing matches"
+    // state and needs its own friendly message rather than blank sections.
+    const isTemperatureFilterEmpty = filters.minTemp > 0 && visibleRanked.length === 0
 
     const mastheadImage = static_masthead ?? spotGuides.find((s) => s.thumbnail)?.thumbnail ?? null
     const minLabel = `${filters.min} ${filters.unit}`
@@ -198,7 +222,18 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
             <DestinationsMap spotGuides={spotGuides} />
 
             {/* Card layouts */}
-            {filters.group === 'global' ? (
+            {isTemperatureFilterEmpty ? (
+                // Real "nothing matches" state — the temperature filter is opt-in,
+                // so this only shows once the user has actively raised the minimum
+                // above "Any" and every spot's typical temp falls short.
+                <section className="bg-white">
+                    <div className="container mx-auto py-16 text-center">
+                        <p className="text-secondary/60 text-base lg:text-lg">
+                            No destinations reach {filters.minTemp}°C in {monthName} — lower the minimum temperature.
+                        </p>
+                    </div>
+                </section>
+            ) : filters.group === 'global' ? (
                 <section className="bg-white">
                     <div className="container mx-auto pt-14 lg:pt-18">
                         <SectionHeading label={`Best for ${MONTH_NAMES[filters.month - 1]}`} count={rankedGuides.length} />
@@ -234,15 +269,15 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
                         </div>
                     </div>
                     <div className="container mx-auto py-4 lg:py-8 space-y-8">
-                        <SailableDaysChart ranked={ranked} colours={colours} selectedMonth={filters.month} minLabel={minLabel} />
+                        <SailableDaysChart ranked={visibleRanked} colours={colours} selectedMonth={filters.month} minLabel={minLabel} />
                         <AllDestinationsWindChart
                             climate={climate}
-                            activeDestinations={activeTitles.map((title) => ({ label: title, value: title }))}
+                            activeDestinations={visibleRanked.map((row) => ({ label: row.title, value: row.title }))}
                             activeWindUnit={filters.unit}
                             colours={colours}
                             selectedMonth={filters.month}
                         />
-                        <AllDestinationsTempChart climate={climate} activeDestinations={activeTitles.map((title) => ({ label: title, value: title }))} colours={colours} selectedMonth={filters.month} />
+                        <AllDestinationsTempChart climate={climate} activeDestinations={visibleRanked.map((row) => ({ label: row.title, value: row.title }))} colours={colours} selectedMonth={filters.month} />
                     </div>
                 </section>
             )}

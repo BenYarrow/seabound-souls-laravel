@@ -29,6 +29,16 @@ export const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+/** Typical air temp (°C) for a spot in a given month name, or null if absent. */
+export const climateTempForMonth = (
+    dataset: ClimateDataset,
+    title: string,
+    monthName: string
+): number | null => {
+    const entry = (dataset[title] ?? []).find((month) => month.month === monthName)
+    return entry ? entry.avgTemp : null
+}
+
 /**
  * Pivot a climate dataset into Recharts rows for one datapoint (e.g. 'ktsWind'):
  * one row per month present in any spot, each carrying a key per spot title.
