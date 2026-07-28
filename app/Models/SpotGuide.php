@@ -218,6 +218,12 @@ class SpotGuide extends Model
         return $this->hasMany(WeatherRecord::class);
     }
 
+    /** Daily sailable-wind data (2nd-highest sailing-window hour, kts); feeds the days-per-month ranking. */
+    public function sailableDays(): HasMany
+    {
+        return $this->hasMany(SailableDay::class);
+    }
+
     /**
      * Contributor submits the guide for the owner's review. Editable-during-review by
      * design (no lock), so this only advances the status + stamps the time.
