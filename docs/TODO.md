@@ -2,6 +2,12 @@
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
+## Sailable-days ranking (follow-ups)
+- [ ] **Prod data on partial data** — the admin "Fetch all weather" only populated a few spots (suspected Cloud queue-worker timeout on the batched `FetchAllWeatherJob`). Run a full **synchronous** `php artisan weather:fetch` on Cloud; if it still fails per-spot, capture the `✓/✗` output and either chunk the button into per-spot queued jobs or lengthen the worker timeout. (The gust+sustained blend needs no re-fetch of its own — both columns already exist.)
+- [ ] **Unpublish the `test` dummy spot guide** — it tops every month's ranking in the data.
+- [ ] **Optional: temperature gate on the sailable metric** — the gust+sustained-floor blend fixed December but January still leans to cold-but-windy Karpathos over warm-season Langebaan, because wind-count ignores temperature. A typical-air/water-temp floor (or a monthly avg-temp gate using the `climate` prop we already ship) would flip cold months down. Deferred in favour of the blend (owner's call).
+- [ ] **Optional: sustained/gust UI toggle** — both daily columns are stored; a filter-bar toggle could expose sustained-only vs the blend.
+
 ## Content curation (from the featured/content brainstorm — A #25, B #26, C #27; all shipped)
 - [ ] Optional: a test locking the list-block empty/all-draft-picks contract (resolved `[]` → renders nothing) — the homepage's default state now relies on that guard (safe by construction today). From #26 review.
 - [ ] Optional: cache the list-block picker `->options()` query (`Blog`/`SpotGuide` title lists) if the content library grows large — currently re-queried per admin form render. From #26 review.
