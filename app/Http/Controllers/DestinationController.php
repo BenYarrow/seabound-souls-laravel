@@ -3,7 +3,7 @@
 // Public destinations index:
 //   GET /destinations — destinations.index
 // Lists published spot guides (grouped by continent on the front end) and builds
-// the weatherData map the comparison charts consume.
+// the sailableDays + climate maps the ranking and comparison charts consume.
 
 namespace App\Http\Controllers;
 
@@ -15,11 +15,13 @@ use Inertia\Response;
 class DestinationController extends Controller
 {
     /**
-     * Render the destinations index. Returns two props built from one query:
-     * `spotGuides` (cards, title-ordered) and `weatherData` — a map keyed by
-     * guide title, each value grouped by year and sorted by month, matching the
-     * shape the wind/temperature comparison charts expect (keyed by the same
-     * title the chart legend uses).
+     * Render the destinations index. Returns props built from one query:
+     * `spotGuides` (cards, title-ordered), `sailableDays` — pooled daily
+     * qualifying-GUST values keyed by guide title then month (1-12), for the
+     * client to rank by coverage-normalised sailable-day rate — and `climate`
+     * — cross-year-averaged monthly conditions keyed by guide title, matching
+     * the shape the wind/temperature comparison charts expect (keyed by the
+     * same title the chart legend uses).
      */
     public function index(): Response
     {
@@ -32,12 +34,9 @@ class DestinationController extends Controller
             ->first();
 
         $spotGuides = SpotGuide::published()
-            ->with(['country', 'thumbnailMedia', 'weatherRecords', 'author.profileImageMedia'])
+            ->with(['country', 'thumbnailMedia', 'weatherRecords', 'sailableDays', 'author.profileImageMedia'])
             ->orderBy('title')
             ->get();
-
-        // Rank "gustiest first" for the current month (see SpotGuide::sortByGustiestThisMonth).
-        $spotGuides = SpotGuide::sortByGustiestThisMonth($spotGuides);
 
         $spotGuidesData = $spotGuides->map(fn ($guide) => [
             'id' => $guide->id,
@@ -65,20 +64,43 @@ class DestinationController extends Controller
             ->with(['country', 'thumbnailMedia'])
             ->first();
 
-        // Keyed by title (not slug) so the chart legend/series labels line up.
-        $weatherData = $spotGuides->mapWithKeys(fn ($guide) => [
+        // Pooled daily sailable-GUST values, keyed by title then month (1-12).
+        // The browser counts values >= minimum, divides by the held-day count and
+        // scales by the month's length to get the typical (climatological) number
+        // of sailable days that month — a coverage-normalised rate that is robust
+        // to the rolling window's partial boundary months (so no `years` field is
+        // shipped; per-year division would undercount the boundary months).
+        // Ranking on gust (not sustained wind) because sustained 10m wind
+        // under-reads the felt wind at thermal/meltemi spots (e.g. Karpathos),
+        // while gusts track what sailors actually ride.
+        $sailableDays = $spotGuides->mapWithKeys(fn ($guide) => [
+            $guide->title => $guide->sailableDays
+                ->groupBy('month')
+                ->map(fn ($monthDays) => [
+                    'values' => $monthDays->map(fn ($day) => (float) $day->qualifying_gust_kts)->values()->toArray(),
+                ])
+                ->toArray(),
+        ])->toArray();
+
+        // "Typical year" climate: monthly averages collapsed across all held years,
+        // keyed by title (matching the chart legend labels), sorted by month.
+        $monthNames = [1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'];
+        $average = fn ($collection, string $column) => round($collection->avg($column), 1);
+        $climate = $spotGuides->mapWithKeys(fn ($guide) => [
             $guide->title => $guide->weatherRecords
-                ->groupBy('year')
-                ->map(fn ($yearRecords) => $yearRecords->sortBy('month')->values()->map(fn ($r) => [
-                    'month' => $r->month_name,
-                    'avgTemp' => (float) $r->avg_temp,
-                    'ktsWind' => (float) $r->kts_wind,
-                    'ktsGust' => (float) $r->kts_gust,
-                    'mphWind' => $r->mph_wind,
-                    'mphGust' => $r->mph_gust,
-                    'kphWind' => $r->kph_wind,
-                    'kphGust' => $r->kph_gust,
-                ])->toArray())
+                ->groupBy('month')
+                ->sortKeys()
+                ->map(fn ($monthRecords, $monthNumber) => [
+                    'month' => $monthNames[(int) $monthNumber] ?? '',
+                    'avgTemp' => $average($monthRecords, 'avg_temp'),
+                    'ktsWind' => $average($monthRecords, 'kts_wind'),
+                    'ktsGust' => $average($monthRecords, 'kts_gust'),
+                    'mphWind' => (int) round($monthRecords->avg('mph_wind')),
+                    'mphGust' => (int) round($monthRecords->avg('mph_gust')),
+                    'kphWind' => (int) round($monthRecords->avg('kph_wind')),
+                    'kphGust' => (int) round($monthRecords->avg('kph_gust')),
+                ])
+                ->values()
                 ->toArray(),
         ])->toArray();
 
@@ -91,7 +113,8 @@ class DestinationController extends Controller
                 'country' => $featured->country?->name,
                 'thumbnail' => $featured->thumbnailMedia?->imagePayload(),
             ] : null,
-            'weatherData' => $weatherData,
+            'sailableDays' => $sailableDays,
+            'climate' => $climate,
             // Show provenance bylines only once a published contributor guide exists.
             'showProvenance' => SpotGuide::contributorGuidesExist(),
             'static_masthead' => $page?->staticMastheadMedia?->imagePayload(),

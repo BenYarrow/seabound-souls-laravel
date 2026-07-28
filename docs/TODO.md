@@ -47,6 +47,19 @@ Shipped 2026-07-14 (crawlable `/blog/tags/{slug}` pages, tag bar, post chips, ow
 - [ ] Consolidate `formatDate`: `Tag.tsx` + `Index.tsx` define a local copy while `Show.tsx` imports the shared `@/Helpers/helpers` one.
 - [ ] Minor: `Tag::publishedBlogs()` duplicates `blogs()`'s query; redundant `->map()` after `->get([...])` in `BlogController@index` tags; sitemap runs one query per tag (N+1, cached, fine at small scale); `TagResource` shares `navigationSort=3` with `PageResource` (harmless — alphabetical tie-break orders it correctly).
 
+## Sailable-days ranking (follow-ups)
+Shipped 2026-07-28 (`/destinations` ranks spots by typical sailable days for a chosen month + minimum wind, client-side, URL-synced filters — see `docs/history/2026-07-28-sailable-days-ranking.md`). Remaining polish (all Minor/non-blocking, from per-task + whole-branch review):
+- [ ] **Prod: run `php artisan weather:fetch` (or the admin "Fetch all weather" button) once after deploy** to populate `spot_sailable_days` for existing spots — the table ships empty until the next fetch.
+- [ ] **Owner: live-browser visual/responsive/dark-mode eyeball** of the redesigned `/destinations` page (light + dark, mobile/tablet/desktop, live drag-the-minimum reordering, sticky filter bar) — the local `.test` Herd host blocked automated browser control during the build.
+- [ ] Sailable metric: optional **sustained/gust UI toggle** — the ranking switched to gust-based (`qualifying_gust_kts`) post-build, but the sustained column (`qualifying_wind_kts`) is already stored and unused; a toggle would let a user compare the two.
+- [ ] `climate` map's mph/kph/gust fields are untested server-side; add at least one assertion covering them.
+- [ ] `test_index_keeps_alphabetical_order_regardless_of_which_year_has_data` (`DestinationSailablePayloadTest`) is tautological — can't distinguish old vs new ordering; tighten or replace.
+- [ ] Memoise `allTitles`/`destinationOptions` in `Pages/Destinations/Index.tsx` (currently recomputed every render, so the `colours` memo never actually hits).
+- [ ] `rankSpots()`'s `peak()` is recomputed inside the sort comparator (O(n) × O(n log n) — immaterial at current spot counts, but worth hoisting if the roster grows).
+- [ ] `WindUnit` type (`resources/js/Helpers/sailableDays.ts`) lacks JSDoc.
+- [ ] `statFor()` in `Index.tsx` does a linear `find` per card (O(n²) at scale) — index the ranked array by title instead.
+- [ ] Remove dead `resources/js/Helpers/weatherDataHelpers.ts` (`prepareYearlyWindData`/`prepareYearlyTempData`) — zero importers since the charts moved to `climate.ts`; also drop its line from CLAUDE.md's Helpers list.
+
 ## Frontend
 - [ ] Match the single-spot `chartColors` trio (wind/gust/temp on spot-guide pages, `resources/js/Helpers/colours.ts`) to the new muted generated family, so single-spot and multi-destination charts share one look. Left out of the destinations light-theme work (#24) to keep scope tight.
 - [ ] Dark-mode token layer (CSS vars on `:root` / `html.dark`), no-flash theme switch, CI colour-guard test — sweep includes `SearchPanel` (currently raw `bg-white`/`gray-*`). Would eventually subsume the hardcoded light utilities added for the destinations light theme (#24).

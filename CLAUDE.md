@@ -165,6 +165,13 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - `mph_wind`, `mph_gust`, `kph_wind`, `kph_gust` (smallint)
 - Unique constraint: `(spot_guide_id, year, month)`
 
+**`spot_sailable_days`**
+- `spot_guide_id` (FK, cascade on delete), `date`, `year`, `month`
+- `qualifying_wind_kts` (decimal:5,1) — the day's 2nd-highest **sustained**-wind 9am–7pm hour (retained for a future toggle)
+- `qualifying_gust_kts` (decimal:5,1) — the day's 2nd-highest **gust** 9am–7pm hour (the ranking metric — see note below)
+- Unique constraint: `(spot_guide_id, date)`
+- Daily layer feeding the `/destinations` sailable-days ranking; populated by `WeatherFetcher` in the same pass as `weather_records`
+
 **`media_library`** — centralised image library; each row is one image, referenced by FK from other tables
 
 **`media`** — Spatie Media Library managed table (now attached only to `MediaLibrary` model, collection `file`)
@@ -176,7 +183,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | Model | Traits | Relationships |
 |-------|--------|---------------|
 | `MediaLibrary` | HasMedia | — (owns Spatie `file` collection) |
-| `SpotGuide` | SoftDeletes, Searchable | belongsTo Country; hasMany Recommendations, WindsurfingLocations, WeatherRecords; belongsTo MediaLibrary (×8) |
+| `SpotGuide` | SoftDeletes, Searchable | belongsTo Country; hasMany Recommendations, WindsurfingLocations, WeatherRecords, SailableDays; belongsTo MediaLibrary (×8) |
 | `Blog` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3); belongsToMany Tag |
 | `Tag` | SoftDeletes | belongsToMany Blog (curated blog tags); belongsTo MediaLibrary (×2: thumbnail, static_masthead) |
 | `Page` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3) |
@@ -184,6 +191,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | `Recommendation` | SoftDeletes | belongsTo SpotGuide; belongsTo MediaLibrary (thumbnail) |
 | `WindsurfingLocation` | — | belongsTo SpotGuide; belongsTo MediaLibrary (thumbnail) |
 | `WeatherRecord` | — | belongsTo SpotGuide |
+| `SailableDay` | — | belongsTo SpotGuide |
 
 ### Media FK columns
 - **SpotGuide:** `thumbnail_media_id`, `static_masthead_media_id`, `og_image_media_id`, `wind_conditions_bg_media_id`, `water_conditions_bg_media_id`, `travelling_to_bg_media_id`, `lessons_and_hire_bg_media_id`, `gallery_media_ids` (JSON)
@@ -233,7 +241,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | Page | File | Key Props |
 |------|------|-----------|
 | Homepage | `Pages/Homepage.tsx` | `page`, `featuredSpotGuides[]`, `recentBlogs[]`, `meta` |
-| Destinations | `Pages/Destinations/Index.tsx` | `spotGuides[]`, `weatherData{}`, `meta` |
+| Destinations | `Pages/Destinations/Index.tsx` | `spotGuides[]`, `sailableDays{}`, `climate{}`, `meta` |
 | Spot Guide | `Pages/SpotGuide/Show.tsx` | `spotGuide` (full), `meta` |
 | Blog Index | `Pages/Blog/Index.tsx` | `blogs` (paginated), `meta` |
 | Blog Show | `Pages/Blog/Show.tsx` | `blog` (with content_blocks), `meta` |
@@ -265,9 +273,10 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - **`DestinationsMap.tsx`** — Mapbox globe map with wind-icon markers, click popups, reset button (uses `react-map-gl/mapbox`)
 
 ### Destinations
-- **`FilterDataset.tsx`** — year select + destination multi-select (react-select) + reset button in `bg-primary-lighter` bar
-- **`AllDestinationsWindChart.tsx`** — Recharts LineChart comparing wind speeds across destinations, with avg wind/gust toggle and kts/mph/kph unit selector
-- **`AllDestinationsTempChart.tsx`** — Recharts LineChart comparing temperatures across destinations
+- **`DestinationFilterBar.tsx`** — sticky top-of-page filter bar (Month / Group by continent·country·global / Spots / Unit / Min wind), URL-synced via `history.replaceState`; superseded `FilterDataset.tsx` (deleted)
+- **`SailableDaysChart.tsx`** — grouped bar chart, one series per selected spot, y = typical (coverage-normalised) sailable days per month, selected month marked
+- **`AllDestinationsWindChart.tsx`** — Recharts LineChart of the typical-year `climate` wind curve across destinations; unit is display-only (the filter bar is now the single unit control), gust/wind toggle is local chart state
+- **`AllDestinationsTempChart.tsx`** — Recharts LineChart of the typical-year `climate` temperature curve across destinations
 
 ### Content
 - **`ContentBuilder.tsx`** — routes content_blocks array to specific components
@@ -417,6 +426,11 @@ Rewritten to match the Next.js design:
 - **`colours.ts`** — `chartColors` for single-spot charts; `getSpotGuideColours()` auto-assigns from a 16-colour palette for multi-destination charts
 - **`weatherDataHelpers.ts`** — `prepareYearlyWindData()` and `prepareYearlyTempData()` transform `{ [title]: { [year]: months[] } }` into Recharts-friendly `[{ month, Title1: value, ... }]`
 - **`helpers.ts`** — `formatDate()`, `truncateText()`
+- **`sailableDays.ts`** — client-side sailable-days ranking: `unitToKts()`/`ktsToUnit()`/`snapToUnitOption()` (kts/mph/kph), `sailableDaysInMonth()` (coverage-normalised rate), `rankSpots()` (month-desc, peak-month → alphabetical tie-break, dataless spots kept at rank 0)
+- **`destinationFilters.ts`** — `parseFilters()`/`filtersToQuery()`: URL query-string round-trip for the destinations filter bar (`spots` serialised as **slugs**, not titles)
+- **`sailableChartData.ts`** — `prepareSailableChartData()` pivots ranked spots into Recharts rows for `SailableDaysChart`
+- **`climate.ts`** — `prepareClimateData()` pivots the `climate` prop into Recharts rows for the wind/temp charts; exports `MONTH_NAMES`
+- **`selectTypes.ts`** — shared `SelectOption` type (moved out of the now-deleted `FilterDataset.tsx`)
 
 ---
 
@@ -462,3 +476,4 @@ The `/destinations` page was rebuilt to match the Next.js design. Previously it 
 - **Search:** Laravel Scout with database driver in development. Can swap to Meilisearch/Algolia for production.
 - **Caching:** `spatie/laravel-responsecache` is installed. Live weather API results are cached for 1 hour in `LiveWeatherController`.
 - **Mapbox:** `react-map-gl@8` must be imported as `react-map-gl/mapbox` (not `react-map-gl`) due to Vite 7's strict exports resolution. The token is shared via Inertia middleware (`usePage().props.mapboxToken`).
+- **Sailable-days ranking (`/destinations`) is GUST-based**, not sustained wind (`qualifying_gust_kts` on `spot_sailable_days`) — Open-Meteo's sustained 10m wind under-reads thermal/venturi spots, while gusts track felt wind; the sustained column (`qualifying_wind_kts`) is retained for a possible future UI toggle. The typical sailable-days figure is a **coverage-normalised rate** (`qualifying ÷ held × daysInMonth`, robust to the rolling 3-year window's partial boundary months), computed entirely **client-side** (`resources/js/Helpers/sailableDays.ts`) from the pooled `sailableDays` prop — no per-keystroke round-trip. Filter state (month/group/spots/unit/min) is URL-synced via `history.replaceState`, with spots serialised as slugs. See `docs/history/2026-07-28-sailable-days-ranking.md`.

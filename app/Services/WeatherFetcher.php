@@ -8,6 +8,7 @@
 
 namespace App\Services;
 
+use App\Models\SailableDay;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Facades\Http;
@@ -69,8 +70,23 @@ class WeatherFetcher
         }
 
         // Daily buckets, restricted to the 9am–7pm sailing window.
+        //
+        // Chunk seams share a boundary day: $chunkStart re-uses the previous
+        // chunk's $chunkEnd, and Open-Meteo's date range is inclusive, so that
+        // day's hourly readings come back from BOTH requests and land twice in
+        // $times/$winds/etc via array_merge. Monthly averages are invariant to
+        // an exact duplicate, but the daily 2nd-highest order-statistic is not
+        // (two copies of the max would wrongly outrank the true 2nd-highest) —
+        // so de-dup by the exact timestamp string here, keeping the first
+        // occurrence, before any bucketing happens.
+        $seenTimestamps = [];
         $dailyMap = [];
         foreach ($times as $index => $datetime) {
+            if (isset($seenTimestamps[$datetime])) {
+                continue;
+            }
+            $seenTimestamps[$datetime] = true;
+
             $hour = (int) substr($datetime, 11, 2);
             if ($hour < 9 || $hour > 19) {
                 continue;
@@ -120,6 +136,40 @@ class WeatherFetcher
                     'mph_gust' => (int) round($ktsGust * 1.15078),
                     'kph_wind' => (int) round($ktsWind * 1.852),
                     'kph_gust' => (int) round($ktsGust * 1.852),
+                ]
+            );
+        }
+
+        // Persist the daily sailable-wind layer from the same 9am-7pm buckets.
+        // Both qualifying_wind_kts (sustained) and qualifying_gust_kts (gust) are
+        // the day's 2nd-highest hour of that metric, because "sailable" means
+        // >= 2 hours at/above the user's minimum, i.e. the 2nd hour (when values
+        // are sorted high-to-low) already clears it. A day with fewer than 2
+        // in-window readings can never be sailable, so it scores 0.
+        //
+        // The sailable-day RANKING uses qualifying_gust_kts, not sustained wind:
+        // real-world validation at meltemi/thermal spots (e.g. Karpathos) showed
+        // Open-Meteo's sustained 10m wind under-reads the felt wind there, while
+        // gusts track what sailors actually ride. Sustained wind is still stored
+        // for a possible future toggle.
+        foreach ($dailyMap as $date => $values) {
+            $dailyWinds = $values['winds'];
+            rsort($dailyWinds); // highest first
+            $secondHighestWind = count($dailyWinds) >= 2 ? $dailyWinds[1] : 0.0;
+
+            $dailyGusts = $values['gusts'];
+            rsort($dailyGusts); // highest first
+            $secondHighestGust = count($dailyGusts) >= 2 ? $dailyGusts[1] : 0.0;
+
+            [$year, $monthNumber] = explode('-', $date);
+
+            SailableDay::updateOrCreate(
+                ['spot_guide_id' => $spot->id, 'date' => $date],
+                [
+                    'year' => (int) $year,
+                    'month' => (int) $monthNumber,
+                    'qualifying_wind_kts' => round($secondHighestWind, 1),
+                    'qualifying_gust_kts' => round($secondHighestGust, 1),
                 ]
             );
         }

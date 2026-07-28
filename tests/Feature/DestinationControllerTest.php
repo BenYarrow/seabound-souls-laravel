@@ -2,7 +2,9 @@
 
 // Feature tests for App\Http\Controllers\DestinationController — the /destinations
 // index. Covers published-only listing, title ordering, country inclusion, and the
-// weatherData map (keyed by guide title → year → month rows) the charts consume.
+// climate map (keyed by guide title → sorted month rows, averaged across held years)
+// the charts consume. sailableDays payload behaviour lives in
+// DestinationSailablePayloadTest.
 
 namespace Tests\Feature;
 
@@ -56,7 +58,11 @@ class DestinationControllerTest extends TestCase
         );
     }
 
-    public function test_index_keys_weather_data_by_title_grouped_by_year(): void
+    // Replaces the old weatherData assertion — the controller now ships a
+    // `climate` prop (monthly averages across all held years, sorted by
+    // month) instead of a per-year weatherData map. See DestinationSailablePayloadTest
+    // for the cross-year averaging behaviour itself.
+    public function test_index_keys_climate_by_title_sorted_by_month(): void
     {
         $guide = SpotGuide::factory()->create(['title' => 'Tarifa', 'slug' => 'tarifa']);
         WeatherRecord::factory()->for($guide)->create(['year' => 2023, 'month' => 2]);
@@ -66,9 +72,10 @@ class DestinationControllerTest extends TestCase
 
         $response->assertInertia(
             fn (Assert $page) => $page
-                ->has('weatherData.Tarifa.2023', 2)
-                // Sorted by month within the year, so January comes first.
-                ->where('weatherData.Tarifa.2023.0.month', 'January')
+                ->has('climate.Tarifa', 2)
+                // Sorted by month regardless of insertion order, so January comes first.
+                ->where('climate.Tarifa.0.month', 'January')
+                ->where('climate.Tarifa.1.month', 'February')
         );
     }
 
@@ -137,49 +144,51 @@ class DestinationControllerTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->where('featuredSpotGuide', null));
     }
 
-    public function test_index_orders_guides_windiest_first_for_the_current_month(): void
+    // The following three tests previously asserted the server-side
+    // "gustiest-first" re-order (SpotGuide::sortByGustiestThisMonth), which
+    // Task 3 deliberately removed from this controller — ranking now happens
+    // client-side on every filter change (a fixed server order would fight
+    // it). Rewritten to prove the intentional new behaviour instead: the
+    // title-alphabetical order from `orderBy('title')` is NOT disturbed by
+    // gust/weather data, however lopsided.
+    public function test_index_keeps_alphabetical_order_regardless_of_gust_data(): void
     {
         $calm = SpotGuide::factory()->create(['title' => 'Calm Bay', 'slug' => 'calm-bay']);
         $windy = SpotGuide::factory()->create(['title' => 'Windy Point', 'slug' => 'windy-point']);
-        // Rank uses THIS year + current month; front end groups the ranked array.
         WeatherRecord::factory()->for($calm)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 8]);
         WeatherRecord::factory()->for($windy)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 20]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('spotGuides.0.title', 'Windy Point')
-                ->where('spotGuides.1.title', 'Calm Bay')
+                ->where('spotGuides.0.title', 'Calm Bay')
+                ->where('spotGuides.1.title', 'Windy Point')
             );
     }
 
-    public function test_index_sorts_guides_without_current_month_data_last(): void
+    public function test_index_keeps_alphabetical_order_when_only_one_guide_has_current_month_data(): void
     {
-        // "Aaa Bay" is alphabetically first but has no current-month reading, so it
-        // must sort AFTER a guide that does — proving no-data falls to the end.
         SpotGuide::factory()->create(['title' => 'Aaa Bay', 'slug' => 'aaa-bay']);
         $withData = SpotGuide::factory()->create(['title' => 'Zephyr Cove', 'slug' => 'zephyr-cove']);
         WeatherRecord::factory()->for($withData)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 5]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('spotGuides.0.title', 'Zephyr Cove')
-                ->where('spotGuides.1.title', 'Aaa Bay')
+                ->where('spotGuides.0.title', 'Aaa Bay')
+                ->where('spotGuides.1.title', 'Zephyr Cove')
             );
     }
 
-    public function test_index_ignores_other_years_and_months_when_ranking(): void
+    public function test_index_keeps_alphabetical_order_regardless_of_which_year_has_data(): void
     {
-        // A big wind reading in a different year must not lift a guide — only the
-        // current year+month counts (else it's treated as no current data → last).
-        $stale = SpotGuide::factory()->create(['title' => 'Stale Bay', 'slug' => 'stale-bay']);
         $fresh = SpotGuide::factory()->create(['title' => 'Fresh Point', 'slug' => 'fresh-point']);
-        WeatherRecord::factory()->for($stale)->create(['year' => now()->subYear()->year, 'month' => now()->month, 'kts_gust' => 40]);
+        $stale = SpotGuide::factory()->create(['title' => 'Stale Bay', 'slug' => 'stale-bay']);
         WeatherRecord::factory()->for($fresh)->create(['year' => now()->year, 'month' => now()->month, 'kts_gust' => 3]);
+        WeatherRecord::factory()->for($stale)->create(['year' => now()->subYear()->year, 'month' => now()->month, 'kts_gust' => 40]);
 
         $this->get(route('destinations.index'))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('spotGuides.0.title', 'Fresh Point') // current data, even at 3kt
-                ->where('spotGuides.1.title', 'Stale Bay')    // 40kt but wrong year → no current data → last
+                ->where('spotGuides.0.title', 'Fresh Point')
+                ->where('spotGuides.1.title', 'Stale Bay')
             );
     }
 }
