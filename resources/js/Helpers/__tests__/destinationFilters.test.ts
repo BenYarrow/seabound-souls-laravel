@@ -24,4 +24,13 @@ describe('destination filters URL sync', () => {
         expect(filters.unit).toBe('kts')
         expect(filters.group).toBe('continent')
     })
+
+    it('rejects an off-grid min for the resolved unit, falling back to the default', () => {
+        expect(parseFilters('?min=17&unit=kts', { month: 7 }).min).toBe(20)
+        expect(parseFilters('?min=999&unit=mph', { month: 7 }).min).toBe(20)
+    })
+
+    it('still accepts a valid on-grid, non-default min', () => {
+        expect(parseFilters('?min=35&unit=kts', { month: 7 }).min).toBe(35)
+    })
 })

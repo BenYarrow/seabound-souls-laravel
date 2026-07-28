@@ -107,9 +107,11 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
     const minKts = unitToKts(filters.min, filters.unit)
     // Selected slugs → titles (dropping any unknown/stale slug from a shared link);
     // empty selection = the whole published set.
-    const activeTitles = filters.spots.length > 0
-        ? filters.spots.map((slug) => slugToTitle[slug]).filter(Boolean)
-        : allTitles
+    const resolvedTitles = filters.spots.map((slug) => slugToTitle[slug]).filter(Boolean)
+    // why: a shared link whose slugs are ALL stale (spot renamed/deleted) must not
+    // resolve to an empty list — that would render the page and every chart blank.
+    // Falling back to allTitles shows everything instead of nothing.
+    const activeTitles = resolvedTitles.length > 0 ? resolvedTitles : allTitles
     const ranked = useMemo(
         () => rankSpots(sailableDays, activeTitles, filters.month, minKts),
         [sailableDays, activeTitles, filters.month, minKts]

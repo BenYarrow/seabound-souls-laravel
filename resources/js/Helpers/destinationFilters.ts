@@ -6,7 +6,7 @@
 // serialised as slugs**, not titles (titles contain spaces/commas that would
 // break the comma-join); the page resolves slugs → titles for ranking.
 
-import type { WindUnit } from '@/Helpers/sailableDays'
+import { MIN_OPTIONS, type WindUnit } from '@/Helpers/sailableDays'
 
 export type GroupBy = 'continent' | 'country' | 'global'
 
@@ -33,11 +33,15 @@ export const parseFilters = (search: string, defaults: { month: number }): Desti
     const monthParam = Number(params.get('month'))
     const month = Number.isInteger(monthParam) && monthParam >= 1 && monthParam <= 12 ? monthParam : defaults.month
 
-    const minParam = Number(params.get('min'))
-    const min = Number.isFinite(minParam) && minParam > 0 ? minParam : DEFAULT_MIN
-
     const unitParam = params.get('unit') as WindUnit | null
     const unit = unitParam && UNITS.includes(unitParam) ? unitParam : 'kts'
+
+    // why: the min <Select> only ever offers MIN_OPTIONS[unit] values, so a
+    // hand-edited URL with an off-grid min (e.g. min=17 or min=999) must be
+    // rejected — otherwise the dropdown and the applied ranking value fall out
+    // of lockstep (dropdown shows the closest option, ranking uses the raw one).
+    const minParam = Number(params.get('min'))
+    const min = Number.isFinite(minParam) && MIN_OPTIONS[unit].includes(minParam) ? minParam : DEFAULT_MIN
 
     const groupParam = params.get('group') as GroupBy | null
     const group = groupParam && GROUPS.includes(groupParam) ? groupParam : 'continent'
