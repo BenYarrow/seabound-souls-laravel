@@ -10,7 +10,7 @@ import Select from 'react-select'
 import Icon from '@/Components/Common/Icon'
 import { faSlidersH, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { MIN_OPTIONS, snapToUnitOption, unitToKts, type WindUnit } from '@/Helpers/sailableDays'
-import type { DestinationFilters, GroupBy } from '@/Helpers/destinationFilters'
+import { TEMP_OPTIONS, type DestinationFilters, type GroupBy } from '@/Helpers/destinationFilters'
 import type { SelectOption } from '@/Helpers/selectTypes'
 
 // react-select styling reused from the old FilterDataset (brand teal, square corners).
@@ -79,6 +79,8 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
         { label: 'kts', value: 'kts' }, { label: 'mph', value: 'mph' }, { label: 'kph', value: 'kph' },
     ]
     const minOptions = MIN_OPTIONS[filters.unit].map((value) => ({ label: `${value} ${filters.unit}`, value }))
+    // 0 = "Any" (the opt-in filter is off) — everything above is a °C floor.
+    const tempOptions = TEMP_OPTIONS.map((value) => ({ label: value === 0 ? 'Any' : `${value}°C`, value }))
 
     const isAllSpots = filters.spots.length === 0
     const selectedSpotOptions = destinationOptions.filter((opt) => filters.spots.includes(opt.value))
@@ -101,7 +103,10 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
     const spotsLabel = isAllSpots
         ? 'All spots'
         : `${filters.spots.length} spot${filters.spots.length === 1 ? '' : 's'}`
-    const filterSummary = `${monthLabel} · ${filters.min} ${filters.unit} · ${spotsLabel} · ${groupLabel}`
+    // Temp is opt-in (default 0/Any), so it only joins the summary once set —
+    // otherwise every collapsed header would read "· Any" for no reason.
+    const tempSummary = filters.minTemp > 0 ? ` · ≥${filters.minTemp}°C` : ''
+    const filterSummary = `${monthLabel} · ${filters.min} ${filters.unit} · ${spotsLabel} · ${groupLabel}${tempSummary}`
 
     return (
         <div className="bg-white border-y border-secondary/10 sticky top-0 z-20">
@@ -189,6 +194,17 @@ const DestinationFilterBar = ({ monthOptions, groupOptions, destinationOptions, 
                             options={minOptions}
                             value={minOptions.find((opt) => opt.value === filters.min) ?? minOptions[0]}
                             onChange={(opt: any) => opt && onChange({ ...filters, min: Number(opt.value) })}
+                            styles={selectStyles}
+                            isSearchable={false}
+                        />
+                    </div>
+
+                    <div className="flex flex-col lg:w-32 shrink-0">
+                        <label className="block text-[10px] uppercase tracking-[0.2em] text-secondary/50 mb-1">Min. temp</label>
+                        <Select
+                            options={tempOptions}
+                            value={tempOptions.find((opt) => opt.value === filters.minTemp) ?? tempOptions[0]}
+                            onChange={(opt: any) => opt && onChange({ ...filters, minTemp: Number(opt.value) })}
                             styles={selectStyles}
                             isSearchable={false}
                         />

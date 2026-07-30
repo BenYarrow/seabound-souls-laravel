@@ -16,11 +16,20 @@ export interface DestinationFilters {
     unit: WindUnit
     group: GroupBy
     spots: string[]
+    /** Opt-in minimum typical air temp (°C) for the selected month; 0 = "Any"/off. */
+    minTemp: number
 }
 
 const UNITS: WindUnit[] = ['kts', 'mph', 'kph']
 const GROUPS: GroupBy[] = ['continent', 'country', 'global']
 const DEFAULT_MIN = 20
+
+// why: opt-in, off by default (0 = "Any") — cold-water spots like Brouwersdam
+// rank purely on wind, and must not be silently penalised by a temperature
+// judgement unless the user explicitly sets a minimum. A fixed step list (not
+// a free-typed number) keeps the dropdown and the applied value in lockstep,
+// matching the existing MIN_OPTIONS/min-wind pattern.
+export const TEMP_OPTIONS = [0, 10, 15, 20, 25]
 
 /**
  * Build filter state from a URL query string, falling back to defaults for any
@@ -49,10 +58,16 @@ export const parseFilters = (search: string, defaults: { month: number }): Desti
     const spotsParam = params.get('spots')
     const spots = spotsParam ? spotsParam.split(',').filter(Boolean) : []
 
-    return { month, min, unit, group, spots }
+    // Off-grid values (not one of TEMP_OPTIONS) fall back to 0 (Any) rather than
+    // the nearest step — a hand-edited/stale URL must not silently apply a
+    // filter the dropdown never offered.
+    const tempParam = Number(params.get('temp'))
+    const minTemp = Number.isFinite(tempParam) && TEMP_OPTIONS.includes(tempParam) ? tempParam : 0
+
+    return { month, min, unit, group, spots, minTemp }
 }
 
-/** Serialise filter state to a flat query-param map (omitting empty spots). */
+/** Serialise filter state to a flat query-param map (omitting empty spots and an off/Any temp). */
 export const filtersToQuery = (filters: DestinationFilters): Record<string, string> => {
     const query: Record<string, string> = {
         month: String(filters.month),
@@ -62,6 +77,12 @@ export const filtersToQuery = (filters: DestinationFilters): Record<string, stri
     }
     if (filters.spots.length > 0) {
         query.spots = filters.spots.join(',')
+    }
+    // why: temp is opt-in — omitting it at 0 (Any) keeps shared/default URLs
+    // clean and matches the "off by default" contract (no `temp=0` cluttering
+    // every link).
+    if (filters.minTemp > 0) {
+        query.temp = String(filters.minTemp)
     }
     return query
 }
