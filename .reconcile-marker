@@ -1,2 +1,2 @@
-date: 2026-07-28
-note: Reconcile 22 (folded into the sailable-days blend PR #41) — post-launch sailable-days refinements: gust→gust+sustained-floor blend (fixes spiky-storm over-count), mobile collapsible filter bar (#40), written-by band restyle (#38).
+date: 2026-07-30
+note: Reconcile 23 (standalone, catching up merged #42) — temperature note on destination cards + opt-in min-temp filter (surfaced/filterable, never gated — protects cold-water spots like Brouwersdam).
