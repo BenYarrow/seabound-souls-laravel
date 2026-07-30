@@ -149,7 +149,7 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
 
     /** "≈ N windy days · T°C" stat for a card, from the ranked row + that month's typical temp. */
     const statFor = (title: string): string => {
-        const row = ranked.find((entry) => entry.title === title)
+        const row = visibleRanked.find((entry) => entry.title === title)
         const days = row ? Math.round(row.avgDaysThisMonth) : 0
         const temp = climateTempForMonth(climate, title, monthName)
         const tempPart = temp !== null ? ` · ${Math.round(temp)}°C` : ''
@@ -257,7 +257,11 @@ const Index = ({ spotGuides, sailableDays, climate, showProvenance, static_masth
             )}
 
             {/* Charts */}
-            {allTitles.length > 0 && (
+            {/* why: when the temp filter yields no spots, the cards show the empty-state
+                message and this whole section is hidden — otherwise SailableDaysChart
+                (unlike its wind/temp siblings) has no self-hide guard and would render
+                a blank chart frame. */}
+            {allTitles.length > 0 && !isTemperatureFilterEmpty && (
                 <section className="bg-primary-lightest">
                     <div className="container mx-auto pt-16 lg:pt-20 pb-10 lg:pb-12">
                         <div className="flex items-start gap-4">
