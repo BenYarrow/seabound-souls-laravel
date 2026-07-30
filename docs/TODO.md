@@ -1,4 +1,4 @@
-# TODO — Seabound Souls (Laravel)
+# TODO — Seabound Sessions (Laravel)
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
@@ -35,7 +35,7 @@ Public controllers all covered. Remaining:
 
 ## Contributor workflow (follow-ups)
 Sub-project 1 shipped 2026-07-13 (see history + SITREP). Remaining:
-- [ ] **Email delivery** — wire the `mail` channel so contributor **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see Project B).
+- [ ] **Email delivery** — wire the `mail` channel so contributor **invite links** and **workflow notifications** (submitted / published / changes-requested) send by email. Built email-ready (Laravel notification classes on the `database` channel; the invite link is shown in-panel to copy today). Depends on real transactional mail (see "Rebrand + launch").
 - [ ] On Cloud/staging: set **`MAPBOX_TOKEN`** (map picker won't render without it) and confirm **`APP_URL`** matches the domain (signed set-password invite links are built from it).
 
 ### Contributor profiles (sub-project 2 — shipped 2026-07-15, #36; follow-ups)
@@ -88,9 +88,37 @@ The single owner login has been hardened with a strong env-driven password (set 
   - `APP_ENV=production`, `APP_DEBUG=false` (no stack-trace/query leakage)
   - `SESSION_SECURE_COOKIE=true`, HTTPS enforced
   - `QUEUE_CONNECTION=database` with a supervised worker process running (weather triggers)
-  - Real transactional mail configured (see Project B)
+  - Real transactional mail configured (see "Rebrand + launch")
 
-## Project B — go-live (separate effort)
-- [ ] Deploy Laravel to a host (first-ever deploy) + point `seaboundsouls.co.uk` at it, off the old Vercel holding page
-- [ ] When the custom domain goes live, update the `Sitemap:` URL in `public/robots.txt` to `https://seaboundsouls.co.uk/sitemap.xml` (currently points at the laravel.cloud URL). The sitemap itself is a dynamic cached route (`/sitemap.xml`, no cron) whose URLs already adapt to the serving host — only the static robots.txt line is host-specific. Also submit the sitemap in Google Search Console.
-- [ ] Real transactional email (Resend/Postmark) + verify sending domain (SPF/DKIM/DMARC) — then swap `MAIL_MAILER` from Herd's catcher; contact-enquiry notifications go live with no code change
+## Rebrand + launch — seaboundsessions.com (PRE-LAUNCH)
+
+Rebrand code changes shipped 2026-07-30 (#44, see [history](history/2026-07-30-rebrand-seabound-sessions.md)).
+Everything below is production/third-party state that code can't change.
+
+### Production data still carrying the old brand
+- [ ] **Three content records** — fixed in local dev only; the same edits are needed on prod via the admin: the `home` Page's **title** *and* `seo_description`, the `blog` Page's `seo_description`, and the `dakhla` spot guide's `seo_description`.
+- [ ] **Owner account display name** — still `Seabound Souls` in the prod DB (it's the house "Written by" byline). Either re-run `php artisan db:seed --class=AdminUserSeeder` (note: this also rotates the password to `ADMIN_PASSWORD`) or edit the name directly.
+- [ ] **`public/robots.txt`** — the `Sitemap:` line points at `https://seabound-souls-production-ewycw6.laravel.cloud/sitemap.xml`. That host is stale twice over: the Cloud application has since been renamed, and the custom domain will supersede it. Update to `https://seaboundsessions.com/sitemap.xml` at cutover. (The sitemap itself is a dynamic cached route whose URLs adapt to the serving host — only this static line is host-specific.)
+
+### Domain cutover
+- [ ] **Attach the domain** in Cloud → Environment → Network settings; add the DNS records it specifies at Namecheap (expect an **A** record at the apex — you're not on Cloudflare). Refresh until status reads **Connected**.
+- [ ] **Canonical host = apex** (`https://seaboundsessions.com`), with `www` redirecting to it — set the redirect behaviour in Cloud's Add-domain dialog. Serving both splits SEO across two hosts.
+- [ ] **Set the custom domain as the environment's primary domain.** Cloud derives the injected `APP_URL` from it — confirmed live: renaming the Cloud application updated `APP_URL` automatically. A manual custom `APP_URL` override is therefore probably unnecessary; check the injected value after redeploy and only override if it still shows the vanity host. (Custom vars override injected ones — you can't edit the injected block directly.)
+- [ ] **Order matters:** don't point `APP_URL` at the new domain until it resolves. Signed contributor invite links embed the host in their signature, so any link minted against a mismatched `APP_URL` fails verification.
+- [ ] **Environment variable changes need a redeploy** to take effect.
+- [ ] Submit the sitemap in **Google Search Console** for the new domain. (Note `*.laravel.cloud` hosts carry `X-Robots-Tag: noindex, nofollow`; custom domains don't — so indexing starts cleanly at cutover.)
+- [ ] Decide what happens to **seaboundsouls.com / .co.uk** — if the old Next.js site is still serving on either, 301 it to the new domain rather than letting it lapse.
+
+### Third-party keys (domain-bound — these fail *after* cutover)
+- [ ] **Mapbox URL restrictions are not saving.** New account `benyarrow95`; a restricted token was created and deployed, but as of the last probe it still returned **200** for `Referer: https://evil-scraper.test/` — i.e. no restriction is enforcing. Likely the "Add URL" button wasn't clicked (the URL counter must read above zero). Verify with: allowed hosts → 200, `example.com` → **403**. Until that flip is observed, prod is running an effectively unrestricted token.
+- [ ] **Mapbox allow-list must include the Cloud vanity host**, not just the custom domain — prod serves from the vanity host until cutover. It changed when the Cloud app was renamed, so the old entry is dead; remove it once the new one is confirmed.
+- [ ] **reCAPTCHA** — new keys issued and installed locally (site key ends `fSbIqB`). Confirm the Google console lists **both** the dev host and `seaboundsessions.com`. Subdomains are auto-included, so the apex covers `www` — but registering `www` alone would *not* cover the apex. Server-side verification fails on a hostname mismatch, which looks like a silently broken form, not a config error.
+- [ ] **Real transactional email** (Resend/Postmark) + verify the sending domain for seaboundsessions.com (SPF/DKIM/DMARC), then swap `MAIL_MAILER` off Herd's catcher. Contact-enquiry notifications and contributor invites go live with no code change. `MAIL_FROM_NAME` follows `APP_NAME`, already updated.
+
+### Local repo rename (optional, planned)
+The GitHub repo is renamed; renaming the local directory to match has four path-keyed consequences:
+- [ ] `public/storage` is an **absolute** symlink and will dangle (all media 404) — `rm public/storage && php artisan storage:link`.
+- [ ] `php artisan optimize:clear` — `bootstrap/cache/` holds absolute paths.
+- [ ] `git remote set-url origin <new-repo-url>` (GitHub redirects, but don't leave it implicit).
+- [ ] The Claude Code **project memory dir** is keyed on the absolute path (`~/.claude/projects/-Users-...-seabound-souls-laravel/`) — rename it to match or future sessions start with empty memory. Also update `memory_dir` in `.claude/skills/reconcile-everything/project.md`.
+- [ ] Herd derives the local domain from the folder name, so `seaboundsouls.test` changes — update `APP_URL` in `.env`, and the Mapbox allow-list entry if the dev host is listed there.

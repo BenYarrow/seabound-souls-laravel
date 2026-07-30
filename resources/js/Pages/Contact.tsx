@@ -2,7 +2,7 @@ import Layout from '@/Layouts/Layout'
 import Icon from '@/Components/Common/Icon'
 import { useForm } from '@inertiajs/react'
 import { FormEvent, useEffect, useState } from 'react'
-import { faEnvelope, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
 
 // Google reCAPTCHA v3 (invisible / score-based), loaded via a <script> tag keyed
@@ -136,18 +136,6 @@ const Contact = ({ recaptchaSiteKey, meta }: Props) => {
                     {/* Bottom: contact details */}
                     <div className="relative z-10 pt-12 space-y-5">
                         <div className="h-px bg-white/[0.07]" />
-
-                        <a
-                            href="mailto:seabound.souls@outlook.com"
-                            className="flex items-center gap-3 text-white/45 hover:text-white text-sm transition-colors duration-200 group"
-                        >
-                            <Icon
-                                icon={faEnvelope}
-                                size="size-4"
-                                customClasses="text-primary-lighter/60 group-hover:text-primary-lighter shrink-0 transition-colors duration-200"
-                            />
-                            seabound.souls@outlook.com
-                        </a>
 
                         <div className="flex gap-3">
                             {socialMedia.map((social) => (

@@ -22,7 +22,7 @@ class AdminUserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => config('admin.email')],
             [
-                'name' => 'Seabound Souls',
+                'name' => 'Seabound Sessions',
                 'password' => Hash::make(config('admin.password')),
                 'role' => User::ROLE_OWNER,
             ],

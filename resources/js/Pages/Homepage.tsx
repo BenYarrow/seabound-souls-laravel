@@ -14,11 +14,11 @@ const Homepage = ({ page, meta }: Props) => {
     return (
         <Layout title={meta.title} description={meta.description} keywords={meta.keywords} ogImage={meta.og_image}>
             {hasSlider ? (
-                <MastheadSlider slides={page.masthead_slider} title={page?.title || 'Seabound Souls'} />
+                <MastheadSlider slides={page.masthead_slider} title={page?.title || 'Seabound Sessions'} />
             ) : (
                 <StaticMasthead
                     imageUrl={page?.static_masthead ?? null}
-                    title={page?.title || 'Seabound Souls'}
+                    title={page?.title || 'Seabound Sessions'}
                     subtitle="Your ultimate windsurfing destination guide"
                 />
             )}

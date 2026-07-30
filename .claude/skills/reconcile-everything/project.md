@@ -1,4 +1,4 @@
-# Reconcile Everything — Seabound Souls (Laravel) project data
+# Reconcile Everything — Seabound Sessions (Laravel) project data
 
 **This is a data file** referenced by the global `reconcile-everything` skill at `~/.claude/skills/reconcile-everything/SKILL.md`. The global skill carries the procedure logic; this file supplies project-specific values.
 
@@ -28,7 +28,7 @@ Update this file when project conventions change. Don't put procedure logic here
 | `test_runner` | `php artisan test` (PHPUnit 11) |
 | `frontend_build_cmd` | `npm run build` _(requires Node 22+; shell default v14 fails — see CLAUDE.md)_ |
 | `db_engine` | PostgreSQL. Local `seabound_souls_dev` on Homebrew `postgresql@16` (server); prod DB is **`main`** on Laravel Cloud / Neon (Postgres **17**). Client tools `postgresql@17` also installed locally for `db:pull-from-production`. Tests run on in-memory SQLite (`phpunit.xml`). |
-| `deploy_platform` | Laravel Cloud (serverless Postgres) — **live** since 2026-07-09, `https://seabound-souls-production-ewycw6.laravel.cloud` (see SITREP roadmap #18/#19); custom domain still pending |
+| `deploy_platform` | Laravel Cloud (serverless Postgres) — **live** since 2026-07-09 (see SITREP roadmap #18/#19). The Cloud application was **renamed** 2026-07-30 in the Seabound Sessions rebrand, so the `*.laravel.cloud` vanity host changed (Cloud derives it from app+environment name); the old `seabound-souls-production-ewycw6` URL is dead. Custom domain **seaboundsessions.com** pending — see `docs/TODO.md` → "Rebrand + launch". |
 
 ## Code directories — for stable-doc deep-audit (10a)
 

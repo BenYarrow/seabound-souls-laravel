@@ -57,7 +57,7 @@ class ContributorController extends Controller
             'static_masthead' => $contributor->staticMastheadMedia?->imagePayload(),
             'guides' => $guides,
             'meta' => [
-                'title' => "{$contributor->name} — Seabound Souls",
+                'title' => "{$contributor->name} — Seabound Sessions",
                 'description' => "Windsurfing spot guides and story from {$contributor->name}.",
                 'keywords' => [],
                 'og_image' => $contributor->profileImageMedia?->getUrl() ?: '',

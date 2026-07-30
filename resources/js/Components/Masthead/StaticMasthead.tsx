@@ -99,7 +99,7 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center pointer-events-none">
                     <h1
                         className="font-title text-white uppercase leading-[0.9] drop-shadow-2xl"
-                        style={{ fontSize: 'clamp(3rem, 9vw, 7rem)' }}
+                        style={{ fontSize: 'clamp(2.25rem, 6.5vw, 5rem)' }}
                     >
                         {title}
                     </h1>
@@ -116,7 +116,7 @@ const StaticMasthead = ({ imageUrl, title, subtitle, eyebrow, children }: Static
                         )}
                         <h1
                             className="font-title text-white uppercase leading-[0.9] drop-shadow-2xl"
-                            style={{ fontSize: 'clamp(3.5rem, 11vw, 9rem)' }}
+                            style={{ fontSize: 'clamp(2.5rem, 7.5vw, 6rem)' }}
                         >
                             {title}
                         </h1>

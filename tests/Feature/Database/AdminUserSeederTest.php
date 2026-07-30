@@ -22,7 +22,7 @@ class AdminUserSeederTest extends TestCase
 
         $user = User::where('email', 'owner@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertSame('Seabound Souls', $user->name);
+        $this->assertSame('Seabound Sessions', $user->name);
         $this->assertTrue(Hash::check('secret-one', $user->password));
     }
 

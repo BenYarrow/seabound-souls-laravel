@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 
 createInertiaApp({
-    title: (title) => title ? `${title} | Seabound Souls` : 'Seabound Souls',
+    title: (title) => title ? `${title} | Seabound Sessions` : 'Seabound Sessions',
     resolve: (name) => {
         const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true });
         return pages[`./Pages/${name}.tsx`] as any;

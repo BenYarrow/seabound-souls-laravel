@@ -1,8 +1,10 @@
-# Seabound Souls — Laravel/Inertia Project
+# Seabound Sessions — Laravel/Inertia Project
 
 ## Project Overview
 
-A full rebuild of the **Seabound Souls** windsurfing destination guide website. The original was built with **Next.js 15 + Sanity CMS**. This project is a complete port to **Laravel 12 + Inertia.js + React + Filament admin**. The design reference and component logic should always be compared against the original at `../seabound-souls-sanity-next-js/`.
+A full rebuild of the windsurfing destination guide website. The original was built with **Next.js 15 + Sanity CMS**. This project is a complete port to **Laravel 12 + Inertia.js + React + Filament admin**. The design reference and component logic should always be compared against the original at `../seabound-souls-sanity-next-js/`.
+
+**Brand:** the site is **Seabound Sessions**, launching on **seaboundsessions.com** — renamed from "Seabound Souls" on 2026-07-30. The old name survives only where it is not brand-facing: the repo/directory name, the local + production database names, the `seabound.souls@outlook.com` owner mailbox, the `@seabound_souls` / `@seaboundsouls` social handles, and dated records under `docs/history/`. Never reintroduce it in UI copy, page/SEO titles, or admin chrome.
 
 **What the site is:** A windsurfing destination guide featuring spot guides with maps, weather data, recommendations, galleries, a blog, and contact form.
 
@@ -300,7 +302,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | **BlogResource** | General, Content (blocks builder), Gallery, SEO |
 | **PageResource** | General, Content (blocks builder), Gallery & Images, SEO |
 | **CountryResource** | name, slug, continent |
-| **TagResource** (owner-only, "Blog Tags", `/admin/blog-tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
+| **TagResource** (owner-only, nav label "Blog Tags", URL `/admin/tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
 | **ContributorResource** (owner-only) | Contributors roster (first/last name, email, guide count, joined) + per-contributor guides panel; **Invite Contributor** action. Built on the `User` model, scoped to `role = contributor`. |
 
 ---
@@ -321,7 +323,7 @@ orange:           hsl(11 61% 58%)      accent orange
 
 ### Custom Font
 - `font-title` → **Knewave** (Google Font, imported in `resources/css/app.css`)
-- Used for the "Seabound Souls" nav logo text
+- Used for the "Seabound Sessions" nav wordmark and masthead titles
 
 ### Safelist
 Dynamic classes for colours, text alignment, prose variants, and Recharts chart colours.
@@ -424,7 +426,7 @@ Rewritten to match the Next.js design:
 ### Helpers (`resources/js/Helpers/`)
 > **Case matters:** the directory is `Helpers/` (capital H) — import as `@/Helpers/…`. macOS is case-insensitive so lowercase `@/helpers/…` works locally but breaks the case-sensitive Linux build on Laravel Cloud (`vite:load-fallback … ENOENT`). Match the tracked case for every `@/…` import.
 - **`colours.ts`** — `chartColors` for single-spot charts; `getSpotGuideColours()` auto-assigns from a 16-colour palette for multi-destination charts
-- **`weatherDataHelpers.ts`** — `prepareYearlyWindData()` and `prepareYearlyTempData()` transform `{ [title]: { [year]: months[] } }` into Recharts-friendly `[{ month, Title1: value, ... }]`
+- **`weatherDataHelpers.ts`** — *dead code*: zero importers since the charts moved to `climate.ts`. Slated for removal (see `docs/TODO.md`).
 - **`helpers.ts`** — `formatDate()`, `truncateText()`
 - **`sailableDays.ts`** — client-side sailable-days ranking: `unitToKts()`/`ktsToUnit()`/`snapToUnitOption()` (kts/mph/kph), `sailableDaysInMonth()` (coverage-normalised rate), `rankSpots()` (month-desc, peak-month → alphabetical tie-break, dataless spots kept at rank 0)
 - **`destinationFilters.ts`** — `parseFilters()`/`filtersToQuery()`: URL query-string round-trip for the destinations filter bar (`spots` serialised as **slugs**, not titles)

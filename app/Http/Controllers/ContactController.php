@@ -29,7 +29,7 @@ class ContactController extends Controller
             'recaptchaSiteKey' => config('services.recaptcha.site_key'),
             'meta' => [
                 'title' => $page?->seo_title ?: 'Contact',
-                'description' => $page?->seo_description ?: 'Get in touch with the Seabound Souls team.',
+                'description' => $page?->seo_description ?: 'Get in touch with the Seabound Sessions team.',
                 'keywords' => $page?->seo_keywords ?? [],
                 'og_image' => $page?->ogImageMedia?->getUrl() ?: '',
             ],

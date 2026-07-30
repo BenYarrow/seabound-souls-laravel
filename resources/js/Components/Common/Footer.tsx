@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react'
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons'
 import Icon from './Icon'
 
@@ -33,7 +32,7 @@ const Footer = () => {
                     className="font-title text-white/[0.025] uppercase whitespace-nowrap"
                     style={{ fontSize: 'clamp(5rem, 18vw, 18rem)', lineHeight: 1 }}
                 >
-                    Seabound Souls
+                    Seabound Sessions
                 </span>
             </div>
 
@@ -44,8 +43,8 @@ const Footer = () => {
                     {/* Brand column */}
                     <div className="lg:col-span-2 space-y-5">
                         <Link href="/" className="flex items-center gap-3" aria-label="Homepage">
-                            <img src="/images/logo.png" alt="" className="w-14" loading="lazy" />
-                            <span className="font-title text-white text-2xl uppercase">Seabound Souls</span>
+                            <img src="/images/logo-mark.png" alt="" className="w-14" loading="lazy" />
+                            <span className="font-title text-white text-2xl uppercase">Seabound Sessions</span>
                         </Link>
                         <p className="text-white/45 text-sm leading-relaxed max-w-xs">
                             Discover the world's finest windsurfing destinations — curated guides,
@@ -91,21 +90,12 @@ const Footer = () => {
                         <h4 className="text-primary-lighter text-[10px] uppercase tracking-[0.25em] mb-6 font-medium">
                             Get in touch
                         </h4>
-                        <div className="space-y-4">
-                            <a
-                                href="mailto:seabound.souls@outlook.com"
-                                className="flex items-center gap-3 text-white/50 hover:text-white text-sm transition-colors duration-200 group"
-                            >
-                                <Icon icon={faEnvelope} size="size-4" customClasses="shrink-0 text-primary-lighter/60 group-hover:text-primary-lighter transition-colors" />
-                                seabound.souls@outlook.com
-                            </a>
-                            <p className="text-white/30 text-xs leading-relaxed pt-2">
-                                Planning your next trip or want to collaborate?{' '}
-                                <Link href="/contact" className="text-primary-lighter/70 hover:text-primary-lighter underline underline-offset-2 transition-colors">
-                                    Send us a message.
-                                </Link>
-                            </p>
-                        </div>
+                        <p className="text-white/30 text-xs leading-relaxed">
+                            Planning your next trip or want to collaborate?{' '}
+                            <Link href="/contact" className="text-primary-lighter/70 hover:text-primary-lighter underline underline-offset-2 transition-colors">
+                                Send us a message.
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -114,7 +104,7 @@ const Footer = () => {
             <div className="relative border-t border-white/[0.07]">
                 <div className="container mx-auto py-4 flex items-center justify-between gap-4">
                     <span className="text-white/25 text-xs">
-                        © {year} Seabound Souls. All rights reserved.
+                        © {year} Seabound Sessions. All rights reserved.
                     </span>
                     <span className="text-white/15 text-xs hidden sm:block">
                         Wind. Water. Freedom.
