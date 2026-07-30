@@ -29,6 +29,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            // Set explicitly rather than inherited from APP_NAME: an environment
+            // with a stale or unset APP_NAME would otherwise show the pre-rename
+            // brand (or "Laravel") in the topbar, login page and tab titles.
+            // No brandLogo — the logo mark is white line art, invisible against
+            // Filament's light topbar.
+            ->brandName('Seabound Sessions')
+            ->favicon(asset('favicon.png'))
             ->databaseNotifications()
             // "View site" link in the admin top bar — opens the public homepage in
             // a new tab so the admin can jump from the panel to the live site.

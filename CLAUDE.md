@@ -1,8 +1,10 @@
-# Seabound Souls — Laravel/Inertia Project
+# Seabound Sessions — Laravel/Inertia Project
 
 ## Project Overview
 
-A full rebuild of the **Seabound Souls** windsurfing destination guide website. The original was built with **Next.js 15 + Sanity CMS**. This project is a complete port to **Laravel 12 + Inertia.js + React + Filament admin**. The design reference and component logic should always be compared against the original at `../seabound-souls-sanity-next-js/`.
+A full rebuild of the windsurfing destination guide website. The original was built with **Next.js 15 + Sanity CMS**. This project is a complete port to **Laravel 12 + Inertia.js + React + Filament admin**. The design reference and component logic should always be compared against the original at `../seabound-souls-sanity-next-js/`.
+
+**Brand:** the site is **Seabound Sessions**, launching on **seaboundsessions.com** — renamed from "Seabound Souls" on 2026-07-30. The old name survives only where it is not brand-facing: the repo/directory name, the local + production database names, the `seabound.souls@outlook.com` owner mailbox, the `@seabound_souls` / `@seaboundsouls` social handles, and dated records under `docs/history/`. Never reintroduce it in UI copy, page/SEO titles, or admin chrome.
 
 **What the site is:** A windsurfing destination guide featuring spot guides with maps, weather data, recommendations, galleries, a blog, and contact form.
 
@@ -321,7 +323,7 @@ orange:           hsl(11 61% 58%)      accent orange
 
 ### Custom Font
 - `font-title` → **Knewave** (Google Font, imported in `resources/css/app.css`)
-- Used for the "Seabound Souls" nav logo text
+- Used for the "Seabound Sessions" nav wordmark and masthead titles
 
 ### Safelist
 Dynamic classes for colours, text alignment, prose variants, and Recharts chart colours.

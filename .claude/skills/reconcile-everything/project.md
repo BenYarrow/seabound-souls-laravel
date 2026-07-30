@@ -1,4 +1,4 @@
-# Reconcile Everything — Seabound Souls (Laravel) project data
+# Reconcile Everything — Seabound Sessions (Laravel) project data
 
 **This is a data file** referenced by the global `reconcile-everything` skill at `~/.claude/skills/reconcile-everything/SKILL.md`. The global skill carries the procedure logic; this file supplies project-specific values.
 

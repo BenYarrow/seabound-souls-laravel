@@ -1,4 +1,4 @@
-# TODO — Seabound Souls (Laravel)
+# TODO — Seabound Sessions (Laravel)
 
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
