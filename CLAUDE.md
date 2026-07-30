@@ -302,7 +302,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | **BlogResource** | General, Content (blocks builder), Gallery, SEO |
 | **PageResource** | General, Content (blocks builder), Gallery & Images, SEO |
 | **CountryResource** | name, slug, continent |
-| **TagResource** (owner-only, "Blog Tags", `/admin/blog-tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
+| **TagResource** (owner-only, nav label "Blog Tags", URL `/admin/tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
 | **ContributorResource** (owner-only) | Contributors roster (first/last name, email, guide count, joined) + per-contributor guides panel; **Invite Contributor** action. Built on the `User` model, scoped to `role = contributor`. |
 
 ---
@@ -426,7 +426,7 @@ Rewritten to match the Next.js design:
 ### Helpers (`resources/js/Helpers/`)
 > **Case matters:** the directory is `Helpers/` (capital H) — import as `@/Helpers/…`. macOS is case-insensitive so lowercase `@/helpers/…` works locally but breaks the case-sensitive Linux build on Laravel Cloud (`vite:load-fallback … ENOENT`). Match the tracked case for every `@/…` import.
 - **`colours.ts`** — `chartColors` for single-spot charts; `getSpotGuideColours()` auto-assigns from a 16-colour palette for multi-destination charts
-- **`weatherDataHelpers.ts`** — `prepareYearlyWindData()` and `prepareYearlyTempData()` transform `{ [title]: { [year]: months[] } }` into Recharts-friendly `[{ month, Title1: value, ... }]`
+- **`weatherDataHelpers.ts`** — *dead code*: zero importers since the charts moved to `climate.ts`. Slated for removal (see `docs/TODO.md`).
 - **`helpers.ts`** — `formatDate()`, `truncateText()`
 - **`sailableDays.ts`** — client-side sailable-days ranking: `unitToKts()`/`ktsToUnit()`/`snapToUnitOption()` (kts/mph/kph), `sailableDaysInMonth()` (coverage-normalised rate), `rankSpots()` (month-desc, peak-month → alphabetical tie-break, dataless spots kept at rank 0)
 - **`destinationFilters.ts`** — `parseFilters()`/`filtersToQuery()`: URL query-string round-trip for the destinations filter bar (`spots` serialised as **slugs**, not titles)

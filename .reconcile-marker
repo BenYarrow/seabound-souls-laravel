@@ -1,2 +1,2 @@
 date: 2026-07-30
-note: Reconcile 23 (standalone, catching up merged #42) — temperature note on destination cards + opt-in min-temp filter (surfaced/filterable, never gated — protects cold-water spots like Brouwersdam).
+note: Reconcile 24 (folded into #44) — rebrand to Seabound Sessions: derived logo mark + favicon, brand strings site-wide + admin panel, mailboxes removed, masthead titles cut ~30%. Pre-launch domain/key tasks captured in docs/TODO.md.
