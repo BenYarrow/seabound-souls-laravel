@@ -64,6 +64,6 @@ class TagPageTest extends TestCase
         $tag->blogs()->attach(Blog::factory()->create());
 
         $this->get('/blog/tags/'.$tag->slug)
-            ->assertInertia(fn ($page) => $page->where('meta.title', 'Posts tagged Freestyle — Seabound Souls'));
+            ->assertInertia(fn ($page) => $page->where('meta.title', 'Posts tagged Freestyle — Seabound Sessions'));
     }
 }

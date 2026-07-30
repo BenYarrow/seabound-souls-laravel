@@ -227,7 +227,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
             {/* ── Author attribution — only once a contributor guide exists on the site ──
                 Sits below the quick-nav, leading the content.
                 Contributor: a prominent card (portrait + name) linking to their profile.
-                House: a simple "Written by Seabound Souls" label. */}
+                House: a simple "Written by Seabound Sessions" label. */}
             {showProvenance && (
                 <div className="relative overflow-hidden bg-cream py-12">
                     {/* Flowing wave lines — soft on-brand decoration on the cream
@@ -289,7 +289,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                         <div className="inline-flex flex-col items-center">
                             <span className="text-[10px] uppercase tracking-[0.35em] text-primary/60">Written by</span>
                             <span className="font-title text-secondary uppercase leading-tight mt-1" style={{ fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)' }}>
-                                Seabound Souls
+                                Seabound Sessions
                             </span>
                         </div>
                     )}

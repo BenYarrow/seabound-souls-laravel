@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Set your password — Seabound Souls</title>
+    <title>Set your password — Seabound Sessions</title>
     @vite('resources/css/app.css')
 </head>
 <body class="min-h-full bg-cream flex items-center justify-center p-6">

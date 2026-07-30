@@ -13,6 +13,10 @@ const navItems = [
     { title: 'Contact', href: '/contact' },
 ]
 
+// Scales down on narrow screens: the wordmark is `whitespace-nowrap`, so at
+// text-2xl it overruns the search/menu buttons on a 375px viewport.
+const wordmarkClasses = 'text-white text-base sm:text-xl md:text-2xl uppercase font-title whitespace-nowrap'
+
 const NavBar = () => {
     const { url } = usePage()
     const [showMobileNav, setShowMobileNav] = useState(false)
@@ -58,11 +62,11 @@ const NavBar = () => {
             <header className="h-[5rem] flex items-center">
                 <div className="container mx-auto w-full flex items-center justify-between gap-x-6">
                     <div className="flex items-center gap-x-2">
-                        <img src="/images/logo.png" alt="Seabound Souls" className="size-[50px] md:size-[60px]" loading="lazy" />
+                        <img src="/images/logo-mark.png" alt="Seabound Sessions" className="size-[44px] md:size-[60px]" loading="lazy" />
                         {url === '/' ? (
-                            <h1 className="text-white text-2xl uppercase font-title whitespace-nowrap">Seabound Souls</h1>
+                            <h1 className={wordmarkClasses}>Seabound Sessions</h1>
                         ) : (
-                            <Link href="/" className="text-white text-2xl uppercase font-title whitespace-nowrap">Seabound Souls</Link>
+                            <Link href="/" className={wordmarkClasses}>Seabound Sessions</Link>
                         )}
                     </div>
 

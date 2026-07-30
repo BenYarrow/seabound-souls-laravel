@@ -47,7 +47,7 @@ class User extends Authenticatable implements FilamentUser
     /**
      * Keep `name` (the canonical display column used by auth/account UIs) in sync
      * with the structured contributor first/last names. Only runs when first/last are
-     * set, so the owner's brand name ("Seabound Souls", first/last null) is left
+     * set, so the owner's brand name ("Seabound Sessions", first/last null) is left
      * untouched.
      */
     protected static function booted(): void

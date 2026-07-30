@@ -315,7 +315,7 @@ const CardGrid = ({ guides, showProvenance, statFor, withContinent = false }: {
                     countryName={guide.country?.name}
                     continentLabel={withContinent ? (CONTINENT_LABELS[guide.country?.continent ?? ''] ?? null) : null}
                     stat={statFor(guide.title)}
-                    byline={showProvenance ? (guide.author.kind === 'contributor' && guide.author.name ? `By ${guide.author.name}` : 'Seabound Souls') : null}
+                    byline={showProvenance ? (guide.author.kind === 'contributor' && guide.author.name ? `By ${guide.author.name}` : 'Seabound Sessions') : null}
                 />
             </li>
         ))}

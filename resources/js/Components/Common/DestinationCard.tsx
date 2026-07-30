@@ -16,7 +16,7 @@ interface DestinationCardProps {
     slug: string
     thumbnail: FocalImage | null
     countryName?: string | null
-    /** Attribution line (e.g. "By Marina Reef" / "Seabound Souls"); null hides it. */
+    /** Attribution line (e.g. "By Marina Reef" / "Seabound Sessions"); null hides it. */
     byline?: string | null
     /** e.g. "≈ 19 days ≥ 20 kts" — the sailable-days figure for the active filter; null hides it. */
     stat?: string | null

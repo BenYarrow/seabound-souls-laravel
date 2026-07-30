@@ -41,7 +41,7 @@ class TagController extends Controller
         return Inertia::render('Blog/Tags', [
             'tags' => $tags,
             'meta' => [
-                'title' => 'Topics — Seabound Souls',
+                'title' => 'Topics — Seabound Sessions',
                 'description' => 'Browse windsurfing articles and guides by topic.',
                 'keywords' => [],
                 'og_image' => '',
@@ -82,7 +82,7 @@ class TagController extends Controller
             'static_masthead' => $tag->staticMastheadMedia?->imagePayload(),
             'posts' => $posts,
             'meta' => [
-                'title' => $tag->seo_title ?: "Posts tagged {$tag->name} — Seabound Souls",
+                'title' => $tag->seo_title ?: "Posts tagged {$tag->name} — Seabound Sessions",
                 'description' => $tag->seo_description
                     ?: "Windsurfing articles and guides tagged {$tag->name}.",
                 'keywords' => [],
