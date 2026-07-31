@@ -156,11 +156,21 @@ class WeatherFetcher
         // (The daily sailable layer below deliberately keeps partial months —
         // it is coverage-normalised and handles them correctly.)
         $now = now();
+        $currentMonthStart = now()->startOfMonth();
 
         $climateRows = [];
         foreach ($yearMonthMap as $row) {
-            $daysInMonth = Carbon::create($row['year'], $row['month'], 1)->daysInMonth;
-            if ($row['days'] < $daysInMonth) {
+            $monthStart = Carbon::create($row['year'], $row['month'], 1);
+
+            // The month must have ELAPSED. Day-count completeness alone is not
+            // enough: Open-Meteo forecast-fills the current day, so on the last
+            // day of a month every day is present and the month would qualify
+            // on forecast values rather than observations.
+            if ($monthStart->gte($currentMonthStart)) {
+                continue;
+            }
+
+            if ($row['days'] < $monthStart->daysInMonth) {
                 continue;
             }
 

@@ -233,4 +233,28 @@ class WeatherFetcherClimateMonthsTest extends TestCase
         $this->assertNotNull($record);
         $this->assertEqualsWithDelta(20.0, (float) $record->avg_temp, 0.01);
     }
+
+    public function test_it_skips_the_current_month_even_when_every_day_is_present(): void
+    {
+        Sleep::fake();
+
+        // Open-Meteo forecast-fills the current day, so on the last day of a
+        // month the archive returns every day of it. Day-count completeness
+        // alone would therefore accept the current month and write forecast
+        // values into a table of observed climate. The month must also have
+        // ELAPSED.
+        $currentMonth = now()->startOfMonth();
+
+        $this->fakeArchive($this->fullMonthReadings($currentMonth, 25.0, 30.0, 40.0));
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $this->assertDatabaseMissing('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) $currentMonth->year,
+            'month' => (int) $currentMonth->month,
+        ]);
+    }
 }
