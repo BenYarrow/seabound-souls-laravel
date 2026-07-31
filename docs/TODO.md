@@ -3,7 +3,7 @@
 Forward-looking backlog. Completed work is recorded in `docs/history/` and the `SITREP.md` roadmap, not here.
 
 ## Sailable-days ranking (follow-ups)
-- [ ] **Prod data on partial data** — the admin "Fetch all weather" only populated a few spots (suspected Cloud queue-worker timeout on the batched `FetchAllWeatherJob`). Run a full **synchronous** `php artisan weather:fetch` on Cloud; if it still fails per-spot, capture the `✓/✗` output and either chunk the button into per-spot queued jobs or lengthen the worker timeout. (The gust+sustained blend needs no re-fetch of its own — both columns already exist.)
+- [ ] **Prod data on partial data** — the admin "Fetch all weather" only populated a few spots (suspected Cloud queue-worker timeout on the batched `FetchAllWeatherJob`). Run a full **synchronous** `php artisan weather:fetch` on Cloud; if it still fails per-spot, capture the `✓/✗` output and either chunk the button into per-spot queued jobs or lengthen the worker timeout. **This re-fetch is now also what corrects the climate averages** — the partial-month fix is self-healing but only applies on the next fetch, so until it runs, prod charts keep the inflated figures.
 - [ ] **Unpublish the `test` dummy spot guide** — it tops every month's ranking in the data.
 - [ ] **Optional: water-temp signal** — the air-temp note + opt-in min-temp filter shipped (#42), but they use *air* temp (`climate.avgTemp`). Water temp is arguably more relevant to wetsuit choice; would need a new fetched field (Open-Meteo has sea-surface temp for coastal points) + storage. Bigger than the air-temp version.
 - [ ] **Optional: sustained/gust UI toggle** — both daily columns are stored; a filter-bar toggle could expose sustained-only vs the blend.
