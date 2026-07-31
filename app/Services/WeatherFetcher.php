@@ -12,6 +12,7 @@ use App\Models\SailableDay;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 
@@ -144,6 +145,9 @@ class WeatherFetcher
         //
         // (The daily sailable layer below deliberately keeps partial months —
         // it is coverage-normalised and handles them correctly.)
+        $now = now();
+
+        $climateRows = [];
         foreach ($yearMonthMap as $row) {
             $daysInMonth = Carbon::create($row['year'], $row['month'], 1)->daysInMonth;
             if ($row['days'] < $daysInMonth) {
@@ -153,18 +157,34 @@ class WeatherFetcher
             $ktsWind = round($average($row['winds']), 1);
             $ktsGust = round($average($row['gusts']), 1);
 
-            WeatherRecord::updateOrCreate(
-                ['spot_guide_id' => $spot->id, 'year' => $row['year'], 'month' => $row['month']],
-                [
-                    'avg_temp' => round($average($row['temps']), 1),
-                    'kts_wind' => $ktsWind,
-                    'kts_gust' => $ktsGust,
-                    'mph_wind' => (int) round($ktsWind * 1.15078),
-                    'mph_gust' => (int) round($ktsGust * 1.15078),
-                    'kph_wind' => (int) round($ktsWind * 1.852),
-                    'kph_gust' => (int) round($ktsGust * 1.852),
-                ]
-            );
+            $climateRows[] = [
+                'spot_guide_id' => $spot->id,
+                'year' => $row['year'],
+                'month' => $row['month'],
+                'avg_temp' => round($average($row['temps']), 1),
+                'kts_wind' => $ktsWind,
+                'kts_gust' => $ktsGust,
+                'mph_wind' => (int) round($ktsWind * 1.15078),
+                'mph_gust' => (int) round($ktsGust * 1.15078),
+                'kph_wind' => (int) round($ktsWind * 1.852),
+                'kph_gust' => (int) round($ktsGust * 1.852),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // Replace rather than merge. Rows that have fallen out of the rolling
+        // window are never re-fetched, so updateOrCreate can never correct a
+        // stale or partial one — it would vote in the cross-year average
+        // forever. Replacing makes a single re-fetch self-healing, which is
+        // why this needs no data migration. Guarded by the collect-then-write
+        // order above: a failed API call throws before we reach here, so a
+        // failure can never leave a spot with no climate data.
+        if ($climateRows !== []) {
+            DB::transaction(function () use ($spot, $climateRows) {
+                WeatherRecord::where('spot_guide_id', $spot->id)->delete();
+                WeatherRecord::insert($climateRows);
+            });
         }
 
         // Persist the daily sailable-wind layer from the same 9am-7pm buckets.

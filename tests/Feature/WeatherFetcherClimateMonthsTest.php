@@ -122,4 +122,83 @@ class WeatherFetcherClimateMonthsTest extends TestCase
             'date' => $currentMonthDay,
         ]);
     }
+
+    public function test_it_removes_climate_rows_that_fell_out_of_the_window(): void
+    {
+        Sleep::fake();
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        // A frozen row from an older fetch, now far outside the 3-year window.
+        // Nothing re-fetches it, so updateOrCreate can never correct it — it
+        // would keep voting in the cross-year average forever.
+        \App\Models\WeatherRecord::create([
+            'spot_guide_id' => $spot->id,
+            'year' => (int) now()->subYears(5)->year,
+            'month' => 7,
+            'avg_temp' => 30.0,
+            'kts_wind' => 99.0,
+            'kts_gust' => 99.0,
+            'mph_wind' => 114,
+            'mph_gust' => 114,
+            'kph_wind' => 183,
+            'kph_gust' => 183,
+        ]);
+
+        $completeMonth = now()->subMonths(6)->startOfMonth();
+
+        $this->fakeArchive($this->fullMonthReadings($completeMonth, 20.0, 10.0, 15.0));
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $this->assertDatabaseMissing('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) now()->subYears(5)->year,
+            'month' => 7,
+        ]);
+
+        $this->assertDatabaseHas('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) $completeMonth->year,
+            'month' => (int) $completeMonth->month,
+        ]);
+    }
+
+    public function test_a_failed_fetch_does_not_wipe_existing_climate_rows(): void
+    {
+        Sleep::fake();
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        \App\Models\WeatherRecord::create([
+            'spot_guide_id' => $spot->id,
+            'year' => (int) now()->subYear()->year,
+            'month' => 3,
+            'avg_temp' => 18.0,
+            'kts_wind' => 12.0,
+            'kts_gust' => 18.0,
+            'mph_wind' => 14,
+            'mph_gust' => 21,
+            'kph_wind' => 22,
+            'kph_gust' => 33,
+        ]);
+
+        // The API fails partway, so fetchForSpot throws before writing anything.
+        // The delete must not have happened — a failed fetch leaving a spot with
+        // no climate data would blank its charts.
+        Http::fake(['archive-api.open-meteo.com/*' => Http::response('boom', 500)]);
+
+        try {
+            app(WeatherFetcher::class)->fetchForSpot($spot);
+            $this->fail('Expected the fetch to throw on a 500.');
+        } catch (\RuntimeException) {
+            // expected
+        }
+
+        $this->assertDatabaseHas('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) now()->subYear()->year,
+            'month' => 3,
+        ]);
+    }
 }
