@@ -654,3 +654,109 @@ git commit -m "Document the complete-months rule for climate averages"
 ## Before the PR
 
 Run `reconcile-everything` on the branch so the reconcile docs ride in the same PR (project rule — folded reconcile is the default here).
+
+---
+
+### Task 5: Exclude the current month explicitly (added during execution)
+
+**Why this task exists.** Task 4's verification surfaced it on real data. Open-Meteo's archive endpoint **forecast-fills the current day** — a request made at 09:31 on 2026-07-31 returned all 24 hours of that day, including hours not yet elapsed. So on the last day of a month, the current month satisfies the day-count completeness test and is written as though it were observed climate. The plan's Architecture claims the fetcher "skips the (always partial) current month"; the day-count rule alone does not enforce that, it only appears to on days that are not month-end.
+
+Two consequences worth fixing: forecast values enter a climatology table, and the number of rows per month becomes dependent on what day you fetch. Requiring a month to have fully elapsed makes intent match behaviour and yields a stable three complete rows for every month.
+
+**Files:**
+- Modify: `app/Services/WeatherFetcher.php` (the completeness gate added in Task 1, rewritten in Task 2)
+- Test: `tests/Feature/WeatherFetcherClimateMonthsTest.php`
+
+**Interfaces:**
+- Consumes: the `days` counter and `$climateRows` collect-then-replace loop from Tasks 1-2.
+- Produces: no signature change. A climate row now requires the month to be both fully elapsed and fully received.
+
+- [ ] **Step 1: Write the failing test**
+
+Add to `tests/Feature/WeatherFetcherClimateMonthsTest.php`:
+
+```php
+    public function test_it_skips_the_current_month_even_when_every_day_is_present(): void
+    {
+        Sleep::fake();
+
+        // Open-Meteo forecast-fills the current day, so on the last day of a
+        // month the archive returns every day of it. Day-count completeness
+        // alone would therefore accept the current month and write forecast
+        // values into a table of observed climate. The month must also have
+        // ELAPSED.
+        $currentMonth = now()->startOfMonth();
+
+        $this->fakeArchive($this->fullMonthReadings($currentMonth, 25.0, 30.0, 40.0));
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $this->assertDatabaseMissing('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) $currentMonth->year,
+            'month' => (int) $currentMonth->month,
+        ]);
+    }
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `php artisan test --filter=test_it_skips_the_current_month_even_when_every_day_is_present`
+
+Expected: FAIL — the current month is written, because every one of its days is present in the fixture.
+
+- [ ] **Step 3: Require the month to have elapsed**
+
+In `app/Services/WeatherFetcher.php`, in the `foreach ($yearMonthMap as $row)` loop that builds `$climateRows`, replace the completeness gate:
+
+```php
+            $daysInMonth = Carbon::create($row['year'], $row['month'], 1)->daysInMonth;
+            if ($row['days'] < $daysInMonth) {
+                continue;
+            }
+```
+
+with:
+
+```php
+            $monthStart = Carbon::create($row['year'], $row['month'], 1);
+
+            // The month must have ELAPSED. Day-count completeness alone is not
+            // enough: Open-Meteo forecast-fills the current day, so on the last
+            // day of a month every day is present and the month would qualify
+            // on forecast values rather than observations.
+            if ($monthStart->gte($currentMonthStart)) {
+                continue;
+            }
+
+            if ($row['days'] < $monthStart->daysInMonth) {
+                continue;
+            }
+```
+
+and define `$currentMonthStart` alongside `$now`, just above the loop:
+
+```php
+        $currentMonthStart = now()->startOfMonth();
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `php artisan test --filter=WeatherFetcherClimateMonthsTest`
+
+Expected: PASS, all six tests.
+
+- [ ] **Step 5: Run the full suite**
+
+Run: `php artisan test`
+
+Expected: all pass.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add app/Services/WeatherFetcher.php tests/Feature/WeatherFetcherClimateMonthsTest.php
+git commit -m "Require a climate month to have elapsed, not just be fully received"
+```
