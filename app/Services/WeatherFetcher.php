@@ -126,9 +126,19 @@ class WeatherFetcher
                 $yearMonthMap[$key] = ['year' => (int) $year, 'month' => (int) $monthNumber, 'days' => 0, 'temps' => [], 'winds' => [], 'gusts' => []];
             }
             $yearMonthMap[$key]['days']++;
-            $yearMonthMap[$key]['temps'][] = $average($values['temps']);
-            $yearMonthMap[$key]['winds'][] = $average($values['winds']);
-            $yearMonthMap[$key]['gusts'][] = $average($values['gusts']);
+            // Only contribute a metric the day actually has readings for.
+            // $average returns 0.0 for an empty array, and pushing that would
+            // silently drag the month's mean toward zero whenever Open-Meteo
+            // returns nulls for one metric but not the others.
+            if ($values['temps'] !== []) {
+                $yearMonthMap[$key]['temps'][] = $average($values['temps']);
+            }
+            if ($values['winds'] !== []) {
+                $yearMonthMap[$key]['winds'][] = $average($values['winds']);
+            }
+            if ($values['gusts'] !== []) {
+                $yearMonthMap[$key]['gusts'][] = $average($values['gusts']);
+            }
         }
 
         // A climate row must represent a COMPLETE calendar month: the charts

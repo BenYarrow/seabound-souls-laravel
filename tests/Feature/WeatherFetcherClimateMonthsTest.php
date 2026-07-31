@@ -201,4 +201,36 @@ class WeatherFetcherClimateMonthsTest extends TestCase
             'month' => 3,
         ]);
     }
+
+    public function test_a_day_with_no_temperature_readings_does_not_drag_the_month_average_down(): void
+    {
+        Sleep::fake();
+
+        // A complete month where ONE day has null temperatures but valid wind —
+        // an Open-Meteo gap. avg_temp must be 20.0 (the mean of the days that
+        // actually reported), not dragged down by a phantom 0.0 for that day.
+        // The day still counts toward completeness: it has readings, just not
+        // for this metric.
+        $completeMonth = now()->subMonths(6)->startOfMonth();
+        $readings = $this->fullMonthReadings($completeMonth, 20.0, 10.0, 15.0);
+
+        // Null out the temperature on the second day's two readings (indexes
+        // 2 and 3 — two readings per day, day one occupies 0 and 1).
+        $readings[2][1] = null;
+        $readings[3][1] = null;
+
+        $this->fakeArchive($readings);
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $record = \App\Models\WeatherRecord::where('spot_guide_id', $spot->id)
+            ->where('year', (int) $completeMonth->year)
+            ->where('month', (int) $completeMonth->month)
+            ->first();
+
+        $this->assertNotNull($record);
+        $this->assertEqualsWithDelta(20.0, (float) $record->avg_temp, 0.01);
+    }
 }
