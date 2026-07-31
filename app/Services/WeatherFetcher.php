@@ -2,7 +2,10 @@
 
 // Shared Open-Meteo fetch service. Pulls 3 years of hourly archive data for a
 // spot guide, reduces it to monthly averages (temperature / wind / gust) over
-// the 9am–7pm sailing window, and upserts WeatherRecord rows. Single source of
+// the 9am–7pm sailing window, and writes WeatherRecord rows for only the
+// complete, fully-elapsed calendar months — a spot's climate rows are deleted
+// and reinserted wholesale on each fetch (not upserted), which is what lets a
+// stale or out-of-window row self-heal on the next run. Single source of
 // truth for the weekly weather:fetch command and the FetchSpotWeather /
 // FetchAllWeather queued jobs — none of them re-implement the fetch.
 
@@ -19,7 +22,17 @@ use Illuminate\Support\Sleep;
 class WeatherFetcher
 {
     /**
-     * Fetch, aggregate, and upsert monthly weather averages for one spot.
+     * Fetch and aggregate monthly weather averages for one spot, then replace
+     * its WeatherRecord rows wholesale (delete all, then insert) inside a
+     * transaction. Only a complete, fully-elapsed calendar month becomes a
+     * climate row — the /destinations charts average year-rows with equal
+     * weight, so a partial month must never be written. Replacing rather
+     * than upserting is what makes a stale row (one that has fallen out of
+     * the rolling 3-year window and will never be re-fetched) self-heal on
+     * the next run instead of voting in the cross-year average forever. The
+     * daily sailable-days layer written at the end of this method is
+     * deliberately different: it is coverage-normalised and correctly keeps
+     * partial months, so it is upserted per day, not replaced.
      *
      * Splits the 3-year range into 3-month windows because a single large
      * request to the archive API intermittently 500s; pauses between windows
@@ -171,6 +184,16 @@ class WeatherFetcher
             }
 
             if ($row['days'] < $monthStart->daysInMonth) {
+                continue;
+            }
+
+            // A metric absent for EVERY day of the month would otherwise be
+            // written as $average([]) = 0.0. Because rows are now replaced
+            // wholesale, that fabricated zero would become the authoritative
+            // value rather than one vote among years. Omitting the month is
+            // the same choice made for partial months above: no row beats a
+            // wrong row.
+            if ($row['temps'] === [] || $row['winds'] === [] || $row['gusts'] === []) {
                 continue;
             }
 

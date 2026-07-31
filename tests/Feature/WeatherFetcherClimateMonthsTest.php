@@ -234,6 +234,36 @@ class WeatherFetcherClimateMonthsTest extends TestCase
         $this->assertEqualsWithDelta(20.0, (float) $record->avg_temp, 0.01);
     }
 
+    public function test_a_metric_absent_for_the_whole_month_writes_no_row_instead_of_a_fabricated_zero(): void
+    {
+        Sleep::fake();
+
+        // A complete month where EVERY day is missing gust readings — a
+        // whole-month Open-Meteo gap, distinct from the single-day gap tested
+        // above. $average([]) returns 0.0, and because rows are now replaced
+        // wholesale that fabricated zero would become the authoritative
+        // value rather than one vote among years, so no row must be written
+        // for this month at all.
+        $completeMonth = now()->subMonths(6)->startOfMonth();
+        $readings = $this->fullMonthReadings($completeMonth, 20.0, 10.0, 15.0);
+
+        foreach ($readings as $index => $reading) {
+            $readings[$index][3] = null;
+        }
+
+        $this->fakeArchive($readings);
+
+        $spot = SpotGuide::factory()->create(['latitude' => 38.7, 'longitude' => 20.6]);
+
+        app(WeatherFetcher::class)->fetchForSpot($spot);
+
+        $this->assertDatabaseMissing('weather_records', [
+            'spot_guide_id' => $spot->id,
+            'year' => (int) $completeMonth->year,
+            'month' => (int) $completeMonth->month,
+        ]);
+    }
+
     public function test_it_skips_the_current_month_even_when_every_day_is_present(): void
     {
         Sleep::fake();
