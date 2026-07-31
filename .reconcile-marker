@@ -1,2 +1,2 @@
-date: 2026-07-30
-note: Reconcile 24 (folded into #44) — rebrand to Seabound Sessions: derived logo mark + favicon, brand strings site-wide + admin panel, mailboxes removed, masthead titles cut ~30%. Pre-launch domain/key tasks captured in docs/TODO.md.
+date: 2026-07-31
+note: Reconcile 25 (folded into #45) — climate averages corrected: weather_records now holds only complete, fully-elapsed calendar months and is replaced per fetch, so frozen partial-month stubs self-heal. Charts were inflated (Langebaan typical July 11.6 -> 11.1 kts).
