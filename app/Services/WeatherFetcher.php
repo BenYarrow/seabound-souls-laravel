@@ -11,6 +11,7 @@ namespace App\Services;
 use App\Models\SailableDay;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 
@@ -30,7 +31,13 @@ class WeatherFetcher
         $winds = [];
         $gusts = [];
 
-        $startOfRange = now()->subYears(3);
+        // Start on a month boundary so the OLDEST month in range is complete.
+        // A mid-month start wrote a stub row (e.g. 4 days of July 2023) which
+        // the /destinations charts then weighted equally with a full 31-day
+        // month, because the cross-year average in DestinationController is a
+        // plain mean over year-rows. Snapping back to the 1st gains data
+        // rather than discarding it.
+        $startOfRange = now()->subYears(3)->startOfMonth();
         $endOfRange = now();
         $chunkStart = $startOfRange->copy();
         $isFirstChunk = true;
@@ -115,14 +122,34 @@ class WeatherFetcher
             [$year, $monthNumber] = explode('-', $date);
             $key = "{$year}-{$monthNumber}";
             if (! isset($yearMonthMap[$key])) {
-                $yearMonthMap[$key] = ['year' => (int) $year, 'month' => (int) $monthNumber, 'temps' => [], 'winds' => [], 'gusts' => []];
+                $yearMonthMap[$key] = ['year' => (int) $year, 'month' => (int) $monthNumber, 'days' => 0, 'temps' => [], 'winds' => [], 'gusts' => []];
             }
+            $yearMonthMap[$key]['days']++;
             $yearMonthMap[$key]['temps'][] = $average($values['temps']);
             $yearMonthMap[$key]['winds'][] = $average($values['winds']);
             $yearMonthMap[$key]['gusts'][] = $average($values['gusts']);
         }
 
+        // A climate row must represent a COMPLETE calendar month: the charts
+        // average year-rows with equal weight, so a partial month would count
+        // as much as a full one — a 4-day stub of July 2023 was inflating
+        // Langebaan's typical July by ~8%.
+        //
+        // Completeness is tested by counting the days we actually received,
+        // not by the date range: Open-Meteo's archive lags real time by a few
+        // days, so a month can sit inside the window and still be missing its
+        // tail. A month that falls short is simply skipped and picked up by a
+        // later fetch — for climatology, omitting a month beats averaging a
+        // partial one.
+        //
+        // (The daily sailable layer below deliberately keeps partial months —
+        // it is coverage-normalised and handles them correctly.)
         foreach ($yearMonthMap as $row) {
+            $daysInMonth = Carbon::create($row['year'], $row['month'], 1)->daysInMonth;
+            if ($row['days'] < $daysInMonth) {
+                continue;
+            }
+
             $ktsWind = round($average($row['winds']), 1);
             $ktsGust = round($average($row['gusts']), 1);
 
