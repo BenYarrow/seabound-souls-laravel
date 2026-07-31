@@ -2,7 +2,10 @@
 
 // Shared Open-Meteo fetch service. Pulls 3 years of hourly archive data for a
 // spot guide, reduces it to monthly averages (temperature / wind / gust) over
-// the 9am–7pm sailing window, and upserts WeatherRecord rows. Single source of
+// the 9am–7pm sailing window, and writes WeatherRecord rows for only the
+// complete, fully-elapsed calendar months — a spot's climate rows are deleted
+// and reinserted wholesale on each fetch (not upserted), which is what lets a
+// stale or out-of-window row self-heal on the next run. Single source of
 // truth for the weekly weather:fetch command and the FetchSpotWeather /
 // FetchAllWeather queued jobs — none of them re-implement the fetch.
 
@@ -11,13 +14,25 @@ namespace App\Services;
 use App\Models\SailableDay;
 use App\Models\SpotGuide;
 use App\Models\WeatherRecord;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 
 class WeatherFetcher
 {
     /**
-     * Fetch, aggregate, and upsert monthly weather averages for one spot.
+     * Fetch and aggregate monthly weather averages for one spot, then replace
+     * its WeatherRecord rows wholesale (delete all, then insert) inside a
+     * transaction. Only a complete, fully-elapsed calendar month becomes a
+     * climate row — the /destinations charts average year-rows with equal
+     * weight, so a partial month must never be written. Replacing rather
+     * than upserting is what makes a stale row (one that has fallen out of
+     * the rolling 3-year window and will never be re-fetched) self-heal on
+     * the next run instead of voting in the cross-year average forever. The
+     * daily sailable-days layer written at the end of this method is
+     * deliberately different: it is coverage-normalised and correctly keeps
+     * partial months, so it is upserted per day, not replaced.
      *
      * Splits the 3-year range into 3-month windows because a single large
      * request to the archive API intermittently 500s; pauses between windows
@@ -30,7 +45,13 @@ class WeatherFetcher
         $winds = [];
         $gusts = [];
 
-        $startOfRange = now()->subYears(3);
+        // Start on a month boundary so the OLDEST month in range is complete.
+        // A mid-month start wrote a stub row (e.g. 4 days of July 2023) which
+        // the /destinations charts then weighted equally with a full 31-day
+        // month, because the cross-year average in DestinationController is a
+        // plain mean over year-rows. Snapping back to the 1st gains data
+        // rather than discarding it.
+        $startOfRange = now()->subYears(3)->startOfMonth();
         $endOfRange = now();
         $chunkStart = $startOfRange->copy();
         $isFirstChunk = true;
@@ -115,29 +136,98 @@ class WeatherFetcher
             [$year, $monthNumber] = explode('-', $date);
             $key = "{$year}-{$monthNumber}";
             if (! isset($yearMonthMap[$key])) {
-                $yearMonthMap[$key] = ['year' => (int) $year, 'month' => (int) $monthNumber, 'temps' => [], 'winds' => [], 'gusts' => []];
+                $yearMonthMap[$key] = ['year' => (int) $year, 'month' => (int) $monthNumber, 'days' => 0, 'temps' => [], 'winds' => [], 'gusts' => []];
             }
-            $yearMonthMap[$key]['temps'][] = $average($values['temps']);
-            $yearMonthMap[$key]['winds'][] = $average($values['winds']);
-            $yearMonthMap[$key]['gusts'][] = $average($values['gusts']);
+            $yearMonthMap[$key]['days']++;
+            // Only contribute a metric the day actually has readings for.
+            // $average returns 0.0 for an empty array, and pushing that would
+            // silently drag the month's mean toward zero whenever Open-Meteo
+            // returns nulls for one metric but not the others.
+            if ($values['temps'] !== []) {
+                $yearMonthMap[$key]['temps'][] = $average($values['temps']);
+            }
+            if ($values['winds'] !== []) {
+                $yearMonthMap[$key]['winds'][] = $average($values['winds']);
+            }
+            if ($values['gusts'] !== []) {
+                $yearMonthMap[$key]['gusts'][] = $average($values['gusts']);
+            }
         }
 
+        // A climate row must represent a COMPLETE calendar month: the charts
+        // average year-rows with equal weight, so a partial month would count
+        // as much as a full one — a 4-day stub of July 2023 was inflating
+        // Langebaan's typical July by ~8%.
+        //
+        // Completeness is tested by counting the days we actually received,
+        // not by the date range: Open-Meteo's archive lags real time by a few
+        // days, so a month can sit inside the window and still be missing its
+        // tail. A month that falls short is simply skipped and picked up by a
+        // later fetch — for climatology, omitting a month beats averaging a
+        // partial one.
+        //
+        // (The daily sailable layer below deliberately keeps partial months —
+        // it is coverage-normalised and handles them correctly.)
+        $now = now();
+        $currentMonthStart = now()->startOfMonth();
+
+        $climateRows = [];
         foreach ($yearMonthMap as $row) {
+            $monthStart = Carbon::create($row['year'], $row['month'], 1);
+
+            // The month must have ELAPSED. Day-count completeness alone is not
+            // enough: Open-Meteo forecast-fills the current day, so on the last
+            // day of a month every day is present and the month would qualify
+            // on forecast values rather than observations.
+            if ($monthStart->gte($currentMonthStart)) {
+                continue;
+            }
+
+            if ($row['days'] < $monthStart->daysInMonth) {
+                continue;
+            }
+
+            // A metric absent for EVERY day of the month would otherwise be
+            // written as $average([]) = 0.0. Because rows are now replaced
+            // wholesale, that fabricated zero would become the authoritative
+            // value rather than one vote among years. Omitting the month is
+            // the same choice made for partial months above: no row beats a
+            // wrong row.
+            if ($row['temps'] === [] || $row['winds'] === [] || $row['gusts'] === []) {
+                continue;
+            }
+
             $ktsWind = round($average($row['winds']), 1);
             $ktsGust = round($average($row['gusts']), 1);
 
-            WeatherRecord::updateOrCreate(
-                ['spot_guide_id' => $spot->id, 'year' => $row['year'], 'month' => $row['month']],
-                [
-                    'avg_temp' => round($average($row['temps']), 1),
-                    'kts_wind' => $ktsWind,
-                    'kts_gust' => $ktsGust,
-                    'mph_wind' => (int) round($ktsWind * 1.15078),
-                    'mph_gust' => (int) round($ktsGust * 1.15078),
-                    'kph_wind' => (int) round($ktsWind * 1.852),
-                    'kph_gust' => (int) round($ktsGust * 1.852),
-                ]
-            );
+            $climateRows[] = [
+                'spot_guide_id' => $spot->id,
+                'year' => $row['year'],
+                'month' => $row['month'],
+                'avg_temp' => round($average($row['temps']), 1),
+                'kts_wind' => $ktsWind,
+                'kts_gust' => $ktsGust,
+                'mph_wind' => (int) round($ktsWind * 1.15078),
+                'mph_gust' => (int) round($ktsGust * 1.15078),
+                'kph_wind' => (int) round($ktsWind * 1.852),
+                'kph_gust' => (int) round($ktsGust * 1.852),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // Replace rather than merge. Rows that have fallen out of the rolling
+        // window are never re-fetched, so updateOrCreate can never correct a
+        // stale or partial one — it would vote in the cross-year average
+        // forever. Replacing makes a single re-fetch self-healing, which is
+        // why this needs no data migration. Guarded by the collect-then-write
+        // order above: a failed API call throws before we reach here, so a
+        // failure can never leave a spot with no climate data.
+        if ($climateRows !== []) {
+            DB::transaction(function () use ($spot, $climateRows) {
+                WeatherRecord::where('spot_guide_id', $spot->id)->delete();
+                WeatherRecord::insert($climateRows);
+            });
         }
 
         // Persist the daily sailable-wind layer from the same 9am-7pm buckets.

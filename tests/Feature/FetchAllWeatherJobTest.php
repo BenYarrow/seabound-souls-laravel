@@ -21,7 +21,9 @@ class FetchAllWeatherJobTest extends TestCase
         $temps = [];
         $winds = [];
         $gusts = [];
-        foreach (['2024-02-10', '2024-02-11'] as $date) {
+        // Generate all 29 days of Feb 2024 (leap year).
+        for ($day = 1; $day <= 29; $day++) {
+            $date = sprintf('2024-02-%02d', $day);
             foreach (range(9, 19) as $hour) {
                 $times[] = sprintf('%sT%02d:00', $date, $hour);
                 $temps[] = 20.0;
