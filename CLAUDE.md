@@ -186,9 +186,15 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - Unique constraint: `(spot_guide_id, date)`
 - Daily layer feeding the `/destinations` sailable-days ranking; populated by `WeatherFetcher` in the same pass as `weather_records`
 
-**`media_library`** — centralised image library; each row is one image, referenced by FK from other tables
+**`media_library`** — centralised image library; each row is one image, referenced by FK from other tables. `photographer_id` (FK → `photographers`, nullable, `nullOnDelete()`) credits the image; null (the ~95% case) means "our image."
 
 **`media`** — Spatie Media Library managed table (now attached only to `MediaLibrary` model, collection `file`)
+
+**`photographers`** (image credits, standalone — not a user role; see `docs/history/2026-08-06-photographer-attribution.md`)
+- `name`, `slug` (nullable, partial-unique `WHERE deleted_at IS NULL`, auto-filled from `name`), `socials` (json, same shape as contributors), `credit_link` (string — a **key** into `socials`/`profile`, resolved at read time, not a stored URL), `bio`
+- `thumbnail_media_id`, `static_masthead_media_id` (FK → `media_library`), `profile_blocks` (json — content builder **and** the page's visibility gate: `[]` is normalised to `null` on save so the derived `hasPublicPage()`/`scopeWithPublicPage()` gate is a plain `whereNotNull`, sidestepping Postgres's `json` type having no equality operator), `seo_title`, `seo_description`
+- `user_id` (FK → `users`, nullable) — reserved for a future photographer login; unread today
+- soft deletes
 
 ---
 
@@ -196,7 +202,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 | Model | Traits | Relationships |
 |-------|--------|---------------|
-| `MediaLibrary` | HasMedia | — (owns Spatie `file` collection) |
+| `MediaLibrary` | HasMedia | — (owns Spatie `file` collection); belongsTo Photographer; `$with = ['photographer']` (batches the credit lookup — see the N+1 note below) |
 | `SpotGuide` | SoftDeletes, Searchable | belongsTo Country; hasMany Recommendations, WindsurfingLocations, WeatherRecords, SailableDays; belongsTo MediaLibrary (×8) |
 | `Blog` | SoftDeletes, Searchable | belongsTo MediaLibrary (×3); belongsToMany Tag |
 | `Tag` | SoftDeletes | belongsToMany Blog (curated blog tags); belongsTo MediaLibrary (×2: thumbnail, static_masthead) |
@@ -206,6 +212,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | `WindsurfingLocation` | — | belongsTo SpotGuide; belongsTo MediaLibrary (thumbnail) |
 | `WeatherRecord` | — | belongsTo SpotGuide |
 | `SailableDay` | — | belongsTo SpotGuide |
+| `Photographer` | SoftDeletes | belongsTo MediaLibrary (×2: thumbnail, static_masthead); hasMany MediaLibrary (credited images); belongsTo User (reserved, unread) |
 
 ### Media FK columns
 - **SpotGuide:** `thumbnail_media_id`, `static_masthead_media_id`, `og_image_media_id`, `wind_conditions_bg_media_id`, `water_conditions_bg_media_id`, `travelling_to_bg_media_id`, `lessons_and_hire_bg_media_id`, `gallery_media_ids` (JSON)
@@ -236,6 +243,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | GET | `/contact` | ContactController@index | `contact` |
 | POST | `/contact` | ContactController@store | `contact.store` |
 | GET | `/contributors/{slug}` | ContributorController@show | `contributors.show` (public profile; 404 unless contributor has a published guide) |
+| GET | `/photographers/{slug}` | PhotographerController@show | `photographers.show` (public profile; 404 unless `Photographer::hasPublicPage()` — slug + non-empty `profile_blocks`) |
 | GET | `/about-us` | — | 301 redirect → `/about` (page renamed) |
 | GET | `/contributor/set-password/{user}` | Contributor/SetPasswordController@show | `contributor.password.setup` (signed) |
 | POST | `/contributor/set-password/{user}` | Contributor/SetPasswordController@store | `contributor.password.store` (signed) |
@@ -262,6 +270,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | Page | `Pages/Page/Show.tsx` | `page` (with content_blocks), `meta` |
 | Search | `Pages/Search.tsx` | `query`, `results[]`, `meta` |
 | Contact | `Pages/Contact.tsx` | `recaptchaSiteKey`, `meta` |
+| Photographer Profile | `Pages/Photographers/Show.tsx` | `photographer` (name, bio, socials, content-builder body), `meta` |
 
 ---
 
@@ -296,6 +305,11 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 - **`ContentBuilder.tsx`** — routes content_blocks array to specific components
 - **`ContentWithBackgroundImage.tsx`** — full-height half-width panel layout
 - **`RichText.tsx`** — renders HTML from RichEditor via `dangerouslySetInnerHTML` with prose styling
+- **`PhotographerRollUp.tsx`** — `list_photographers` content block; auto-lists photographers with a live public page (heading + optional intro), modelled on `contributor_roll_up`
+
+### Common (image credit)
+- **`ImageCredit.tsx`** — small, always-visible (never hover-only) attribution badge; renders an external `<a>`, an internal Inertia `<Link>` (the `profile` case), or plain text, and `stopPropagation`s so the badge doesn't hijack clicks on an ancestor card `Link`/`button`
+- **`CoverImage.tsx`** — the shared object-cover image renderer; renders `ImageCredit` when the image carries one (`showCredit={false}` opts a map pin/thumbnail out); wraps consistently whether or not a credit is present so layout never differs
 
 ---
 
@@ -307,6 +321,10 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 **Contributor public profiles (sub-project 2):** contributors have public profile columns on `users` (`slug` from first+last, `profile_image_media_id`, `static_masthead_media_id`, `profile_blocks` JSON content-builder, `socials` JSON). A profile is public **iff** `User::hasPublicProfile()` (contributor with ≥1 published guide) — **derived, no manual flag**; owners never get one. Public page `/contributors/{slug}` (`ContributorController@show`); the spot-guide byline is a clickable author card (`SpotGuide::authorPayload()` carries `slug` + `image`). Contributors self-edit via the Filament **My Profile** page (`App\Filament\Pages\MyProfile`, record always `auth()->user()`); the owner edits via `ContributorResource` — both share `App\Filament\Forms\ContributorProfileForm::schema()`. The About page (`about`, renamed from `about-us` with a 301) hosts a `contributor_roll_up` content block that auto-lists public-profile contributors. See `docs/history/2026-07-15-contributor-profiles.md`.
 
+**Media library scoping is opt-out, not opt-in.** Every place that restricts what a non-owner can see or do in the media library (`MediaLibraryResource::getEloquentQuery()`/`folderOptions()`, `MediaPickerBrowser`, `SpotGuideResource::getEloquentQuery()`, `CreateMediaLibrary::mutateFormDataBeforeCreate()`, `EditSpotGuide::afterSave()`) checks `! $user->isOwner()` rather than `$user->isContributor()`. A role added later that isn't recognised as `contributor` would fail an opt-in check and fall through to seeing house media or having its uploads silently filed as house media; the opt-out form fails closed instead. Each site has a `'photographer'` fictional-role test proving the opt-out, independently verified by reverting that one fix. See `docs/history/2026-08-06-photographer-attribution.md`.
+
+**Photographer credits (standalone model, not a role):** a `Photographer` credits supplied imagery without needing an account — `Tag` is the precedent for an auth-free model with a public presence. `credit_link` stores a **key** resolved against `socials` at read time (`Photographer::creditPayload()`), so redirecting every credit to the on-site profile is a Select change, no deploy. A public page (`/photographers/{slug}`) exists **iff** `hasPublicPage()` (slug + non-empty `profile_blocks`) — derived, so an empty page can never go live. Owner-only admin via `PhotographerResource`, sharing `App\Filament\Forms\PhotographerProfileForm::schema()` (mirrors the contributor pattern, ready for a future self-edit page). See `docs/history/2026-08-06-photographer-attribution.md`.
+
 ### Resources
 | Resource | Key Tabs |
 |---------|---------|
@@ -316,6 +334,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 | **CountryResource** | name, slug, continent |
 | **TagResource** (owner-only, nav label "Blog Tags", URL `/admin/tags`) | Curated blog-tag vocabulary: name, slug (partial-unique, reusable after soft-delete), sort_order, Images (thumbnail + masthead MediaPickers), SEO & intro. Gated by `TagPolicy` (owner-only — contributors author guides, not blogs). Assigned to posts via a `CheckboxList` on the Blog form (`blog_tag` pivot). |
 | **ContributorResource** (owner-only) | Contributors roster (first/last name, email, guide count, joined) + per-contributor guides panel; **Invite Contributor** action. Built on the `User` model, scoped to `role = contributor`. |
+| **PhotographerResource** (owner-only) | Photographer credits: name/slug, socials, `credit_link` Select (options derived from filled socials + `profile` only when `hasPublicPage()` is true), bio, thumbnail/masthead images, content builder, SEO, credited-media count. Gated by `PhotographerPolicy`. `MediaLibraryResource` also gains a Photographer select/column/filter and a bulk "assign photographer" action. |
 
 ---
 
@@ -492,3 +511,4 @@ The `/destinations` page was rebuilt to match the Next.js design. Previously it 
 - **Mapbox:** `react-map-gl@8` must be imported as `react-map-gl/mapbox` (not `react-map-gl`) due to Vite 7's strict exports resolution. The token is shared via Inertia middleware (`usePage().props.mapboxToken`).
 - **Sailable-days ranking (`/destinations`) is a GUST+sustained BLEND.** A day counts as sailable at minimum `X` iff `qualifying_gust_kts ≥ X` **AND** `qualifying_wind_kts ≥ 0.6·X` (the `SUSTAINED_FLOOR_FRACTION` in `resources/js/Helpers/sailableDays.ts`). Gust is the primary signal because Open-Meteo's sustained 10m wind under-reads thermal/venturi spots (felt wind ≈ gusts); the sustained floor rejects gusty-but-not-steady days (winter frontal storm spikes) that pure-gust wrongly rewarded — it stopped e.g. spiky Karpathos (gust/sustained ≈ 2.1) outranking steady Langebaan (≈ 1.3) midwinter. The typical sailable-days figure is a **coverage-normalised rate** (`qualifying ÷ held × daysInMonth`, robust to the rolling 3-year window's partial boundary months), computed entirely **client-side** from the pooled `sailableDays` prop (per-day `gusts[]` + `winds[]`, index-aligned) — no per-keystroke round-trip. Filter state (month/group/spots/unit/**min-temp**) is URL-synced via `history.replaceState`, with spots serialised as slugs. **Temperature never affects the wind ranking itself** (a cold-but-windy month still ranks — imposing a warmth judgement would wrongly bury legitimate cold-water spots like Brouwersdam whose season IS winter); instead the selected-month typical air temp is shown on each card (`≈ 18 windy days · 11°C`) and an **opt-in Min. temp filter** (Any default / 10 / 15 / 20 / 25 °C, `TEMP_OPTIONS`) lets a warmth-seeker exclude spots below a threshold from cards + charts — `climateTempForMonth()` in `climate.ts`, temp from the `climate` payload's `avgTemp`. See `docs/history/2026-07-28-sailable-days-ranking.md` + `docs/history/2026-07-30-destinations-temperature-filter.md`.
   **The monthly `weather_records` layer is separate and has a different rule: it stores only COMPLETE calendar months.** The `/destinations` wind/temp charts average year-rows with equal weight, so a partial month would count as much as a full one — a 4-day stub once inflated Langebaan's typical July by ~8%. `WeatherFetcher` starts its window on a month boundary, skips the (always partial) current month, and *replaces* a spot's rows each fetch so stale rows that fell out of the rolling window self-heal. Do not "fix" this by having the charts read the daily table: `spot_sailable_days` stores the day's 2nd-highest hour, an order statistic, not a daily mean.
+- **Photographer credits flow through `imagePayload()`, not a separate prop.** `MediaLibrary::imagePayload()` gains a `credit` key (`{name, url}` or `null`), resolved from `photographer?->creditPayload()`; every one of the 45+ existing call sites inherits it with no edit. `CoverImage` renders it via `ImageCredit`; `MediaLibrary::$with = ['photographer']` batches the lookup so a page of cards issues one photographer query, not one per card (guarded by a scaling-invariant test, not a fixed query ceiling — see `docs/history/2026-08-06-photographer-attribution.md`).
