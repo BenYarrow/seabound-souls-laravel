@@ -51,9 +51,27 @@ const SingleImage = ({ image, backgroundColour }: SingleImageProps) => {
                 <ImageCredit credit={credit} />
             </button>
 
+            {/*
+             * fslightbox-react@2 has no caption support, so a credited image
+             * is passed as a CUSTOM SOURCE (a JSX element) rather than a URL
+             * string, matching the same pattern used in Gallery's lightbox.
+             */}
             <FsLightbox
                 toggler={toggler}
-                sources={[url]}
+                sources={[
+                    credit ? (
+                        <div className="relative flex items-center justify-center">
+                            <img
+                                src={url}
+                                alt={alt}
+                                className="max-h-[85vh] max-w-[90vw] object-contain"
+                            />
+                            <ImageCredit credit={credit} />
+                        </div>
+                    ) : (
+                        url
+                    ),
+                ]}
                 types={['image']}
             />
         </BlockWrapper>
