@@ -45,7 +45,10 @@ export const resolveCredit = (credit?: ImageCreditData | null): ResolvedCredit =
         return { kind: 'text', name, href: null, label: `Photo by ${name}` }
     }
 
-    const isInternal = href.startsWith('/')
+    // A protocol-relative URL (`//example.com/x`) starts with `/` but is not a
+    // same-site path — the browser resolves it against a different host. Only
+    // a single leading `/` (not followed by a second `/`) is an internal path.
+    const isInternal = href.startsWith('/') && !href.startsWith('//')
 
     return {
         kind: isInternal ? 'internal' : 'external',

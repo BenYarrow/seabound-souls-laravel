@@ -36,7 +36,7 @@ interface Props {
 }
 
 /** Tailwind position utilities; any of these already make an element a valid positioning context. */
-const POSITION_UTILITIES = ['absolute', 'fixed', 'sticky', 'relative']
+const POSITION_UTILITIES = ['static', 'absolute', 'fixed', 'sticky', 'relative']
 
 /**
  * Whether `className` already contains an explicit Tailwind position utility
