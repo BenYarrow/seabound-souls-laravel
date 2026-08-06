@@ -7,6 +7,7 @@ import ImagePair from './Content/ImagePair'
 import Gallery from './Content/Gallery'
 import FeaturedGrid from './Common/FeaturedGrid'
 import ContributorRollUp from '@/Components/Content/ContributorRollUp'
+import PhotographerRollUp from '@/Components/Content/PhotographerRollUp'
 
 interface ContentBlock {
     type: string
@@ -112,6 +113,15 @@ const ContentBuilder = ({ blocks }: ContentBuilderProps) => {
                                 heading={block.data.heading}
                                 intro={block.data.intro}
                                 contributors={block.data.contributors_resolved ?? []}
+                            />
+                        )
+                    case 'list_photographers':
+                        return (
+                            <PhotographerRollUp
+                                key={index}
+                                heading={block.data.heading}
+                                intro={block.data.intro}
+                                photographers={block.data.photographers_resolved ?? []}
                             />
                         )
                     default:

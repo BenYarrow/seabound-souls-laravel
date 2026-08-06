@@ -158,6 +158,13 @@ class ContentBuilderBlocks
                     TextInput::make('intro')->label('Intro line')->helperText('Optional short line under the heading.'),
                 ]),
 
+            Builder\Block::make('list_photographers')
+                ->label('Photographer roll-up')
+                ->schema([
+                    TextInput::make('heading')->default('Our photographers'),
+                    TextInput::make('intro')->label('Intro line')->helperText('Optional short line under the heading.'),
+                ]),
+
             Builder\Block::make('infographic')
                 ->label('Infographic')
                 ->schema([

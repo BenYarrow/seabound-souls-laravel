@@ -7,12 +7,15 @@
 //   • list-block picks (list_content_blogs / list_content_spot_guides) → the
 //     published card entries (`{key}_resolved`), in authored order (drafts dropped); and
 //   • contributor_roll_up → `contributors_resolved`, every contributor with a
-//     public profile (auto-populated, not hand-picked), ordered by name.
+//     public profile (auto-populated, not hand-picked), ordered by name; and
+//   • list_photographers → `photographers_resolved`, every photographer with a
+//     live page (auto-populated, not hand-picked), ordered by name.
 
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Blog;
 use App\Models\MediaLibrary;
+use App\Models\Photographer;
 use App\Models\SpotGuide;
 use App\Models\User;
 
@@ -149,6 +152,23 @@ trait ResolvesContentBlockMedia
                         'slug' => $contributor->slug,
                         'profile_image' => $contributor->profileImageMedia?->imagePayload(),
                         'guides_count' => $contributor->guides_count,
+                    ])
+                    ->all();
+            }
+
+            // Photographer roll-up: auto-populate with every photographer whose
+            // page is live. Records without profile content are excluded — their
+            // card would link to a 404.
+            if (($block['type'] ?? '') === 'list_photographers') {
+                $data['photographers_resolved'] = Photographer::withPublicPage()
+                    ->with('thumbnailMedia')
+                    ->orderBy('name')
+                    ->get()
+                    ->map(fn (Photographer $photographer) => [
+                        'name' => $photographer->name,
+                        'slug' => $photographer->slug,
+                        'bio' => $photographer->bio,
+                        'thumbnail' => $photographer->thumbnailMedia?->imagePayload(),
                     ])
                     ->all();
             }
