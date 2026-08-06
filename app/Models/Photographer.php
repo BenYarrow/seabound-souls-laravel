@@ -58,6 +58,14 @@ class Photographer extends Model
             if (blank($photographer->slug) && filled($photographer->name)) {
                 $photographer->slug = Str::slug($photographer->name);
             }
+
+            // Filament's Builder writes [] when every block is removed. Normalising it
+            // to null keeps the public-page gate a plain NOT NULL check: Postgres's
+            // `json` type has no equality operator, so comparing against '[]' throws
+            // in dev/production while passing silently on the SQLite test suite.
+            if ($photographer->profile_blocks === []) {
+                $photographer->profile_blocks = null;
+            }
         });
     }
 
@@ -94,14 +102,15 @@ class Photographer extends Model
 
     /**
      * Constrain to photographers with a live page. Used by every public surface
-     * (the roll-up block, the sitemap) so gated records never leak.
+     * (the roll-up block, the sitemap) so gated records never leak. A plain
+     * NOT NULL check is sufficient because the `saving` hook above normalises
+     * an empty [] content builder to null, so the empty case is never stored.
      */
     public function scopeWithPublicPage(Builder $query): Builder
     {
         return $query
             ->whereNotNull('slug')
-            ->whereNotNull('profile_blocks')
-            ->whereNot('profile_blocks', '[]');
+            ->whereNotNull('profile_blocks');
     }
 
     /**

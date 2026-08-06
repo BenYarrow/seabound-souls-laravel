@@ -69,6 +69,32 @@ class PhotographerModelTest extends TestCase
         $this->assertTrue($results->first()->is($live));
     }
 
+    public function test_empty_profile_blocks_array_is_normalised_to_null_on_save(): void
+    {
+        // Filament's Builder field writes [] when every block is removed. This
+        // must be normalised to null at the model boundary rather than compared
+        // against literally, because Postgres's `json` column type has no
+        // equality operator and a `whereNot('profile_blocks', '[]')` query
+        // throws in dev/production while passing silently under the SQLite test
+        // suite.
+        $photographer = Photographer::factory()->create(['profile_blocks' => []]);
+
+        $fresh = Photographer::find($photographer->id);
+
+        $this->assertNull($fresh->profile_blocks);
+    }
+
+    public function test_with_public_page_scope_excludes_a_record_emptied_to_an_array(): void
+    {
+        $live = Photographer::factory()->withPublicPage()->create();
+        Photographer::factory()->create(['profile_blocks' => []]);
+
+        $results = Photographer::withPublicPage()->get();
+
+        $this->assertCount(1, $results);
+        $this->assertTrue($results->first()->is($live));
+    }
+
     public function test_credit_payload_resolves_the_active_social_url(): void
     {
         $photographer = Photographer::factory()->create([
