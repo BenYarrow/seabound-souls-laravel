@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -79,6 +80,16 @@ class Photographer extends Model
     public function staticMastheadMedia(): BelongsTo
     {
         return $this->belongsTo(MediaLibrary::class, 'static_masthead_media_id');
+    }
+
+    /**
+     * Every library image credited to this photographer.
+     *
+     * @return HasMany<MediaLibrary>
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(MediaLibrary::class);
     }
 
     /**
