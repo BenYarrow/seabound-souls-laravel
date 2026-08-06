@@ -45,8 +45,10 @@ class MediaPickerBrowser extends Component
     {
         $user = auth()->user();
 
+        // Opt-OUT for the owner rather than opt-IN for contributors: a role added
+        // later must not fall through this check and see the house folders.
         return MediaLibrary::whereNotNull('folder')
-            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder')
@@ -84,10 +86,13 @@ class MediaPickerBrowser extends Component
         ]);
 
         try {
+            // Opt-OUT for the owner rather than opt-IN for contributors: a role added
+            // later must not fall through this check and have their upload silently
+            // filed as house media (user_id null) instead of attributed to them.
             $ml = MediaLibrary::create([
                 'name' => $this->newName ?: $this->newFile->getClientOriginalName(),
                 'folder' => $this->newFolder ?: null,
-                'user_id' => auth()->user()?->isContributor() ? auth()->id() : null,
+                'user_id' => (auth()->user() && ! auth()->user()->isOwner()) ? auth()->id() : null,
             ]);
 
             $ml->addMedia($this->newFile->getRealPath())
@@ -131,8 +136,12 @@ class MediaPickerBrowser extends Component
     {
         $user = auth()->user();
 
+        // Opt-OUT for the owner rather than opt-IN for contributors: this is an
+        // authorisation gate on a network-callable method, so a role added later
+        // must not fall through the check and be allowed to select someone
+        // else's media (or house media) by id.
         return MediaLibrary::query()
-            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
             ->whereKey($id)
             ->exists();
     }
@@ -141,8 +150,11 @@ class MediaPickerBrowser extends Component
     {
         $user = auth()->user();
 
+        // Opt-OUT for the owner rather than opt-IN for contributors: see
+        // isSelectableByCurrentUser() above — the render query must stay in sync
+        // with what a user is actually authorised to select.
         $mediaItems = MediaLibrary::query()
-            ->when($user && $user->isContributor(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->folder, fn ($q) => $q->where('folder', $this->folder))
             ->latest()

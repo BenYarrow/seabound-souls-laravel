@@ -6,7 +6,6 @@ use App\Filament\Resources\MediaLibraryResource\Pages;
 use App\Models\MediaLibrary;
 use App\Models\Photographer;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Select as FormSelect;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -54,7 +53,7 @@ class MediaLibraryResource extends Resource
 
             // Retro-assignment path: any existing image can be credited later by
             // editing it here, not only at upload time.
-            FormSelect::make('photographer_id')
+            Select::make('photographer_id')
                 ->label('Photographer')
                 ->relationship('photographer', 'name')
                 ->searchable()
@@ -120,7 +119,7 @@ class MediaLibraryResource extends Resource
                         ->label('Assign photographer')
                         ->icon('heroicon-o-camera')
                         ->form([
-                            FormSelect::make('photographer_id')
+                            Select::make('photographer_id')
                                 ->label('Photographer')
                                 ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray())
                                 ->searchable()
@@ -136,9 +135,9 @@ class MediaLibraryResource extends Resource
     }
 
     /**
-     * Distinct folder names for the form Select and the table filter, scoped so a
-     * contributor only ever sees (and can file into) their own folders — never the house
-     * folders. Owners see every folder.
+     * Distinct folder names for the form Select and the table filter. Everyone
+     * except the owner only ever sees (and can file into) their own folders,
+     * never the house folders; the owner sees every folder.
      *
      * @return array<string, string>
      */

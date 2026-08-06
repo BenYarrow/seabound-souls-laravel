@@ -350,7 +350,10 @@ class SpotGuideResource extends Resource
             ->withoutGlobalScopes([SoftDeletingScope::class]);
 
         $user = auth()->user();
-        if ($user && $user->isContributor()) {
+        // Opt-OUT for the owner rather than opt-IN for contributors: a role added
+        // later must not fall through this check and see every spot guide,
+        // including everyone else's — same reasoning as MediaLibraryResource.
+        if ($user && ! $user->isOwner()) {
             $query->where('user_id', $user->id);
         }
 
