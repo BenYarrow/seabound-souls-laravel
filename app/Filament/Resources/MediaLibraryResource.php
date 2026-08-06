@@ -4,17 +4,21 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MediaLibraryResource\Pages;
 use App\Models\MediaLibrary;
+use App\Models\Photographer;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Select as FormSelect;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class MediaLibraryResource extends Resource
 {
@@ -48,6 +52,16 @@ class MediaLibraryResource extends Resource
                 ->createOptionUsing(fn (array $data): string => $data['folder'])
                 ->nullable(),
 
+            // Retro-assignment path: any existing image can be credited later by
+            // editing it here, not only at upload time.
+            FormSelect::make('photographer_id')
+                ->label('Photographer')
+                ->relationship('photographer', 'name')
+                ->searchable()
+                ->preload()
+                ->placeholder('Our own image')
+                ->helperText('Leave blank for the site\'s own photography.'),
+
             SpatieMediaLibraryFileUpload::make('file')
                 ->collection('file')
                 ->image()
@@ -75,6 +89,11 @@ class MediaLibraryResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->placeholder('—'),
+                TextColumn::make('photographer.name')
+                    ->label('Photographer')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('—'),
                 TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->dateTime()
@@ -84,6 +103,9 @@ class MediaLibraryResource extends Resource
                 SelectFilter::make('folder')
                     ->label('Folder')
                     ->options(fn (): array => static::folderOptions()),
+                SelectFilter::make('photographer_id')
+                    ->label('Photographer')
+                    ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray()),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
@@ -92,6 +114,22 @@ class MediaLibraryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // A batch of images typically arrives from one photographer;
+                    // assigning them one at a time would be miserable.
+                    BulkAction::make('assignPhotographer')
+                        ->label('Assign photographer')
+                        ->icon('heroicon-o-camera')
+                        ->form([
+                            FormSelect::make('photographer_id')
+                                ->label('Photographer')
+                                ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray())
+                                ->searchable()
+                                ->placeholder('Our own image (clear the credit)'),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update(['photographer_id' => $data['photographer_id'] ?? null]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
@@ -110,7 +148,10 @@ class MediaLibraryResource extends Resource
 
         return MediaLibrary::whereNotNull('folder')
             ->where('folder', '!=', '')
-            ->when($user && $user->isContributor(), fn ($query) => $query->where('user_id', $user->id))
+            // Opt-OUT for the owner rather than opt-IN for contributors: any role
+            // added later is scoped by default instead of falling through to the
+            // full library, house media included.
+            ->when($user && ! $user->isOwner(), fn ($query) => $query->where('user_id', $user->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder', 'folder')
@@ -118,14 +159,16 @@ class MediaLibraryResource extends Resource
     }
 
     /**
-     * Contributors only ever see their own uploads; owners see everything.
+     * Everyone except the owner only ever sees their own uploads; the owner sees
+     * everything, house media included.
      */
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->isContributor()) {
+        // See folderOptions(): scoped unless you are the owner.
+        if ($user && ! $user->isOwner()) {
             $query->where('user_id', $user->id);
         }
 
