@@ -51,4 +51,40 @@ class MediaLibraryScopingTest extends TestCase
 
         $this->assertSame(['Theirs' => 'Theirs'], MediaLibraryResource::folderOptions());
     }
+
+    // The two tests below use a role — 'photographer' — that does not exist
+    // anywhere in the application today. That's deliberate: they stand in for
+    // "any role added in the future". The whole point of scoping via
+    // `! $user->isOwner()` rather than `$user->isContributor()` is that a
+    // brand-new role automatically falls into the restricted branch instead
+    // of silently falling through to the unscoped, house-media-included
+    // query. A test built only from `owner` and `contributor` can never catch
+    // a regression back to `isContributor()`, because across just those two
+    // roles `isContributor()` and `! isOwner()` are logically equivalent —
+    // this fictional third role is what actually exercises the "opt-OUT, not
+    // opt-IN" property.
+    public function test_future_role_sees_only_their_own_media(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        MediaLibrary::create(['name' => 'House shot']);
+        MediaLibrary::create(['name' => 'Theirs', 'user_id' => $photographer->id]);
+
+        $this->actingAs($photographer);
+
+        $results = MediaLibraryResource::getEloquentQuery()->get();
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Theirs', $results->first()->name);
+    }
+
+    public function test_future_role_folder_options_exclude_house_folders(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        MediaLibrary::create(['name' => 'House shot', 'folder' => 'House']);
+        MediaLibrary::create(['name' => 'Theirs', 'folder' => 'Theirs', 'user_id' => $photographer->id]);
+
+        $this->actingAs($photographer);
+
+        $this->assertSame(['Theirs' => 'Theirs'], MediaLibraryResource::folderOptions());
+    }
 }
