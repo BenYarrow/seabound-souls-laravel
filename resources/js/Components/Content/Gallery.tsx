@@ -1,3 +1,17 @@
+/**
+ * Gallery — a content-builder block rendering a swipeable image carousel
+ * (Swiper), either as a compact thumbnail strip (`thumbnailsOnly`) or the
+ * full pagination/navigation carousel. Clicking any slide opens the same
+ * image set in an fslightbox-react lightbox, starting at the clicked index.
+ *
+ * Credited-vs-uncredited slides: fslightbox-react@2 has no caption support
+ * and no onSlideChange callback (verified against the installed package),
+ * so the only way to show a photographer credit inside the lightbox is a
+ * CUSTOM SOURCE — a JSX element (`CreditedLightboxSlide`) in place of the
+ * usual URL string. A credited image becomes that custom element; an
+ * uncredited image stays a plain URL string so the library's own sizing and
+ * zoom handling keeps covering the common case (most images have no credit).
+ */
 import { useEffect, useRef, useState } from 'react'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -8,7 +22,7 @@ import Icon from '../Common/Icon'
 import AnimateInView from '../Common/AnimateInView'
 import BlockWrapper from '../Common/BlockWrapper'
 import CoverImage from '@/Components/Common/CoverImage'
-import ImageCredit from '@/Components/Common/ImageCredit'
+import CreditedLightboxSlide from '@/Components/Common/CreditedLightboxSlide'
 import type { FocalImage } from '@/types/media'
 
 import 'swiper/css'
@@ -36,23 +50,9 @@ const Gallery = ({ images, thumbnailsOnly }: GalleryProps) => {
 
     if (!images || images.length === 0) return null
 
-    // fslightbox-react@2 has no caption support and no onSlideChange callback
-    // (verified against the installed package), so the only way to show a
-    // credit inside the lightbox is a CUSTOM SOURCE — a JSX element in place
-    // of the usual URL string. A credited image becomes a JSX element wrapping
-    // its own <img> plus ImageCredit; an uncredited image stays a plain string
-    // so the library's own sizing/zoom handling keeps covering the common case
-    // (most images have no credit).
     const lightboxSources = images.map((image) =>
         image.credit ? (
-            <div className="relative flex items-center justify-center">
-                <img
-                    src={image.url}
-                    alt={image.alt ?? ''}
-                    className="max-h-[85vh] max-w-[90vw] object-contain"
-                />
-                <ImageCredit credit={image.credit} />
-            </div>
+            <CreditedLightboxSlide url={image.url} alt={image.alt ?? ''} credit={image.credit} />
         ) : (
             image.url
         )

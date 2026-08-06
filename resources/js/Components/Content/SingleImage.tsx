@@ -7,6 +7,7 @@ import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import BlockWrapper from '../Common/BlockWrapper'
 import ImageCredit from '@/Components/Common/ImageCredit'
+import CreditedLightboxSlide from '@/Components/Common/CreditedLightboxSlide'
 import type { FocalImage } from '@/types/media'
 
 interface SingleImageProps {
@@ -58,20 +59,7 @@ const SingleImage = ({ image, backgroundColour }: SingleImageProps) => {
              */}
             <FsLightbox
                 toggler={toggler}
-                sources={[
-                    credit ? (
-                        <div className="relative flex items-center justify-center">
-                            <img
-                                src={url}
-                                alt={alt}
-                                className="max-h-[85vh] max-w-[90vw] object-contain"
-                            />
-                            <ImageCredit credit={credit} />
-                        </div>
-                    ) : (
-                        url
-                    ),
-                ]}
+                sources={[credit ? <CreditedLightboxSlide url={url} alt={alt} credit={credit} /> : url]}
                 types={['image']}
             />
         </BlockWrapper>
