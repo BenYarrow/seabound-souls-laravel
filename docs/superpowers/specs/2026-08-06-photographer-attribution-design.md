@@ -1,6 +1,6 @@
 # Photographer Attribution — Design
 
-**Date:** 2026-08-04
+**Date:** 2026-08-06
 **Branch:** `feature/photographer-attribution`
 **Status:** Approved design, ready for planning
 
