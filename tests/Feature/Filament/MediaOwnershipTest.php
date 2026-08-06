@@ -235,4 +235,54 @@ class MediaOwnershipTest extends TestCase
         $this->assertTrue($names->contains('Mine'));
         $this->assertFalse($names->contains('House'));
     }
+
+    /**
+     * Finding 1: CreateMediaLibrary::mutateFormDataBeforeCreate() must stamp
+     * ownership opt-OUT (! isOwner()), not opt-IN (isContributor()) — otherwise a
+     * future role's upload through the resource's create page silently falls
+     * through to house media (user_id null), visible to everyone.
+     */
+    public function test_media_created_by_a_future_role_via_the_resource_is_owned_by_them(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+
+        Livewire::test(CreateMediaLibrary::class)
+            ->fillForm(['name' => 'Photographer upload', 'file' => [UploadedFile::fake()->image('photo.jpg')]])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'Photographer upload',
+            'user_id' => $photographer->id,
+        ]);
+    }
+
+    /**
+     * Finding 3: MediaPickerBrowser::saveUpload() has no direct test coverage
+     * today — every existing MediaPickerBrowser test exercises toggleSelect,
+     * confirm, getFolderOptions, or render(), none of which call saveUpload().
+     * A regression of saveUpload() alone back to the opt-in ownership form would
+     * pass the suite silently. This proves an upload via the picker's inline
+     * uploader is attributed to a future-role user, not filed as house media.
+     */
+    public function test_future_role_upload_via_media_picker_browser_save_upload_is_owned_by_them(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+
+        $component = Livewire::test(MediaPickerBrowser::class)
+            ->set('newFile', UploadedFile::fake()->image('picker-upload.jpg'))
+            ->set('newName', 'Picker upload')
+            ->call('saveUpload');
+
+        $component->assertHasNoErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'Picker upload',
+            'user_id' => $photographer->id,
+        ]);
+    }
 }
