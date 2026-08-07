@@ -37,7 +37,7 @@ const Show = ({ photographer, static_masthead, meta }: Props) => (
         <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
             <div className="flex flex-col items-center text-center">
                 {photographer.thumbnail && (
-                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
+                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-cream shadow-xl">
                         {/* Their own portrait needs no credit badge over it. */}
                         <CoverImage
                             image={photographer.thumbnail}

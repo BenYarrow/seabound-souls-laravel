@@ -51,8 +51,11 @@ interface Props {
     imageClassName?: string
     /**
      * Suppress the credit badge. Used where an image is UI chrome rather than
-     * displayed photography — map pins/popups are small and a badge would be
-     * illegible or would crowd the content there.
+     * displayed photography and a badge would be illegible or would crowd the
+     * content: map pins/popups, circular avatars/portraits (a rectangular
+     * badge doesn't sit well on a circle and the crop is usually a face, not a
+     * scene), and thumbnails below roughly 128px on a side (search results,
+     * nav previews) where the badge would be as large as the image itself.
      */
     showCredit?: boolean
 }

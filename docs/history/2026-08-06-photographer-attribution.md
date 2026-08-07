@@ -292,13 +292,94 @@ existing signed-link `SetPasswordController` (already entirely
 role-agnostic), and point the existing form schema at
 `auth()->user()->photographer`.
 
+## Final pre-merge review fixes
+
+A last whole-branch review on top of the per-task passes above found two
+Critical and several Important issues, all fixed before merge:
+
+- **Hover transforms buried the credit badge.** `CoverImage` put the
+  caller's `group-hover:scale-*`/`transition-transform` utilities on the
+  wrapper `<span>`. A non-`none` `transform` creates a new stacking
+  context, so on hover the badge's `z-10` was trapped inside the wrapper
+  and painted beneath a later `absolute inset-0` sibling overlay (card
+  vignettes/scrims) — on surfaces where that overlay lacked
+  `pointer-events-none`, the click never reached the credit link at all.
+  The same misplacement also regressed the intended zoom effect: the scale
+  used to apply to the `<img>` (frame fixed, photo zooms inside it); on the
+  wrapper it scaled — and `overflow-hidden`-clipped — the badge too. Fixed
+  by adding `CoverImage.imageClassName`, applied to the `<img>`, and moving
+  every call site's transform utilities onto it.
+- **Two lightboxes dropped the credit.** `ImagePair.tsx` and
+  `SplitImageText.tsx` still reduced every image to a bare URL string for
+  `FsLightbox`, silently losing the credit `Gallery.tsx`/`SingleImage.tsx`
+  already preserve via `CreditedLightboxSlide`. Both now use the same
+  credited-vs-plain-string branch.
+- **The photographer roster and bulk-assign action were reachable by
+  contributors** via `/admin/media-libraries` — `MediaLibraryPolicy` gates
+  the resource generally but doesn't know about the photographer-specific
+  additions. `PhotographerResource` was already owner-only, but the
+  `photographer_id` Select (`->preload()`), the `photographer.name` column,
+  the photographer `SelectFilter`, and the `assignPhotographer`
+  `BulkAction` on `MediaLibraryResource` were not, letting a contributor
+  enumerate every photographer and falsely credit their own upload to one.
+  All four are now owner-gated (the bulk action via `->authorize()`, which
+  also blocks a forged direct call, not just the button).
+- **The exclusion list was incomplete and inconsistently applied.** The
+  spec excluded map pins ("a badge there is illegible") but the same
+  reasoning was never extended to circular avatars/portraits or other
+  small thumbnails — and even where it obviously should have applied, it
+  was inconsistent: `PhotographerRollUp`/`Photographers/Show` already
+  passed `showCredit={false}` on their portraits, but the byte-for-byte
+  equivalent `ContributorRollUp`/`Contributors/Show` did not, nor did the
+  `SpotGuide/Show` author avatar, `SearchPanel`'s 40px thumbnail, or
+  `Pages/Search.tsx`'s 96×80 thumbnail. The rule is now: **map pins,
+  circular avatars/portraits, and thumbnails below roughly 128px on a
+  side** all opt out, applied uniformly.
+- **Two idioms for the same role-scoping rule, with opposite guest
+  behaviour.** `MediaLibraryResource` (×2) and `MediaPickerBrowser` (×4)
+  used `$user && ! $user->isOwner()`, under which a guest (null user)
+  skipped scoping entirely and got the *unscoped* query — the opposite of
+  what "opt-out for the owner" is supposed to guarantee. `CreateMediaLibrary`
+  and `EditSpotGuide::afterSave` already used the fail-closed
+  `! $user?->isOwner()` form, under which a guest gets the *most*
+  restrictive branch. A third site with the same unscoped form
+  (`SpotGuideResource::getEloquentQuery`) was found during the sweep.
+  Standardised all seven on the fail-closed form.
+- **`PhotographerPolicy` was missing abilities Filament resolves as
+  *allow*.** Filament's `authorize()` helper defaults a missing ability on
+  an *existing* policy to `Response::allow()`. `PhotographerResource` ships
+  a `DeleteBulkAction` and `Photographer` uses `SoftDeletes`, so
+  `deleteAny`/`restore`/`restoreAny`/`forceDelete`/`forceDeleteAny` were all
+  implicitly open to anyone reaching the resource. Added, all owner-only.
+- **`user_id` was mass-assignable** on `Photographer` despite being read by
+  nothing today — removed from `$fillable`.
+- **An empty-string slug could desync `hasPublicPage()` from the sitemap
+  scope.** `hasPublicPage()` uses `filled($this->slug)` (false for `''`);
+  `scopeWithPublicPage()` used `whereNotNull('slug')` (true for `''`, since
+  SQL `''` is not `NULL`). A punctuation-only name (e.g. `"!!!"`) slugifies
+  to `''` via `Str::slug()`, so the `saving` hook's auto-fill could store an
+  empty string, which the scope would then advertise in the sitemap while
+  the controller 404s it. Fixed at the single point the slug is ever
+  assigned — the `saving` hook now falls back to a random slug when
+  `Str::slug($name)` is empty — rather than teaching every reader (scope,
+  `hasPublicPage()`, future consumers) to special-case `''`: one
+  enforcement point is harder to regress than several that all have to
+  agree.
+- `resolveCreditUrl()` now uses `route('photographers.show', $slug, false)`
+  instead of a hardcoded `/photographers/{slug}` string (the explicit
+  `false` keeps it a relative path, since `ImageCredit` decides
+  internal-vs-external by a leading `/`).
+- `ring-white`/`text-gray-500` on the photographer/contributor roll-up
+  cards and profile portraits (4 files) replaced with `ring-cream`/
+  `text-secondary/60` — raw non-themed utilities that wouldn't flip in
+  dark mode, now consistent across all four instead of half-fixed.
+- The `credit_link` admin column showed the raw stored key (e.g.
+  `instagram`) instead of its `Photographer::CREDIT_LINK_OPTIONS` label.
+
 ## Known follow-ups
 
 - **Pre-existing `media` N+1** (see above) — tracked in `docs/TODO.md`,
   fixable by adding `'media'` to `MediaLibrary::$with`.
-- `resolveCreditUrl()` hardcodes `/photographers/{slug}` rather than
-  `route('photographers.show')` — would silently desync if the route path
-  ever changes.
 - The `credit_link` Select reads the DB-loaded record and neither the
   socials fields nor the content builder are `->live()`, so adding page
   content or a social URL makes the new option selectable only after
@@ -308,11 +389,6 @@ role-agnostic), and point the existing form schema at
   pre-existing structure (predates this feature), not introduced here.
   Event dispatch is proven clean; only a real cross-browser keyboard/AT
   pass could clear the HTML5 validity concern fully.
-- `ring-white` on photographer/contributor profile portraits is a raw,
-  non-themed colour that won't flip in dark mode — copied verbatim from
-  the existing contributor profile page, not new here. Candidate to fix
-  across all instances together as part of the dark-mode token-layer
-  sweep, not one at a time.
 
 ## Not verified live
 

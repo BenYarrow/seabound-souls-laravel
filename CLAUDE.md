@@ -309,7 +309,7 @@ All work happens within this repo (or one of its git worktrees). Do **not** read
 
 ### Common (image credit)
 - **`ImageCredit.tsx`** — small, always-visible (never hover-only) attribution badge; renders an external `<a>`, an internal Inertia `<Link>` (the `profile` case), or plain text, and `stopPropagation`s so the badge doesn't hijack clicks on an ancestor card `Link`/`button`
-- **`CoverImage.tsx`** — the shared object-cover image renderer; renders `ImageCredit` when the image carries one (`showCredit={false}` opts a map pin/thumbnail out); wraps consistently whether or not a credit is present so layout never differs
+- **`CoverImage.tsx`** — the shared object-cover image renderer; renders `ImageCredit` when the image carries one (`showCredit={false}` opts out map pins/popups, circular avatars/portraits, and thumbnails below ~128px, where a badge would be illegible or crowd the content); wraps consistently whether or not a credit is present so layout never differs; `imageClassName` carries hover/transform utilities onto the `<img>` itself so they don't create a stacking context that buries the badge under sibling overlays
 
 ---
 

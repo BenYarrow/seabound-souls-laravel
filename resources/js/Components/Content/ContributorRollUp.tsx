@@ -36,14 +36,20 @@ const ContributorRollUp = ({ heading, intro, contributors }: Props) => {
                     {heading}
                 </h2>
             )}
-            {intro && <p className="text-center text-gray-500 mt-3 max-w-2xl mx-auto">{intro}</p>}
+            {intro && <p className="text-center text-secondary/60 mt-3 max-w-2xl mx-auto">{intro}</p>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
                 {validContributors.map((contributor) => (
                     <Link key={contributor.slug} href={`/contributors/${contributor.slug}`} className="group flex flex-col items-center text-center">
-                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-cream shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                             {contributor.profile_image ? (
-                                <CoverImage image={contributor.profile_image} alt={contributor.name} className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                                <CoverImage
+                                    image={contributor.profile_image}
+                                    alt={contributor.name}
+                                    className="w-full h-full"
+                                    imageClassName="group-hover:scale-105 transition-transform duration-500"
+                                    showCredit={false}
+                                />
                             ) : (
                                 <div className="w-full h-full bg-primary-lighter" />
                             )}
