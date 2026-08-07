@@ -2,6 +2,7 @@ import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import AnimateInView from '../Common/AnimateInView'
 import CoverImage from '@/Components/Common/CoverImage'
+import CreditedLightboxSlide from '@/Components/Common/CreditedLightboxSlide'
 import type { FocalImage } from '@/types/media'
 
 interface SplitImageTextProps {
@@ -81,10 +82,19 @@ const SplitImageText = ({ image, text, reverse, backgroundColour = 'bg-cream' }:
             </div>
 
             {image && (
-                // FsLightbox needs a raw URL string — extract from focal object or use directly if string.
+                // A credited focal image becomes a JSX custom source so the lightbox
+                // shows the photographer's attribution (see Gallery.tsx); a plain
+                // string or an uncredited image stays a raw URL for the library's
+                // own default sizing/handling.
                 <FsLightbox
                     toggler={toggler}
-                    sources={[typeof image === 'string' ? image : image.url]}
+                    sources={[
+                        typeof image !== 'string' && image.credit ? (
+                            <CreditedLightboxSlide url={image.url} alt={image.alt ?? ''} credit={image.credit} />
+                        ) : (
+                            typeof image === 'string' ? image : image.url
+                        ),
+                    ]}
                     types={['image']}
                 />
             )}
