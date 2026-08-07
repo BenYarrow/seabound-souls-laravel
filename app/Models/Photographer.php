@@ -38,10 +38,15 @@ class Photographer extends Model
         'x' => 'X (Twitter)',
     ];
 
+    // user_id is deliberately NOT fillable: it is reserved for a future
+    // photographer login (see the `user()` relation below) and nothing reads
+    // or writes it today, so there is no legitimate mass-assignment path for
+    // it yet — only ever set it via a dedicated, explicit assignment when
+    // that feature is built.
     protected $fillable = [
         'name', 'slug', 'socials', 'credit_link', 'bio',
         'thumbnail_media_id', 'static_masthead_media_id',
-        'profile_blocks', 'seo_title', 'seo_description', 'user_id',
+        'profile_blocks', 'seo_title', 'seo_description',
     ];
 
     protected $casts = [
@@ -52,12 +57,24 @@ class Photographer extends Model
     /**
      * Auto-fill the slug from the name when left blank, so the model is usable
      * without the admin form (tests, factories, seeders).
+     *
+     * `Str::slug()` can itself produce an empty string for a punctuation-only
+     * name (e.g. "!!!" slugifies to ''). Storing that '' would desync the two
+     * places that decide whether a page is live: `hasPublicPage()` uses
+     * `filled($this->slug)` (false for ''), while a plain SQL `whereNotNull`
+     * (as used by `scopeWithPublicPage()`) sees '' as NOT NULL and includes
+     * it — so the sitemap/roll-up would advertise a page the controller then
+     * 404s. Falling back to a random slug HERE, the single point slug is
+     * ever assigned, is preferred over teaching every reader to also
+     * special-case '' (e.g. `whereNotNull('slug')->where('slug', '!=', '')`):
+     * one enforcement point that guarantees slug is never blank is harder to
+     * regress than several call sites that all have to remember to agree.
      */
     protected static function booted(): void
     {
         static::saving(function (Photographer $photographer) {
             if (blank($photographer->slug) && filled($photographer->name)) {
-                $photographer->slug = Str::slug($photographer->name);
+                $photographer->slug = Str::slug($photographer->name) ?: Str::random(8);
             }
 
             // Filament's Builder writes [] when every block is removed. Normalising it
@@ -149,7 +166,14 @@ class Photographer extends Model
         }
 
         if ($target === 'profile') {
-            return $this->hasPublicPage() ? "/photographers/{$this->slug}" : null;
+            // `route(..., absolute: false)` keeps this a relative path rather than
+            // a hardcoded string: it cannot desync from the actual route
+            // definition, and ImageCredit tells internal from external links by
+            // a leading '/' (a route() call without `absolute: false` would
+            // return a full URL and break that check).
+            return $this->hasPublicPage()
+                ? route('photographers.show', $this->slug, absolute: false)
+                : null;
         }
 
         $url = data_get($this->socials, $target);

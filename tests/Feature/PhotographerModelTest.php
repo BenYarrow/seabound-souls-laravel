@@ -28,6 +28,37 @@ class PhotographerModelTest extends TestCase
         $this->assertSame('hamish', $photographer->slug);
     }
 
+    /**
+     * `Str::slug('!!!')` is '' — a punctuation-only name would otherwise store
+     * an empty-string slug. That must never happen: `hasPublicPage()` treats
+     * '' as blank (via `filled()`) but a plain SQL `whereNotNull` (as used by
+     * `scopeWithPublicPage()`) treats '' as NOT NULL, so the two would
+     * disagree and the sitemap/roll-up could advertise a page that 404s.
+     */
+    public function test_slug_falls_back_when_the_name_slugifies_to_an_empty_string(): void
+    {
+        $photographer = Photographer::factory()->withPublicPage()->create(['name' => '!!!', 'slug' => null]);
+
+        $this->assertNotSame('', $photographer->slug);
+        $this->assertTrue(filled($photographer->slug));
+    }
+
+    /**
+     * The invariant this whole fix protects: whatever slug ends up stored,
+     * hasPublicPage() (PHP `filled()`) and scopeWithPublicPage() (SQL
+     * `whereNotNull`) must agree, or a punctuation-only-named photographer
+     * with a live page would be excluded from hasPublicPage() checks (dead
+     * credit links) while still being advertised by the sitemap/roll-up scope
+     * (a 404).
+     */
+    public function test_a_punctuation_only_name_still_agrees_with_the_public_page_scope(): void
+    {
+        $photographer = Photographer::factory()->withPublicPage()->create(['name' => '!!!', 'slug' => null]);
+
+        $this->assertSame($photographer->hasPublicPage(), Photographer::withPublicPage()->whereKey($photographer->id)->exists());
+        $this->assertTrue($photographer->hasPublicPage());
+    }
+
     public function test_slug_is_reusable_after_soft_delete(): void
     {
         Photographer::create(['name' => 'Hamish'])->delete();
