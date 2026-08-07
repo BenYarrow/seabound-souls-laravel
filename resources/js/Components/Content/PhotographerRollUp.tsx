@@ -46,7 +46,7 @@ const PhotographerRollUp = ({ heading, intro, photographers }: Props) => {
                         href={`/photographers/${photographer.slug}`}
                         className="group flex flex-col items-center text-center"
                     >
-                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-cream shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                             {photographer.thumbnail ? (
                                 <CoverImage
                                     image={photographer.thumbnail}

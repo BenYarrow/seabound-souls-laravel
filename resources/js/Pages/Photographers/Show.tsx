@@ -37,7 +37,16 @@ const Show = ({ photographer, static_masthead, meta }: Props) => (
         <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
             <div className="flex flex-col items-center text-center">
                 {photographer.thumbnail && (
-                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-cream shadow-xl">
+                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
+                        {/*
+                         * ring-white is deliberate, not an oversight: this sits inside a
+                         * `bg-cream` BlockWrapper, so a `ring-cream` halo would be exactly
+                         * the section background and vanish (tried and reverted — see
+                         * git history). There is no dark-mode token layer in this project
+                         * yet (no `darkMode` key, no `.dark` selectors anywhere), so don't
+                         * swap this for a themed token piecemeal; revisit it only when
+                         * that token layer actually lands.
+                         */}
                         {/* Their own portrait needs no credit badge over it. */}
                         <CoverImage
                             image={photographer.thumbnail}

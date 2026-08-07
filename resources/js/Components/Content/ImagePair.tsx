@@ -1,3 +1,8 @@
+/**
+ * ImagePair — a content-builder block rendering two images side by side, each
+ * cropped to a square via CoverImage. Clicking either opens a shared lightbox
+ * scrolled to the clicked image.
+ */
 import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import BlockWrapper from '../Common/BlockWrapper'
@@ -12,6 +17,14 @@ interface ImagePairProps {
     backgroundColour?: string
 }
 
+/**
+ * Render up to two images side by side in a two-column grid, each opening a
+ * shared lightbox (with photographer credit, when present) on click.
+ *
+ * @param imageLeft the left-hand image, or null to omit that slot
+ * @param imageRight the right-hand image, or null to omit that slot
+ * @param backgroundColour section background utility class, forwarded to BlockWrapper
+ */
 const ImagePair = ({ imageLeft, imageRight, backgroundColour }: ImagePairProps) => {
     const [toggler, setToggler] = useState(false)
     const [currentImageIndex, setCurrentImageIndex] = useState(0)

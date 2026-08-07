@@ -46,7 +46,7 @@ const Show = ({ contributor, static_masthead, guides, meta }: Props) => {
             <BlockWrapper options={{ bgColourClass: 'bg-cream' }}>
                 <div className="flex flex-col items-center text-center">
                     {contributor.profile_image && (
-                        <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-cream shadow-xl">
+                        <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
                             {/* Circular avatar — a badge would be illegible here (see CoverImage). */}
                             <CoverImage image={contributor.profile_image} alt={contributor.name} className="w-full h-full" showCredit={false} />
                         </div>

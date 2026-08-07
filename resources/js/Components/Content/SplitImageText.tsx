@@ -1,3 +1,8 @@
+/**
+ * SplitImageText — a content-builder block pairing a cropped image (opens a
+ * lightbox on click) against rich text, side by side, with animated
+ * slide-in-on-scroll for each column and optional left/right reversal.
+ */
 import { useState } from 'react'
 import FsLightbox from 'fslightbox-react'
 import AnimateInView from '../Common/AnimateInView'
@@ -17,6 +22,15 @@ interface SplitImageTextProps {
 /** Dark section backgrounds that need light text — mirrors RichText. */
 const DARK_BACKGROUNDS = ['bg-secondary', 'bg-primary', 'bg-primary-darker']
 
+/**
+ * Render an image/text split section, reversible left-right, with dark-section
+ * text-colour inversion and a credited lightbox on the image.
+ *
+ * @param image the image for this section, or null to omit the image column entirely
+ * @param text rich HTML text for the text column (rendered via dangerouslySetInnerHTML)
+ * @param reverse whether the image sits on the right instead of the left
+ * @param backgroundColour section background utility class; also decides light/dark text inversion
+ */
 const SplitImageText = ({ image, text, reverse, backgroundColour = 'bg-cream' }: SplitImageTextProps) => {
     const [toggler, setToggler] = useState(false)
     const invert = DARK_BACKGROUNDS.includes(backgroundColour)
