@@ -80,6 +80,31 @@ Shipped 2026-07-28 (`/destinations` ranks spots by typical sailable days for a c
 - [ ] Focal points: multi-select (gallery/slider) focal-set UI (single-select preview only today); focal `fetch()` failure feedback/rollback; prune/retype unused `Card.tsx`
 - [ ] Media pipeline (post-launch): Spatie conversions (sizes + WebP + responsive `srcset`) + optional Cloudflare CDN/R2 — image perf (no AWS)
 
+## Photographer attribution — security follow-ups (surfaced, not caused, by #photographer-attribution's final review)
+
+These three were found while auditing the photographer-attribution branch's
+media-scoping security work but are pre-existing, independent of that
+feature, and deliberately out of scope for that PR. 1 and 2 deserve their
+own short branch soon.
+
+- [ ] **`SpotGuidePolicy` has no `deleteAny`, so a contributor can bulk-delete
+  their own published, owner-approved guide.** `SpotGuidePolicy::delete()`
+  explicitly forbids deleting a published guide, but Filament's
+  `DeleteBulkAction` does no per-record re-check — it only consults
+  `deleteAny`, which is missing from the policy and therefore defaults to
+  allow (see the `PhotographerPolicy` fix in
+  `docs/history/2026-08-06-photographer-attribution.md`, same root cause).
+  Same gap for `RestoreBulkAction`/`restoreAny`.
+- [ ] **`POST /admin/media/{media}/focal` has no authorization.**
+  `app/Http/Controllers/Admin/MediaFocalController.php`'s route only has
+  `['web', 'auth']` middleware — any authenticated panel user (any
+  contributor) can rewrite the focal point of every house image and every
+  other contributor's image by iterating ids.
+- [ ] **The `MediaPicker` form field does no scoped `exists` validation.** A
+  contributor can set a `*_media_id` to a house-media id via the Livewire
+  payload directly and read back its URL/name, bypassing the intended
+  per-contributor media scoping.
+
 ## Backend hardening
 - [ ] Dispatch `FetchSpotWeatherJob` from the `SpotGuide::created` hook with `->afterCommit()` so the auto-fetch stays correct even if the Filament panel later enables `->databaseTransactions()`. Correct today (panel has no DB transactions, so the row is committed before dispatch), but the guarantee is currently implicit. Note: a naive `->afterCommit()` breaks the dispatch test under `RefreshDatabase`'s wrapping transaction — needs test-config care.
 - [ ] Remove the one-off SQLite→Postgres migration tooling once the migration is proven and no longer needed: the `sqlite_legacy` connection in `config/database.php`, the `db:import-from-sqlite` command, and the stale `database/database.sqlite` file.
