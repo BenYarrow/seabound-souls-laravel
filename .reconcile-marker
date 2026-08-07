@@ -1,2 +1,2 @@
-date: 2026-07-31
-note: Reconcile 25 (folded into #45) — climate averages corrected: weather_records now holds only complete, fully-elapsed calendar months and is replaced per fetch, so frozen partial-month stubs self-heal. Charts were inflated (Langebaan typical July 11.6 -> 11.1 kts).
+date: 2026-08-07
+note: Reconcile 26 (folded into the photographer-attribution PR) — admin-managed photographer records now credit supplied imagery site-wide with a gated public profile page, built on a standalone auth-free table so a future login is additive, not a migration.

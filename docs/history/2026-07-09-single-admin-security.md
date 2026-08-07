@@ -79,3 +79,10 @@ Plan: `docs/superpowers/plans/2026-07-09-single-admin-security.md`.
 - Remaining pre-launch: the production-environment checklist (`APP_DEBUG=false`,
   `SESSION_SECURE_COOKIE=true`, HTTPS, supervised worker) and real transactional
   mail (Project B go-live).
+- (Superseded 2026-07-13: the single-owner-email panel gate described above no
+  longer reflects the code. `User::canAccessPanel()` now admits any recognised
+  `role` (`owner` or `contributor`) via
+  `in_array($this->role, [self::ROLE_OWNER, self::ROLE_CONTRIBUTOR], true)` —
+  the real gating moved to per-resource Policies, not the panel gate itself.
+  This was introduced by the contributor workflow — see
+  [2026-07-13-rider-contributor-workflow](2026-07-13-rider-contributor-workflow.md).)
