@@ -52,14 +52,19 @@ class MediaLibraryResource extends Resource
                 ->nullable(),
 
             // Retro-assignment path: any existing image can be credited later by
-            // editing it here, not only at upload time.
+            // editing it here, not only at upload time. Owner-only: `->preload()`
+            // eagerly loads every photographer's name/id into the page, and a
+            // contributor able to pick one could attribute their own upload to a
+            // photographer they have no connection to, producing a false public
+            // credit that links out to that photographer's socials.
             Select::make('photographer_id')
                 ->label('Photographer')
                 ->relationship('photographer', 'name')
                 ->searchable()
                 ->preload()
                 ->placeholder('Our own image')
-                ->helperText('Leave blank for the site\'s own photography.'),
+                ->helperText('Leave blank for the site\'s own photography.')
+                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
 
             SpatieMediaLibraryFileUpload::make('file')
                 ->collection('file')
@@ -92,7 +97,8 @@ class MediaLibraryResource extends Resource
                     ->label('Photographer')
                     ->sortable()
                     ->searchable()
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                 TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->dateTime()
@@ -104,7 +110,10 @@ class MediaLibraryResource extends Resource
                     ->options(fn (): array => static::folderOptions()),
                 SelectFilter::make('photographer_id')
                     ->label('Photographer')
-                    ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray()),
+                    ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray())
+                    // Owner-only: the options list is the whole photographer roster,
+                    // which a contributor has no legitimate reason to browse.
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
@@ -114,10 +123,16 @@ class MediaLibraryResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // A batch of images typically arrives from one photographer;
-                    // assigning them one at a time would be miserable.
+                    // assigning them one at a time would be miserable. Owner-only
+                    // (see PhotographerPolicy): a contributor could otherwise
+                    // attribute their own uploads to any photographer in the
+                    // roster, producing a false public credit. `->authorize()`
+                    // (not just `->visible()`) so a direct network call to run
+                    // the action is blocked too, not only its button.
                     BulkAction::make('assignPhotographer')
                         ->label('Assign photographer')
                         ->icon('heroicon-o-camera')
+                        ->authorize(fn (): bool => (bool) auth()->user()?->isOwner())
                         ->form([
                             Select::make('photographer_id')
                                 ->label('Photographer')
