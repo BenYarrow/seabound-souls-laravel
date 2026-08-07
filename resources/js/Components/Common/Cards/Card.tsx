@@ -17,7 +17,8 @@ const Card = ({ title, href, imageUrl, subtitle, description }: CardProps) => {
                     <CoverImage
                         image={imageUrl}
                         alt={title}
-                        className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full"
+                        imageClassName="group-hover:scale-105 transition-transform duration-500"
                     />
                 </div>
             )}

@@ -42,7 +42,8 @@ const SplitImageText = ({ image, text, reverse, backgroundColour = 'bg-cream' }:
                                     <CoverImage
                                         image={image}
                                         alt=""
-                                        className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                                        className="absolute inset-0 w-full h-full"
+                                        imageClassName="group-hover:scale-105 transition-transform duration-700 ease-out"
                                     />
                                     {/* Orange corner brackets — opposite corners */}
                                     <div className={`absolute top-0 ${reverse ? 'right-0 border-r-2' : 'left-0 border-l-2'} w-10 h-10 border-t-2 border-orange pointer-events-none`} />

@@ -116,7 +116,8 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
                         <CoverImage
                             image={rec.thumbnail}
                             alt={rec.name}
-                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                            className="absolute inset-0 w-full h-full"
+                            imageClassName="group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />

@@ -28,6 +28,28 @@ interface Props {
     alt?: string
     className?: string
     /**
+     * Utility classes applied to the `<img>` itself rather than the wrapper —
+     * in particular hover/transform utilities (`group-hover:scale-*`,
+     * `transition-transform`, …). Two independent reasons these must NOT go on
+     * the wrapper:
+     *
+     * 1. A non-`none` `transform` creates a new stacking context. The credit
+     *    badge's `z-10` is only meaningful within that context, so on hover it
+     *    gets trapped inside the wrapper and can paint BENEATH a sibling
+     *    `absolute inset-0` overlay declared later in the caller's markup
+     *    (vignettes, gradient scrims) — silently burying the badge and, where
+     *    that overlay lacks `pointer-events-none`, swallowing the click before
+     *    it ever reaches the credit link.
+     * 2. Before this prop existed, the same utilities applied to the `<img>`
+     *    directly: the image zoomed inside a fixed-size frame. Once they moved
+     *    to the wrapper (when the wrapper was introduced), the WHOLE frame —
+     *    badge included — scaled and translated together, and the badge's
+     *    corner got clipped by the wrapper's `overflow-hidden`. Putting them
+     *    back on the image restores the original "frame stays put, photo
+     *    zooms inside it" behaviour.
+     */
+    imageClassName?: string
+    /**
      * Suppress the credit badge. Used where an image is UI chrome rather than
      * displayed photography — map pins/popups are small and a badge would be
      * illegible or would crowd the content there.
@@ -49,7 +71,7 @@ const hasExplicitPosition = (className: string): boolean =>
         .split(/\s+/)
         .some((token) => POSITION_UTILITIES.includes(token.split(':').pop() ?? ''))
 
-const CoverImage = ({ image, alt, className = '', showCredit = true }: Props) => {
+const CoverImage = ({ image, alt, className = '', imageClassName = '', showCredit = true }: Props) => {
     if (!image) return null
 
     const isString = typeof image === 'string'
@@ -70,7 +92,7 @@ const CoverImage = ({ image, alt, className = '', showCredit = true }: Props) =>
                 src={url}
                 alt={resolvedAlt}
                 loading="lazy"
-                className="object-cover w-full h-full"
+                className={['object-cover w-full h-full', imageClassName].filter(Boolean).join(' ')}
                 style={{ objectPosition: `${focalX}% ${focalY}%` }}
             />
             <ImageCredit credit={credit} />

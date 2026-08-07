@@ -51,7 +51,8 @@ const PhotographerRollUp = ({ heading, intro, photographers }: Props) => {
                                 <CoverImage
                                     image={photographer.thumbnail}
                                     alt={photographer.name}
-                                    className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                    className="w-full h-full"
+                                    imageClassName="group-hover:scale-105 transition-transform duration-500"
                                     showCredit={false}
                                 />
                             ) : (

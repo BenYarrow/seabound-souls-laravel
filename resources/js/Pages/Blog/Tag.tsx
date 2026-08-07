@@ -92,7 +92,8 @@ const Tag = ({ tag, static_masthead, posts, meta }: Props) => {
                                             <CoverImage
                                                 image={post.thumbnail}
                                                 alt={post.title}
-                                                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full"
+                                                imageClassName="group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-primary-lighter" />
