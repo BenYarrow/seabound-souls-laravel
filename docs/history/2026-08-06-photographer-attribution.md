@@ -3,9 +3,10 @@ title: Photographer attribution
 tags: [photographers, media-library, filament, frontend, security, n+1]
 status: stable
 completed: 2026-08-06
-commits: [2492772, f995b87, ffe2870, 089b443, e0f31e5, 4d37100, ea84ad1, e3d8dce, 66ae8c9, c66f8f6, 042a38c, 16e07f0, 0ad19f2, e646bb1, 36ec0bb, edfdb8c, 9d751e3, c56113e]
+commits: [2492772, f995b87, ffe2870, 089b443, e0f31e5, 4d37100, ea84ad1, e3d8dce, 66ae8c9, c66f8f6, 042a38c, 16e07f0, 0ad19f2, e646bb1, 36ec0bb, edfdb8c, 9d751e3, c56113e, 704748d, 14cf267, 433641a, ceabf8f, 21f7348, 8ccd48c, 1456e97, 78f07b7, bce51c7, 5dc28b3, b1e5784, 4435371]
 spec: docs/superpowers/specs/2026-08-06-photographer-attribution-design.md
 plan: docs/superpowers/plans/2026-08-06-photographer-attribution.md
+pr: photographer-attribution (branch)
 ---
 
 # Photographer attribution
@@ -359,20 +360,40 @@ Critical and several Important issues, all fixed before merge:
   SQL `''` is not `NULL`). A punctuation-only name (e.g. `"!!!"`) slugifies
   to `''` via `Str::slug()`, so the `saving` hook's auto-fill could store an
   empty string, which the scope would then advertise in the sitemap while
-  the controller 404s it. Fixed at the single point the slug is ever
-  assigned — the `saving` hook now falls back to a random slug when
-  `Str::slug($name)` is empty — rather than teaching every reader (scope,
-  `hasPublicPage()`, future consumers) to special-case `''`: one
-  enforcement point is harder to regress than several that all have to
-  agree.
+  the controller 404s it. First fixed at what looked like the single point
+  the slug is ever assigned — the `saving` hook falls back to a random slug
+  when `Str::slug($name)` is empty — on the reasoning that one enforcement
+  point is harder to regress than several call sites that all have to agree.
+  That reasoning held only for slugs that go *through* the hook. It doesn't:
+  the fallback is gated on `filled($photographer->name)`, so a record saved
+  with a blank **name** (e.g. built directly by a factory/seed, bypassing the
+  admin form) skips the hook entirely and can still end up with `slug = ''`.
+  A later commit (`4435371`) closed that residual gap by adding
+  `->where('slug', '!=', '')` to `scopeWithPublicPage()` as a second,
+  independent guard, and corrected the docblock's overstated claim.
 - `resolveCreditUrl()` now uses `route('photographers.show', $slug, false)`
   instead of a hardcoded `/photographers/{slug}` string (the explicit
   `false` keeps it a relative path, since `ImageCredit` decides
   internal-vs-external by a leading `/`).
 - `ring-white`/`text-gray-500` on the photographer/contributor roll-up
-  cards and profile portraits (4 files) replaced with `ring-cream`/
-  `text-secondary/60` — raw non-themed utilities that wouldn't flip in
-  dark mode, now consistent across all four instead of half-fixed.
+  cards and profile portraits (4 files) were **attempted** as a swap to
+  `ring-cream`/`text-secondary/60` — raw non-themed utilities that won't
+  flip once dark mode exists. The `ring-cream` half was reverted a commit
+  later (`b1e5784`): both profile pages render the portrait inside a
+  `bg-cream` `BlockWrapper`, so `ring-cream` is exactly the section
+  background and the halo vanished entirely; on the two roll-up cards
+  (no background of their own) it degraded to a near-invisible warm smudge
+  against white. This project has no dark-mode token layer yet (no
+  `darkMode` key, no `.dark` selectors anywhere), so the swap deleted a
+  visible design element for no present benefit. All four portraits are
+  back on `ring-white` today, with a comment at one site
+  (`Photographers/Show.tsx`) explaining why so it isn't re-attempted
+  piecemeal — the fix belongs in the dark-mode token-layer sweep
+  (`docs/TODO.md`) as one pass across the whole site, not a one-off per
+  component. The `text-gray-500` → `text-secondary/60` half was kept: both
+  roll-up intros sit on light backgrounds, and `secondary` at 60% opacity
+  reads at least as dark/legible as `gray-500` there, so it was a genuine
+  equivalent rather than a regression.
 - The `credit_link` admin column showed the raw stored key (e.g.
   `instagram`) instead of its `Photographer::CREDIT_LINK_OPTIONS` label.
 
