@@ -120,7 +120,9 @@ const DestinationsMap = ({ spotGuides }: Props) => {
                                     <CoverImage
                                         image={popupInfo.thumbnail}
                                         alt={popupInfo.title}
-                                        className="w-full h-24 hover:scale-105 transition-transform duration-500"
+                                        className="w-full h-24"
+                                        imageClassName="hover:scale-105 transition-transform duration-500"
+                                        showCredit={false}
                                     />
                                 </Link>
                             </div>

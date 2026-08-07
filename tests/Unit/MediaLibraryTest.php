@@ -24,10 +24,11 @@ class MediaLibraryTest extends TestCase
 
         $payload = $media->imagePayload();
 
-        $this->assertSame(['url', 'alt', 'focal_x', 'focal_y'], array_keys($payload));
+        $this->assertSame(['url', 'alt', 'focal_x', 'focal_y', 'credit'], array_keys($payload));
         $this->assertSame('Sunset', $payload['alt']);
         $this->assertSame(30, $payload['focal_x']);
         $this->assertSame(70, $payload['focal_y']);
         $this->assertIsString($payload['url']); // '' when no file attached — fine
+        $this->assertNull($payload['credit']); // no photographer attached
     }
 }

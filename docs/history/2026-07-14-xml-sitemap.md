@@ -31,3 +31,4 @@ A crawlable `/sitemap.xml` (which was 404ing on prod) plus a `robots.txt` pointi
 
 - On custom-domain launch, update the one `Sitemap:` line in `public/robots.txt` to the real domain and submit the sitemap in Google Search Console (tracked in `docs/TODO.md`). The sitemap route itself needs no change.
 - (Superseded by the blog-tags work the same day: tag pages + the `/blog/tags` hub were added to `SitemapBuilder` — see [2026-07-14-blog-tags](2026-07-14-blog-tags.md).)
+- (Superseded 2026-08-06: `SitemapBuilder` also now emits photographer profile pages — `Photographer::withPublicPage()` entries at `/photographers/{slug}` — see [2026-08-06-photographer-attribution](2026-08-06-photographer-attribution.md).)

@@ -119,7 +119,8 @@ const RelatedSpotGuides = ({ relation, label, guides }: RelatedSpotGuidesProps) 
                                         <CoverImage
                                             image={guide.thumbnail}
                                             alt={guide.title}
-                                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                                            className="absolute inset-0 w-full h-full"
+                                            imageClassName="group-hover:scale-105 transition-transform duration-700 ease-out"
                                         />
                                     )}
 

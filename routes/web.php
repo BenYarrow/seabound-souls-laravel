@@ -8,6 +8,7 @@ use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PhotographerController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SpotGuideController;
@@ -29,6 +30,7 @@ Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact')
     ->name('contact.store');
 Route::get('/contributors/{slug}', [ContributorController::class, 'show'])->name('contributors.show');
+Route::get('/photographers/{slug}', [PhotographerController::class, 'show'])->name('photographers.show');
 
 // Admin: set focal point for a media library item (called by MediaPicker Alpine click handler)
 Route::post('/admin/media/{media}/focal', [MediaFocalController::class, 'store'])

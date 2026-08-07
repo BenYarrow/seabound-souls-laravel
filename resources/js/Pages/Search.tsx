@@ -67,7 +67,7 @@ const Search = ({ query, results, static_masthead, meta }: Props) => {
                         {results.map((result, index) => (
                             <a key={index} href={result.url} className="flex gap-x-4 p-4 rounded-lg border border-gray-200 hover:border-primary transition-colors group">
                                 {result.thumbnail && (
-                                    <CoverImage image={result.thumbnail} alt={result.title} className="w-24 h-20 rounded-md flex-shrink-0" />
+                                    <CoverImage image={result.thumbnail} alt={result.title} className="w-24 h-20 rounded-md flex-shrink-0" showCredit={false} />
                                 )}
                                 <div>
                                     <span className={`text-xs font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

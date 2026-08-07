@@ -167,7 +167,7 @@ const SearchPanel = ({ open, onClose, transparent }: Props) => {
                                 ].join(' ')}
                             >
                                 {result.thumbnail
-                                    ? <CoverImage image={result.thumbnail} alt="" className="w-10 h-10 rounded flex-shrink-0" />
+                                    ? <CoverImage image={result.thumbnail} alt="" className="w-10 h-10 rounded flex-shrink-0" showCredit={false} />
                                     : <span className="w-10 h-10 rounded bg-gray-100 flex-shrink-0" />}
                                 <span className="min-w-0">
                                     <span className={`block text-[0.65rem] font-semibold uppercase tracking-wide ${result.type === 'spot_guide' ? 'text-primary' : 'text-orange'}`}>

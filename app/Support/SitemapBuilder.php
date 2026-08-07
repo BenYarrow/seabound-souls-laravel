@@ -10,6 +10,7 @@ namespace App\Support;
 
 use App\Models\Blog;
 use App\Models\Page;
+use App\Models\Photographer;
 use App\Models\SpotGuide;
 use App\Models\Tag;
 use Spatie\Sitemap\Sitemap;
@@ -69,6 +70,15 @@ class SitemapBuilder
                     ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
             );
         });
+
+        // Photographer profiles that are actually live. Records without profile
+        // content have no page (they 404), so must not be advertised.
+        Photographer::withPublicPage()->each(fn (Photographer $photographer) => $sitemap->add(
+            Url::create("/photographers/{$photographer->slug}")
+                ->setLastModificationDate($photographer->updated_at)
+                ->setPriority(0.6)
+                ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
+        ));
 
         return $sitemap;
     }

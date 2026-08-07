@@ -162,4 +162,185 @@ class MediaOwnershipTest extends TestCase
 
         $component->assertDispatched('media-library-selected', fieldKey: 'thumbnail_media_id', ids: [$mine->id]);
     }
+
+    // The tests below use a role — 'photographer' — that does not exist anywhere
+    // in the application today. That's deliberate: it stands in for "any role
+    // added in the future". The whole point of scoping MediaPickerBrowser via
+    // `! $user->isOwner()` rather than `$user->isContributor()` is that a
+    // brand-new role automatically falls into the restricted branch instead of
+    // silently falling through to the unscoped query/authorisation check — i.e.
+    // seeing house media in the list, or being allowed to select/upload as
+    // house media. A test built only from `owner` and `contributor` can never
+    // catch a regression back to `isContributor()`, because across just those
+    // two roles the two predicates are logically equivalent.
+
+    public function test_future_role_cannot_select_house_or_foreign_media_via_toggle_select(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        $other = MediaLibrary::create(['name' => 'Theirs', 'user_id' => User::factory()->create()->id]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $photographer->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true]);
+
+        $component->call('toggleSelect', $house->id);
+        $this->assertNotContains($house->id, $component->get('selectedIds'));
+
+        $component->call('toggleSelect', $other->id);
+        $this->assertNotContains($other->id, $component->get('selectedIds'));
+
+        $component->call('toggleSelect', $mine->id);
+        $this->assertContains($mine->id, $component->get('selectedIds'));
+    }
+
+    public function test_future_role_confirm_only_dispatches_ids_within_scope(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        $mine = MediaLibrary::create(['name' => 'Mine', 'user_id' => $photographer->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true, 'fieldKey' => 'thumbnail_media_id']);
+        $component->set('selectedIds', [$house->id, $mine->id]);
+
+        $component->call('confirm');
+
+        $component->assertDispatched('media-library-selected', fieldKey: 'thumbnail_media_id', ids: [$mine->id]);
+    }
+
+    public function test_future_role_folder_options_exclude_house_folders(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'MyFolder', 'user_id' => $photographer->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class);
+
+        $this->assertContains('MyFolder', $component->instance()->getFolderOptions());
+        $this->assertNotContains('HouseFolder', $component->instance()->getFolderOptions());
+    }
+
+    public function test_future_role_render_query_excludes_house_media(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'Mine', 'user_id' => $photographer->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class);
+
+        $names = $component->viewData('mediaItems')->pluck('name');
+        $this->assertTrue($names->contains('Mine'));
+        $this->assertFalse($names->contains('House'));
+    }
+
+    /**
+     * Finding 1: CreateMediaLibrary::mutateFormDataBeforeCreate() must stamp
+     * ownership opt-OUT (! isOwner()), not opt-IN (isContributor()) — otherwise a
+     * future role's upload through the resource's create page silently falls
+     * through to house media (user_id null), visible to everyone.
+     */
+    public function test_media_created_by_a_future_role_via_the_resource_is_owned_by_them(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+
+        Livewire::test(CreateMediaLibrary::class)
+            ->fillForm(['name' => 'Photographer upload', 'file' => [UploadedFile::fake()->image('photo.jpg')]])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'Photographer upload',
+            'user_id' => $photographer->id,
+        ]);
+    }
+
+    /**
+     * Finding 3: MediaPickerBrowser::saveUpload() has no direct test coverage
+     * today — every existing MediaPickerBrowser test exercises toggleSelect,
+     * confirm, getFolderOptions, or render(), none of which call saveUpload().
+     * A regression of saveUpload() alone back to the opt-in ownership form would
+     * pass the suite silently. This proves an upload via the picker's inline
+     * uploader is attributed to a future-role user, not filed as house media.
+     */
+    public function test_future_role_upload_via_media_picker_browser_save_upload_is_owned_by_them(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+
+        $component = Livewire::test(MediaPickerBrowser::class)
+            ->set('newFile', UploadedFile::fake()->image('picker-upload.jpg'))
+            ->set('newName', 'Picker upload')
+            ->call('saveUpload');
+
+        $component->assertHasNoErrors();
+
+        $this->assertDatabaseHas('media_library', [
+            'name' => 'Picker upload',
+            'user_id' => $photographer->id,
+        ]);
+    }
+
+    // The tests below cover a GUEST (no acting user at all — auth()->user() is
+    // null) rather than a future role. Livewire's `/livewire/update` route
+    // carries no `auth` middleware, so a replayed snapshot could reach these
+    // methods with a null user. The scoping conversion used two idioms:
+    // `$user && ! $user->isOwner()`, under which a null $user makes the whole
+    // condition false and scoping never applies (UNSCOPED — sees/selects
+    // everything), versus the fail-closed `! $user?->isOwner()`, under which a
+    // null user still lands in the scoped branch. These prove the fail-closed
+    // behaviour: a guest is exactly as restricted as any other non-owner.
+
+    /**
+     * A guest's scope is `user_id = null` (their own, non-existent, id) — which
+     * is exactly the house-media set, not "nothing". House media is already
+     * meant to be usable by anyone, so this is the safe minimal-exposure
+     * default; what must NOT happen is a guest reaching a specific other
+     * user's uploads, which the unscoped ($user && ! $user->isOwner()) form
+     * would have allowed.
+     */
+    public function test_guest_can_select_house_media_but_not_foreign_media(): void
+    {
+        $house = MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        $other = MediaLibrary::create(['name' => 'Theirs', 'user_id' => User::factory()->create()->id]);
+
+        // Deliberately no actingAs() call.
+        $component = Livewire::test(MediaPickerBrowser::class, ['multiple' => true]);
+
+        $component->call('toggleSelect', $other->id);
+        $this->assertNotContains($other->id, $component->get('selectedIds'));
+
+        $component->call('toggleSelect', $house->id);
+        $this->assertContains($house->id, $component->get('selectedIds'));
+    }
+
+    public function test_guest_folder_options_exclude_every_user_owned_folder(): void
+    {
+        $someone = User::factory()->create();
+        MediaLibrary::create(['name' => 'h', 'folder' => 'HouseFolder', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'm', 'folder' => 'TheirFolder', 'user_id' => $someone->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class);
+
+        $this->assertContains('HouseFolder', $component->instance()->getFolderOptions());
+        $this->assertNotContains('TheirFolder', $component->instance()->getFolderOptions());
+    }
+
+    public function test_guest_render_query_excludes_user_owned_media(): void
+    {
+        $someone = User::factory()->create();
+        MediaLibrary::create(['name' => 'House', 'user_id' => null]);
+        MediaLibrary::create(['name' => 'Theirs', 'user_id' => $someone->id]);
+
+        $component = Livewire::test(MediaPickerBrowser::class);
+
+        $names = $component->viewData('mediaItems')->pluck('name');
+        $this->assertTrue($names->contains('House'));
+        $this->assertFalse($names->contains('Theirs'));
+    }
 }

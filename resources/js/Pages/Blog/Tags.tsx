@@ -83,7 +83,8 @@ const Tags = ({ tags, meta }: Props) => {
                                         <CoverImage
                                             image={tag.thumbnail}
                                             alt={tag.name}
-                                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                            className="absolute inset-0 w-full h-full"
+                                            imageClassName="group-hover:scale-105 transition-transform duration-500"
                                         />
                                     ) : (
                                         <div className="absolute inset-0 bg-gradient-to-br from-primary-darker via-primary to-primary-darker">

@@ -31,16 +31,19 @@ class EditSpotGuide extends EditRecord
     }
 
     /**
-     * If a contributor edits a guide that was already APPROVED, keep it live but flag it
-     * back to review and notify the owners — so live content never changes silently
-     * without you knowing. Owner edits, and edits to draft/changes-requested guides,
-     * are left alone.
+     * If anyone but the owner edits a guide that was already APPROVED, keep it live but
+     * flag it back to review and notify the owners — so live content never changes
+     * silently without you knowing. Owner edits, and edits to draft/changes-requested
+     * guides, are left alone. Opt-OUT for the owner rather than opt-IN for contributors:
+     * the owner is the approver, so an owner edit correctly never re-flags; a role added
+     * later must not fall through this check and be able to edit live content without
+     * it being re-flagged or the owner being notified.
      */
     protected function afterSave(): void
     {
         $user = auth()->user();
 
-        if ($user?->isContributor() && $this->reviewStatusBeforeSave === SpotGuide::STATUS_APPROVED) {
+        if (! $user?->isOwner() && $this->reviewStatusBeforeSave === SpotGuide::STATUS_APPROVED) {
             $this->record->submitForReview();
             Notifier::send(User::where('role', User::ROLE_OWNER)->get(), new GuideSubmittedForReview($this->record));
         }

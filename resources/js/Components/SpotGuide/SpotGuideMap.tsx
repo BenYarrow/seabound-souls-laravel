@@ -99,7 +99,7 @@ const SpotGuideMap = ({ latitude, longitude, locations }: Props) => {
                         </div>
                         {popupInfo.thumbnail && (
                             <div className="mt-2 -mx-[14px] -mb-[12px] overflow-hidden">
-                                <CoverImage image={popupInfo.thumbnail} alt={popupInfo.name} className="w-full h-20" />
+                                <CoverImage image={popupInfo.thumbnail} alt={popupInfo.name} className="w-full h-20" showCredit={false} />
                             </div>
                         )}
                     </Popup>

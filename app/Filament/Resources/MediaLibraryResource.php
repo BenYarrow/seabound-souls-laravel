@@ -4,17 +4,20 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MediaLibraryResource\Pages;
 use App\Models\MediaLibrary;
+use App\Models\Photographer;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class MediaLibraryResource extends Resource
 {
@@ -48,6 +51,21 @@ class MediaLibraryResource extends Resource
                 ->createOptionUsing(fn (array $data): string => $data['folder'])
                 ->nullable(),
 
+            // Retro-assignment path: any existing image can be credited later by
+            // editing it here, not only at upload time. Owner-only: `->preload()`
+            // eagerly loads every photographer's name/id into the page, and a
+            // contributor able to pick one could attribute their own upload to a
+            // photographer they have no connection to, producing a false public
+            // credit that links out to that photographer's socials.
+            Select::make('photographer_id')
+                ->label('Photographer')
+                ->relationship('photographer', 'name')
+                ->searchable()
+                ->preload()
+                ->placeholder('Our own image')
+                ->helperText('Leave blank for the site\'s own photography.')
+                ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
+
             SpatieMediaLibraryFileUpload::make('file')
                 ->collection('file')
                 ->image()
@@ -75,6 +93,12 @@ class MediaLibraryResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->placeholder('—'),
+                TextColumn::make('photographer.name')
+                    ->label('Photographer')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('—')
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
                 TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->dateTime()
@@ -84,6 +108,12 @@ class MediaLibraryResource extends Resource
                 SelectFilter::make('folder')
                     ->label('Folder')
                     ->options(fn (): array => static::folderOptions()),
+                SelectFilter::make('photographer_id')
+                    ->label('Photographer')
+                    ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray())
+                    // Owner-only: the options list is the whole photographer roster,
+                    // which a contributor has no legitimate reason to browse.
+                    ->visible(fn (): bool => (bool) auth()->user()?->isOwner()),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
@@ -92,15 +122,41 @@ class MediaLibraryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // A batch of images typically arrives from one photographer;
+                    // assigning them one at a time would be miserable. Owner-only
+                    // (see PhotographerPolicy): a contributor could otherwise
+                    // attribute their own uploads to any photographer in the
+                    // roster, producing a false public credit. `->authorize()`
+                    // states this as an authorisation decision rather than a
+                    // presentation one — `->visible()` would in fact also have
+                    // blocked a direct network call here (Filament v3 routes
+                    // `visible()` through `isHiddenInGroup()` -> `isHidden()` ->
+                    // `isDisabled()`, which the mount/call guards check), but
+                    // `->authorize()` is still the right call for what this is.
+                    BulkAction::make('assignPhotographer')
+                        ->label('Assign photographer')
+                        ->icon('heroicon-o-camera')
+                        ->authorize(fn (): bool => (bool) auth()->user()?->isOwner())
+                        ->form([
+                            Select::make('photographer_id')
+                                ->label('Photographer')
+                                ->options(fn (): array => Photographer::orderBy('name')->pluck('name', 'id')->toArray())
+                                ->searchable()
+                                ->placeholder('Our own image (clear the credit)'),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update(['photographer_id' => $data['photographer_id'] ?? null]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
     /**
-     * Distinct folder names for the form Select and the table filter, scoped so a
-     * contributor only ever sees (and can file into) their own folders — never the house
-     * folders. Owners see every folder.
+     * Distinct folder names for the form Select and the table filter. Everyone
+     * except the owner only ever sees (and can file into) their own folders,
+     * never the house folders; the owner sees every folder.
      *
      * @return array<string, string>
      */
@@ -110,7 +166,13 @@ class MediaLibraryResource extends Resource
 
         return MediaLibrary::whereNotNull('folder')
             ->where('folder', '!=', '')
-            ->when($user && $user->isContributor(), fn ($query) => $query->where('user_id', $user->id))
+            // Opt-OUT for the owner rather than opt-IN for contributors: any role
+            // added later is scoped by default instead of falling through to the
+            // full library, house media included. Fail-closed on the user itself
+            // too (`! $user?->isOwner()`, not `$user && ! $user->isOwner()`): a
+            // guest (null user) must land in the SCOPED branch, not bypass
+            // scoping entirely.
+            ->when(! $user?->isOwner(), fn ($query) => $query->where('user_id', $user?->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder', 'folder')
@@ -118,15 +180,18 @@ class MediaLibraryResource extends Resource
     }
 
     /**
-     * Contributors only ever see their own uploads; owners see everything.
+     * Everyone except the owner only ever sees their own uploads; the owner sees
+     * everything, house media included.
      */
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && $user->isContributor()) {
-            $query->where('user_id', $user->id);
+        // See folderOptions(): scoped unless you are the owner, fail-closed for
+        // a guest too.
+        if (! $user?->isOwner()) {
+            $query->where('user_id', $user?->id);
         }
 
         return $query;

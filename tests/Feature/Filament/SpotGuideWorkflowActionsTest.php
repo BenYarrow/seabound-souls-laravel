@@ -51,6 +51,32 @@ class SpotGuideWorkflowActionsTest extends TestCase
         Notification::assertSentTo($owner, GuideSubmittedForReview::class);
     }
 
+    /**
+     * Finding 2: EditSpotGuide::afterSave() must re-flag opt-OUT (! isOwner()),
+     * not opt-IN (isContributor()) — otherwise a future role editing their own
+     * already-approved guide would silently skip the re-flag-to-review and the
+     * owner notification, letting live content change without anyone knowing.
+     */
+    public function test_future_role_editing_an_approved_guide_returns_it_to_review_and_notifies_owner(): void
+    {
+        Notification::fake();
+        $owner = User::factory()->create(['role' => User::ROLE_OWNER, 'email' => config('admin.email')]);
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        $guide = $this->guideFor($photographer);
+        $guide->publish(); // approved + live
+
+        Livewire::test(EditSpotGuide::class, ['record' => $guide->getRouteKey()])
+            ->fillForm(['introduction_text' => 'Updated by the photographer'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $fresh = $guide->fresh();
+        $this->assertSame(SpotGuide::STATUS_IN_REVIEW, $fresh->review_status);
+        $this->assertTrue($fresh->is_published); // stays live
+        Notification::assertSentTo($owner, GuideSubmittedForReview::class);
+    }
+
     public function test_owner_editing_an_approved_guide_does_not_flip_status(): void
     {
         $contributor = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);

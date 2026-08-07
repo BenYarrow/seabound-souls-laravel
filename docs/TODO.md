@@ -11,6 +11,9 @@ Forward-looking backlog. Completed work is recorded in `docs/history/` and the `
 - [ ] **Concurrent fetches for one spot can now collide.** Climate rows are replaced (delete-then-insert) rather than upserted, so two overlapping `fetchForSpot` calls for the same spot (e.g. the auto-on-create job racing the dashboard "Fetch all") can have the second transaction delete zero rows and then violate `unique(spot_guide_id, year, month)`. It rolls back, so no data loss, and it is unlikely with a single supervised worker — but the old `updateOrCreate` was idempotent here. An `upsert()` plus a "delete rows not in this set" pass would restore that.
 - [ ] **Expect 2 rows, not 3, for the just-elapsed month during the first few days of a new month.** Open-Meteo's archive lags real time by several days, so a month that has just ended fails the day-count completeness gate until the archive catches up. Every stored row is still a complete month and equal weighting stays valid — this is only a note so nobody chases it as a bug when a verification script reports that month as "odd".
 
+## Performance
+- [ ] **Pre-existing N+1 on Spatie media URLs — every image on every page.** `MediaLibrary::getUrl()` / `getThumbnailUrl()` call Spatie's `getFirstMediaUrl()`, which lazily resolves that model's own `media` morph relation once per `MediaLibrary` instance. It is not covered by `MediaLibrary::$with`, so a page issues one extra query per image — a destinations grid of twelve cards does twelve. Surfaced (not caused) by the photographer-credit query-count guard in `tests/Feature/PhotographerQueryCountTest.php`, which had to narrow its assertion to the `photographers` table because a whole-request equality assertion can never pass while this exists. Likely fix: add `'media'` to `MediaLibrary::$with` alongside `'photographer'`, then widen that test back to total query count. Verify against real Postgres and check the Filament admin lists don't regress on memory.
+
 ## Content curation (from the featured/content brainstorm — A #25, B #26, C #27; all shipped)
 - [ ] Optional: a test locking the list-block empty/all-draft-picks contract (resolved `[]` → renders nothing) — the homepage's default state now relies on that guard (safe by construction today). From #26 review.
 - [ ] Optional: cache the list-block picker `->options()` query (`Blog`/`SpotGuide` title lists) if the content library grows large — currently re-queried per admin form render. From #26 review.
@@ -21,6 +24,7 @@ Public controllers all covered. Remaining:
 - [ ] Helpers/logic units — weather-data transforms, `LiveWeatherController` caching (external HTTP + response cache)
 - [ ] `Api\WeatherDataController` (index + show)
 - [ ] Filament resources — smoke tests (lowest priority)
+- [ ] **Photographer credit-badge suppression (`showCredit={false}` on map pins, circular avatars, small thumbnails) is behaviour-only, untested.** The suppression lives entirely inside `CoverImage.tsx` (`const credit = !isString && showCredit ? image.credit : null`) — a plain JSX/React conditional, not extractable into the already-tested pure helper (`resolveCredit()` in `resources/js/Helpers/imageCredit.ts`). This project's Vitest setup is `environment: 'node'` with no jsdom or `@testing-library/react` installed (deliberately — see `docs/history/2026-08-06-photographer-attribution.md`), so there is no way to render `CoverImage` and assert the badge is absent. A regression that dropped `showCredit={false}` from any of the 9 gated call sites would pass every existing test. Closing this needs the React component-testing setup (jsdom + Testing Library) added first.
 
 ## Tooling
 - [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — **against PostgreSQL** (the suite runs on SQLite locally for speed; a Postgres CI job closes the dev/prod engine-parity gap and would have caught the Vite-dependent-suite fragility immediately). Also run the JS suite (`npm run test:js`, Vitest — added #24) and a Linux `npm run build`.
@@ -77,6 +81,31 @@ Shipped 2026-07-28 (`/destinations` ranks spots by typical sailable days for a c
 - [ ] Focal points: multi-select (gallery/slider) focal-set UI (single-select preview only today); focal `fetch()` failure feedback/rollback; prune/retype unused `Card.tsx`
 - [ ] Media pipeline (post-launch): Spatie conversions (sizes + WebP + responsive `srcset`) + optional Cloudflare CDN/R2 — image perf (no AWS)
 
+## Photographer attribution — security follow-ups (surfaced, not caused, by #photographer-attribution's final review)
+
+These three were found while auditing the photographer-attribution branch's
+media-scoping security work but are pre-existing, independent of that
+feature, and deliberately out of scope for that PR. 1 and 2 deserve their
+own short branch soon.
+
+- [ ] **`SpotGuidePolicy` has no `deleteAny`, so a contributor can bulk-delete
+  their own published, owner-approved guide.** `SpotGuidePolicy::delete()`
+  explicitly forbids deleting a published guide, but Filament's
+  `DeleteBulkAction` does no per-record re-check — it only consults
+  `deleteAny`, which is missing from the policy and therefore defaults to
+  allow (see the `PhotographerPolicy` fix in
+  `docs/history/2026-08-06-photographer-attribution.md`, same root cause).
+  Same gap for `RestoreBulkAction`/`restoreAny`.
+- [ ] **`POST /admin/media/{media}/focal` has no authorization.**
+  `app/Http/Controllers/Admin/MediaFocalController.php`'s route only has
+  `['web', 'auth']` middleware — any authenticated panel user (any
+  contributor) can rewrite the focal point of every house image and every
+  other contributor's image by iterating ids.
+- [ ] **The `MediaPicker` form field does no scoped `exists` validation.** A
+  contributor can set a `*_media_id` to a house-media id via the Livewire
+  payload directly and read back its URL/name, bypassing the intended
+  per-contributor media scoping.
+
 ## Backend hardening
 - [ ] Dispatch `FetchSpotWeatherJob` from the `SpotGuide::created` hook with `->afterCommit()` so the auto-fetch stays correct even if the Filament panel later enables `->databaseTransactions()`. Correct today (panel has no DB transactions, so the row is committed before dispatch), but the guarantee is currently implicit. Note: a naive `->afterCommit()` breaks the dispatch test under `RefreshDatabase`'s wrapping transaction — needs test-config care.
 - [ ] Remove the one-off SQLite→Postgres migration tooling once the migration is proven and no longer needed: the `sqlite_legacy` connection in `config/database.php`, the `db:import-from-sqlite` command, and the stale `database/database.sqlite` file.
@@ -111,6 +140,9 @@ Everything below is production/third-party state that code can't change.
 - [ ] **Environment variable changes need a redeploy** to take effect.
 - [ ] Submit the sitemap in **Google Search Console** for the new domain. (Note `*.laravel.cloud` hosts carry `X-Robots-Tag: noindex, nofollow`; custom domains don't — so indexing starts cleanly at cutover.)
 - [ ] Decide what happens to **seaboundsouls.com / .co.uk** — if the old Next.js site is still serving on either, 301 it to the new domain rather than letting it lapse.
+
+### Credential rotation (owner, Cloud dashboard)
+- [ ] **Rotate the production DB password and R2 bucket access key.** Both were provisioned at the 2026-07-09 Cloud launch; the DB password was additionally shared in chat during `db:pull-from-production` setup (see `docs/history/2026-07-11-pull-production-db.md`). Neither has been rotated since. This is `SITREP.md`'s standing "post-launch owner tasks" recommendation — tracked here so it isn't only a roadmap mention. Rotate both via the Cloud dashboard and update the corresponding env vars (redeploy required to pick them up).
 
 ### Third-party keys (domain-bound — these fail *after* cutover)
 - [ ] **Mapbox URL restrictions are not saving.** New account `benyarrow95`; a restricted token was created and deployed, but as of the last probe it still returned **200** for `Referer: https://evil-scraper.test/` — i.e. no restriction is enforcing. Likely the "Add URL" button wasn't clicked (the URL counter must read above zero). Verify with: allowed hosts → 200, `example.com` → **403**. Until that flip is observed, prod is running an effectively unrestricted token.

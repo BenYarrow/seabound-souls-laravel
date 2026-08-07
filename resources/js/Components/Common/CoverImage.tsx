@@ -1,18 +1,80 @@
 /**
  * CoverImage — the single renderer for every object-cover image. Applies the
  * image's focal point as CSS object-position so the subject stays in frame when
- * the image is cropped. Tolerant of a plain URL string (focal defaults to
- * centre) so components can adopt it before the backend emits focal objects.
+ * the image is cropped, and renders the photographer credit when there is one.
+ * Tolerant of a plain URL string (focal defaults to centre, no credit) so
+ * components can adopt it before the backend emits focal objects.
+ *
+ * The wrapper is rendered whether or not there is a credit, so layout can never
+ * differ between a credited and an uncredited image. Callers' classNames size
+ * and position the WRAPPER; the img always fills it.
+ *
+ * Position handling: the wrapper defaults to `relative` so it is always a valid
+ * anchor for the absolutely-positioned credit badge. But several callers pass
+ * `absolute inset-0 ...` themselves (to let the wrapper fill an already-`relative`
+ * ancestor, often inside a flex layout where being pulled OUT of flow is load-
+ * bearing — e.g. ContentWithBackgroundImage's flex row). Tailwind's generated
+ * CSS always places `.relative` after `.absolute`/`.fixed`/`.sticky`, so with
+ * equal specificity `.relative` wins the cascade regardless of class-list order
+ * — a hardcoded `relative` would silently override a caller's `absolute` and
+ * pull the image back into flow. So `relative` is only added when the caller
+ * hasn't already specified a position utility of its own.
  */
 import type { FocalImage } from '@/types/media'
+import ImageCredit from '@/Components/Common/ImageCredit'
 
 interface Props {
     image?: FocalImage | string | null
     alt?: string
     className?: string
+    /**
+     * Utility classes applied to the `<img>` itself rather than the wrapper —
+     * in particular hover/transform utilities (`group-hover:scale-*`,
+     * `transition-transform`, …). Two independent reasons these must NOT go on
+     * the wrapper:
+     *
+     * 1. A non-`none` `transform` creates a new stacking context. The credit
+     *    badge's `z-10` is only meaningful within that context, so on hover it
+     *    gets trapped inside the wrapper and can paint BENEATH a sibling
+     *    `absolute inset-0` overlay declared later in the caller's markup
+     *    (vignettes, gradient scrims) — silently burying the badge and, where
+     *    that overlay lacks `pointer-events-none`, swallowing the click before
+     *    it ever reaches the credit link.
+     * 2. Before this prop existed, the same utilities applied to the `<img>`
+     *    directly: the image zoomed inside a fixed-size frame. Once they moved
+     *    to the wrapper (when the wrapper was introduced), the WHOLE frame —
+     *    badge included — scaled and translated together, and the badge's
+     *    corner got clipped by the wrapper's `overflow-hidden`. Putting them
+     *    back on the image restores the original "frame stays put, photo
+     *    zooms inside it" behaviour.
+     */
+    imageClassName?: string
+    /**
+     * Suppress the credit badge. Used where an image is UI chrome rather than
+     * displayed photography and a badge would be illegible or would crowd the
+     * content: map pins/popups, circular avatars/portraits (a rectangular
+     * badge doesn't sit well on a circle and the crop is usually a face, not a
+     * scene), and thumbnails below roughly 128px on a side (search results,
+     * nav previews) where the badge would be as large as the image itself.
+     */
+    showCredit?: boolean
 }
 
-const CoverImage = ({ image, alt, className = '' }: Props) => {
+/** Tailwind position utilities; any of these already make an element a valid positioning context. */
+const POSITION_UTILITIES = ['static', 'absolute', 'fixed', 'sticky', 'relative']
+
+/**
+ * Whether `className` already contains an explicit Tailwind position utility
+ * (accounting for responsive/state variants like `lg:absolute`).
+ *
+ * @param className the caller-supplied class list to inspect
+ */
+const hasExplicitPosition = (className: string): boolean =>
+    className
+        .split(/\s+/)
+        .some((token) => POSITION_UTILITIES.includes(token.split(':').pop() ?? ''))
+
+const CoverImage = ({ image, alt, className = '', imageClassName = '', showCredit = true }: Props) => {
     if (!image) return null
 
     const isString = typeof image === 'string'
@@ -22,15 +84,22 @@ const CoverImage = ({ image, alt, className = '' }: Props) => {
     const focalX = isString ? 50 : image.focal_x ?? 50
     const focalY = isString ? 50 : image.focal_y ?? 50
     const resolvedAlt = alt ?? (isString ? '' : image.alt ?? '')
+    const credit = !isString && showCredit ? image.credit : null
+
+    const positionClass = hasExplicitPosition(className) ? '' : 'relative'
+    const wrapperClassName = [positionClass, 'block overflow-hidden', className].filter(Boolean).join(' ')
 
     return (
-        <img
-            src={url}
-            alt={resolvedAlt}
-            loading="lazy"
-            className={`object-cover ${className}`}
-            style={{ objectPosition: `${focalX}% ${focalY}%` }}
-        />
+        <span className={wrapperClassName}>
+            <img
+                src={url}
+                alt={resolvedAlt}
+                loading="lazy"
+                className={['object-cover w-full h-full', imageClassName].filter(Boolean).join(' ')}
+                style={{ objectPosition: `${focalX}% ${focalY}%` }}
+            />
+            <ImageCredit credit={credit} />
+        </span>
     )
 }
 

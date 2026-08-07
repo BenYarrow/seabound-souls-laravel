@@ -116,7 +116,8 @@ const RecommendationCards = ({ items, showDirections = false }: { items: Recomme
                         <CoverImage
                             image={rec.thumbnail}
                             alt={rec.name}
-                            className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                            className="absolute inset-0 w-full h-full"
+                            imageClassName="group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                     )}
                     <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors duration-500" />
@@ -252,7 +253,7 @@ const Show = ({ spotGuide, related_spot_guides, meta, is_preview = false, showPr
                                 <>
                                     {spotGuide.author.image ? (
                                         <span className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary-lighter shrink-0">
-                                            <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" />
+                                            <CoverImage image={spotGuide.author.image} alt={spotGuide.author.name ?? ''} className="w-full h-full" showCredit={false} />
                                         </span>
                                     ) : (
                                         <span className="w-14 h-14 rounded-full bg-primary-lighter shrink-0" />

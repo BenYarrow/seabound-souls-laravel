@@ -44,7 +44,8 @@ const FeaturedHero = ({ image, eyebrow, title, description, metaLabel, href, cta
                     <CoverImage
                         image={image}
                         alt={title}
-                        className="w-full h-full group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full"
+                        imageClassName="group-hover:scale-105 transition-transform duration-700"
                     />
                 ) : (
                     <div className="w-full h-full bg-primary-lighter" />

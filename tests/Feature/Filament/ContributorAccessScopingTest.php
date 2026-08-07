@@ -91,4 +91,44 @@ class ContributorAccessScopingTest extends TestCase
         $this->assertFalse($contributor->can('update', $existing));
         $this->assertFalse($contributor->can('delete', $existing));
     }
+
+    // Uses a role — 'photographer' — that does not exist anywhere in the
+    // application today. That's deliberate: it stands in for "any role added
+    // in the future". The whole point of scoping SpotGuideResource's query via
+    // `! $user->isOwner()` rather than `$user->isContributor()` is that a
+    // brand-new role automatically falls into the restricted branch instead of
+    // silently falling through to the unscoped query, seeing everyone's spot
+    // guides. A test built only from `owner` and `contributor` can never catch
+    // a regression back to `isContributor()`, because across just those two
+    // roles the two predicates are logically equivalent.
+    public function test_future_role_query_only_returns_their_guides(): void
+    {
+        $photographer = User::factory()->create(['role' => 'photographer']);
+        $this->actingAs($photographer);
+        $mine = $this->guideOwnedBy($photographer);
+        $theirs = $this->guideOwnedBy(User::factory()->create());
+
+        $ids = SpotGuideResource::getEloquentQuery()->pluck('id');
+        $this->assertTrue($ids->contains($mine->id));
+        $this->assertFalse($ids->contains($theirs->id));
+    }
+
+    /**
+     * A guest (null user — e.g. a replayed Livewire snapshot with no session)
+     * must land in the SAME scoped branch as any other non-owner, not bypass
+     * scoping entirely. `$user && ! $user->isOwner()` would make the whole
+     * `->when()` condition false for a null $user and return every guide
+     * unscoped; the fail-closed `! $user?->isOwner()` scopes to `user_id = null`
+     * instead, matching nobody's guides.
+     */
+    public function test_guest_query_returns_no_ones_guides(): void
+    {
+        $someone = User::factory()->create();
+        $this->guideOwnedBy($someone);
+
+        // Deliberately no actingAs() — auth()->user() is null.
+        $ids = SpotGuideResource::getEloquentQuery()->pluck('id');
+
+        $this->assertTrue($ids->isEmpty());
+    }
 }
