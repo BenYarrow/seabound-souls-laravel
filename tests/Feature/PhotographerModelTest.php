@@ -59,6 +59,29 @@ class PhotographerModelTest extends TestCase
         $this->assertTrue($photographer->hasPublicPage());
     }
 
+    /**
+     * An empty `name` is the one case the `saving` hook cannot self-heal: its
+     * fallback only fires when `filled($photographer->name)`, so a blank name
+     * skips it entirely and a blank slug can be stored as-is. That reproduces
+     * the exact desync the punctuation-only-name test above guards against —
+     * `hasPublicPage()`'s `filled('')` is false while a plain SQL
+     * `whereNotNull` sees '' as NOT NULL — so `scopeWithPublicPage()` carries
+     * an explicit `slug != ''` guard as a second, independent line of defence.
+     * This test proves the two still agree even when the hook itself is
+     * bypassed.
+     */
+    public function test_an_empty_name_and_slug_still_agrees_with_the_public_page_scope(): void
+    {
+        $photographer = Photographer::factory()->withPublicPage()->create(['name' => '', 'slug' => '']);
+
+        $this->assertSame('', $photographer->slug);
+        $this->assertFalse($photographer->hasPublicPage());
+        $this->assertSame(
+            $photographer->hasPublicPage(),
+            Photographer::withPublicPage()->whereKey($photographer->id)->exists()
+        );
+    }
+
     public function test_slug_is_reusable_after_soft_delete(): void
     {
         Photographer::create(['name' => 'Hamish'])->delete();

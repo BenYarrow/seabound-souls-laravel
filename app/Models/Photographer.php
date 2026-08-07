@@ -64,11 +64,14 @@ class Photographer extends Model
      * `filled($this->slug)` (false for ''), while a plain SQL `whereNotNull`
      * (as used by `scopeWithPublicPage()`) sees '' as NOT NULL and includes
      * it — so the sitemap/roll-up would advertise a page the controller then
-     * 404s. Falling back to a random slug HERE, the single point slug is
-     * ever assigned, is preferred over teaching every reader to also
-     * special-case '' (e.g. `whereNotNull('slug')->where('slug', '!=', '')`):
-     * one enforcement point that guarantees slug is never blank is harder to
-     * regress than several call sites that all have to remember to agree.
+     * 404s.
+     *
+     * The hook only fires when `filled($photographer->name)`, so a record
+     * saved with a blank name skips it entirely and can still end up with
+     * `slug = ''` (e.g. seeded/factory-built directly, bypassing the admin
+     * form). That is the exact desync above, so `scopeWithPublicPage()` also
+     * excludes `slug = ''` defensively — two cheap guards on an invariant
+     * that would otherwise leak a 404 URL into the sitemap.
      */
     protected static function booted(): void
     {
@@ -130,14 +133,18 @@ class Photographer extends Model
 
     /**
      * Constrain to photographers with a live page. Used by every public surface
-     * (the roll-up block, the sitemap) so gated records never leak. A plain
-     * NOT NULL check is sufficient because the `saving` hook above normalises
-     * an empty [] content builder to null, so the empty case is never stored.
+     * (the roll-up block, the sitemap) so gated records never leak. The
+     * `profile_blocks` NOT NULL check is sufficient on its own because the
+     * `saving` hook above normalises an empty [] content builder to null, so
+     * the empty case is never stored. The `slug != ''` check is a second,
+     * independent guard against the empty-name edge case documented on the
+     * `saving` hook above, where `slug` can be stored as '' rather than null.
      */
     public function scopeWithPublicPage(Builder $query): Builder
     {
         return $query
             ->whereNotNull('slug')
+            ->where('slug', '!=', '')
             ->whereNotNull('profile_blocks');
     }
 

@@ -127,8 +127,12 @@ class MediaLibraryResource extends Resource
                     // (see PhotographerPolicy): a contributor could otherwise
                     // attribute their own uploads to any photographer in the
                     // roster, producing a false public credit. `->authorize()`
-                    // (not just `->visible()`) so a direct network call to run
-                    // the action is blocked too, not only its button.
+                    // states this as an authorisation decision rather than a
+                    // presentation one — `->visible()` would in fact also have
+                    // blocked a direct network call here (Filament v3 routes
+                    // `visible()` through `isHiddenInGroup()` -> `isHidden()` ->
+                    // `isDisabled()`, which the mount/call guards check), but
+                    // `->authorize()` is still the right call for what this is.
                     BulkAction::make('assignPhotographer')
                         ->label('Assign photographer')
                         ->icon('heroicon-o-camera')
