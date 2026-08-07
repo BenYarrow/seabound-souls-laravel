@@ -24,9 +24,7 @@ class PhotographerPageTest extends TestCase
         $this->get('/photographers/'.$photographer->slug)
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                // Second arg `false` skips the page-file-exists check — the
-                // component is built later in this same task.
-                ->component('Photographers/Show', false)
+                ->component('Photographers/Show')
                 ->where('photographer.name', 'Hamish McTavish')
                 ->where('photographer.bio', 'Water shots in Tarifa.'));
     }

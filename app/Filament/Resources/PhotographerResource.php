@@ -37,7 +37,12 @@ class PhotographerResource extends Resource
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('media_count')->label('Images')->counts('media')->sortable(),
-                TextColumn::make('credit_link')->label('Credit links to')->placeholder('—'),
+                TextColumn::make('credit_link')
+                    ->label('Credit links to')
+                    ->placeholder('—')
+                    // The stored value is the OPTIONS key (e.g. 'instagram'), not
+                    // something a reader should have to decode — show the label.
+                    ->formatStateUsing(fn (?string $state): ?string => $state ? (Photographer::CREDIT_LINK_OPTIONS[$state] ?? $state) : null),
                 IconColumn::make('has_public_page')
                     ->label('Page live')
                     ->boolean()
