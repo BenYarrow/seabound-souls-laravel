@@ -24,6 +24,7 @@ Public controllers all covered. Remaining:
 - [ ] Helpers/logic units — weather-data transforms, `LiveWeatherController` caching (external HTTP + response cache)
 - [ ] `Api\WeatherDataController` (index + show)
 - [ ] Filament resources — smoke tests (lowest priority)
+- [ ] **Photographer credit-badge suppression (`showCredit={false}` on map pins, circular avatars, small thumbnails) is behaviour-only, untested.** The suppression lives entirely inside `CoverImage.tsx` (`const credit = !isString && showCredit ? image.credit : null`) — a plain JSX/React conditional, not extractable into the already-tested pure helper (`resolveCredit()` in `resources/js/Helpers/imageCredit.ts`). This project's Vitest setup is `environment: 'node'` with no jsdom or `@testing-library/react` installed (deliberately — see `docs/history/2026-08-06-photographer-attribution.md`), so there is no way to render `CoverImage` and assert the badge is absent. A regression that dropped `showCredit={false}` from any of the 9 gated call sites would pass every existing test. Closing this needs the React component-testing setup (jsdom + Testing Library) added first.
 
 ## Tooling
 - [ ] CI pipeline (GitHub Actions) running `php artisan test` on every PR — **against PostgreSQL** (the suite runs on SQLite locally for speed; a Postgres CI job closes the dev/prod engine-parity gap and would have caught the Vite-dependent-suite fragility immediately). Also run the JS suite (`npm run test:js`, Vitest — added #24) and a Linux `npm run build`.
@@ -139,6 +140,9 @@ Everything below is production/third-party state that code can't change.
 - [ ] **Environment variable changes need a redeploy** to take effect.
 - [ ] Submit the sitemap in **Google Search Console** for the new domain. (Note `*.laravel.cloud` hosts carry `X-Robots-Tag: noindex, nofollow`; custom domains don't — so indexing starts cleanly at cutover.)
 - [ ] Decide what happens to **seaboundsouls.com / .co.uk** — if the old Next.js site is still serving on either, 301 it to the new domain rather than letting it lapse.
+
+### Credential rotation (owner, Cloud dashboard)
+- [ ] **Rotate the production DB password and R2 bucket access key.** Both were provisioned at the 2026-07-09 Cloud launch; the DB password was additionally shared in chat during `db:pull-from-production` setup (see `docs/history/2026-07-11-pull-production-db.md`). Neither has been rotated since. This is `SITREP.md`'s standing "post-launch owner tasks" recommendation — tracked here so it isn't only a roadmap mention. Rotate both via the Cloud dashboard and update the corresponding env vars (redeploy required to pick them up).
 
 ### Third-party keys (domain-bound — these fail *after* cutover)
 - [ ] **Mapbox URL restrictions are not saving.** New account `benyarrow95`; a restricted token was created and deployed, but as of the last probe it still returned **200** for `Referer: https://evil-scraper.test/` — i.e. no restriction is enforcing. Likely the "Add URL" button wasn't clicked (the URL counter must read above zero). Verify with: allowed hosts → 200, `example.com` → **403**. Until that flip is observed, prod is running an effectively unrestricted token.
