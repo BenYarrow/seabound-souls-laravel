@@ -87,4 +87,34 @@ class MediaLibraryScopingTest extends TestCase
 
         $this->assertSame(['Theirs' => 'Theirs'], MediaLibraryResource::folderOptions());
     }
+
+    // The scoping conversion used two idioms: `$user && ! $user->isOwner()`
+    // (guest -> UNSCOPED, since a null $user makes the whole condition false
+    // and the ->when() never applies) and the fail-closed `! $user?->isOwner()`
+    // (guest -> SCOPED). Livewire's `/livewire/update` route carries no `auth`
+    // middleware, so a replayed snapshot could reach these with a null user —
+    // the tests below prove a guest lands in the same restricted branch as any
+    // other non-owner, not the unrestricted one.
+
+    public function test_guest_sees_only_house_media(): void
+    {
+        $someone = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
+        MediaLibrary::create(['name' => 'House shot']);
+        MediaLibrary::create(['name' => 'Someone else\'s shot', 'user_id' => $someone->id]);
+
+        // Deliberately no actingAs() — auth()->user() is null here.
+        $results = MediaLibraryResource::getEloquentQuery()->get();
+
+        $this->assertCount(1, $results);
+        $this->assertSame('House shot', $results->first()->name);
+    }
+
+    public function test_guest_folder_options_exclude_every_user_owned_folder(): void
+    {
+        $someone = User::factory()->create(['role' => User::ROLE_CONTRIBUTOR]);
+        MediaLibrary::create(['name' => 'House shot', 'folder' => 'House']);
+        MediaLibrary::create(['name' => 'Theirs', 'folder' => 'Theirs', 'user_id' => $someone->id]);
+
+        $this->assertSame(['House' => 'House'], MediaLibraryResource::folderOptions());
+    }
 }

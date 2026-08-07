@@ -47,8 +47,10 @@ class MediaPickerBrowser extends Component
 
         // Opt-OUT for the owner rather than opt-IN for contributors: a role added
         // later must not fall through this check and see the house folders.
+        // Fail-closed on the user itself too: a guest (null user) must land in
+        // the scoped branch, not bypass scoping entirely.
         return MediaLibrary::whereNotNull('folder')
-            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
+            ->when(! $user?->isOwner(), fn ($q) => $q->where('user_id', $user?->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder')
@@ -92,7 +94,7 @@ class MediaPickerBrowser extends Component
             $ml = MediaLibrary::create([
                 'name' => $this->newName ?: $this->newFile->getClientOriginalName(),
                 'folder' => $this->newFolder ?: null,
-                'user_id' => (auth()->user() && ! auth()->user()->isOwner()) ? auth()->id() : null,
+                'user_id' => (! auth()->user()?->isOwner()) ? auth()->id() : null,
             ]);
 
             $ml->addMedia($this->newFile->getRealPath())
@@ -129,8 +131,12 @@ class MediaPickerBrowser extends Component
 
     /**
      * Whether the given media id is within the current user's selection scope:
-     * contributors may only select their own uploads; owners (and guests, defensively)
-     * may select anything. Mirrors the role-scoping predicate used in render().
+     * contributors may only select their own uploads; owners may select
+     * anything. A guest (null user, e.g. a replayed snapshot on the
+     * middleware-free `/livewire/update` route — see render()) falls into the
+     * SCOPED branch like any other non-owner, not an unrestricted one — there
+     * is no "defensive" case where a guest should see more than a contributor.
+     * Mirrors the role-scoping predicate used in render().
      */
     protected function isSelectableByCurrentUser(int $id): bool
     {
@@ -139,9 +145,10 @@ class MediaPickerBrowser extends Component
         // Opt-OUT for the owner rather than opt-IN for contributors: this is an
         // authorisation gate on a network-callable method, so a role added later
         // must not fall through the check and be allowed to select someone
-        // else's media (or house media) by id.
+        // else's media (or house media) by id. Fail-closed on the user itself
+        // too: `! $user?->isOwner()`, not `$user && ! $user->isOwner()`.
         return MediaLibrary::query()
-            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
+            ->when(! $user?->isOwner(), fn ($q) => $q->where('user_id', $user?->id))
             ->whereKey($id)
             ->exists();
     }
@@ -152,9 +159,10 @@ class MediaPickerBrowser extends Component
 
         // Opt-OUT for the owner rather than opt-IN for contributors: see
         // isSelectableByCurrentUser() above — the render query must stay in sync
-        // with what a user is actually authorised to select.
+        // with what a user is actually authorised to select. Fail-closed on the
+        // user itself too, for the same reason.
         $mediaItems = MediaLibrary::query()
-            ->when($user && ! $user->isOwner(), fn ($q) => $q->where('user_id', $user->id))
+            ->when(! $user?->isOwner(), fn ($q) => $q->where('user_id', $user?->id))
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->folder, fn ($q) => $q->where('folder', $this->folder))
             ->latest()

@@ -353,8 +353,10 @@ class SpotGuideResource extends Resource
         // Opt-OUT for the owner rather than opt-IN for contributors: a role added
         // later must not fall through this check and see every spot guide,
         // including everyone else's — same reasoning as MediaLibraryResource.
-        if ($user && ! $user->isOwner()) {
-            $query->where('user_id', $user->id);
+        // Fail-closed on the user itself too: a guest (null user) must land in
+        // the scoped branch, not bypass scoping entirely.
+        if (! $user?->isOwner()) {
+            $query->where('user_id', $user?->id);
         }
 
         return $query;

@@ -164,8 +164,11 @@ class MediaLibraryResource extends Resource
             ->where('folder', '!=', '')
             // Opt-OUT for the owner rather than opt-IN for contributors: any role
             // added later is scoped by default instead of falling through to the
-            // full library, house media included.
-            ->when($user && ! $user->isOwner(), fn ($query) => $query->where('user_id', $user->id))
+            // full library, house media included. Fail-closed on the user itself
+            // too (`! $user?->isOwner()`, not `$user && ! $user->isOwner()`): a
+            // guest (null user) must land in the SCOPED branch, not bypass
+            // scoping entirely.
+            ->when(! $user?->isOwner(), fn ($query) => $query->where('user_id', $user?->id))
             ->distinct()
             ->orderBy('folder')
             ->pluck('folder', 'folder')
@@ -181,9 +184,10 @@ class MediaLibraryResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        // See folderOptions(): scoped unless you are the owner.
-        if ($user && ! $user->isOwner()) {
-            $query->where('user_id', $user->id);
+        // See folderOptions(): scoped unless you are the owner, fail-closed for
+        // a guest too.
+        if (! $user?->isOwner()) {
+            $query->where('user_id', $user?->id);
         }
 
         return $query;

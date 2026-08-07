@@ -112,4 +112,23 @@ class ContributorAccessScopingTest extends TestCase
         $this->assertTrue($ids->contains($mine->id));
         $this->assertFalse($ids->contains($theirs->id));
     }
+
+    /**
+     * A guest (null user — e.g. a replayed Livewire snapshot with no session)
+     * must land in the SAME scoped branch as any other non-owner, not bypass
+     * scoping entirely. `$user && ! $user->isOwner()` would make the whole
+     * `->when()` condition false for a null $user and return every guide
+     * unscoped; the fail-closed `! $user?->isOwner()` scopes to `user_id = null`
+     * instead, matching nobody's guides.
+     */
+    public function test_guest_query_returns_no_ones_guides(): void
+    {
+        $someone = User::factory()->create();
+        $this->guideOwnedBy($someone);
+
+        // Deliberately no actingAs() — auth()->user() is null.
+        $ids = SpotGuideResource::getEloquentQuery()->pluck('id');
+
+        $this->assertTrue($ids->isEmpty());
+    }
 }
